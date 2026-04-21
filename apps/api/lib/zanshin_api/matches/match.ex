@@ -11,10 +11,10 @@ defmodule ZanshinApi.Matches.Match do
   @states [:scheduled, :ready, :ongoing, :paused, :completed, :verified]
 
   schema "matches" do
-    field :tournament_id, :string
-    field :division_id, :string
-    field :aka_competitor_id, :string
-    field :shiro_competitor_id, :string
+    belongs_to :tournament, ZanshinApi.Competitions.Tournament
+    belongs_to :division, ZanshinApi.Competitions.Division
+    belongs_to :aka_competitor, ZanshinApi.Competitions.Competitor
+    belongs_to :shiro_competitor, ZanshinApi.Competitions.Competitor
     field :state, Ecto.Enum, values: @states, default: :scheduled
     has_many :match_events, ZanshinApi.Matches.MatchEvent
 
@@ -29,6 +29,10 @@ defmodule ZanshinApi.Matches.Match do
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_competitor_distinct()
+    |> foreign_key_constraint(:tournament_id)
+    |> foreign_key_constraint(:division_id)
+    |> foreign_key_constraint(:aka_competitor_id)
+    |> foreign_key_constraint(:shiro_competitor_id)
   end
 
   def transition_changeset(match, attrs) do

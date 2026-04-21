@@ -146,8 +146,12 @@ Planned commands:
 
 - Phoenix-oriented API skeleton added in `apps/api`.
 - JWT auth baseline added for protected mutating API endpoints.
+- Competition entities added (`Tournament`, `Division`, `Competitor`) with FK-backed `Match` relations.
 - First API endpoints:
   - `GET /api/v1/health`
+  - `POST /api/v1/tournaments`
+  - `POST /api/v1/divisions`
+  - `POST /api/v1/competitors`
   - `POST /api/v1/matches`
   - `GET /api/v1/matches/:id`
   - `POST /api/v1/matches/:id/transition`

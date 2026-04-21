@@ -13,7 +13,8 @@ defmodule ZanshinApi.MatchesTest do
     end
 
     test "rejects duplicate competitor assignment" do
-      attrs = valid_match_attrs(%{"shiro_competitor_id" => "competitor-a"})
+      base = valid_match_attrs()
+      attrs = Map.put(base, "shiro_competitor_id", base["aka_competitor_id"])
 
       assert {:error, changeset} = Matches.create_match(attrs)
       assert "must be different from aka competitor" in errors_on(changeset).shiro_competitor_id

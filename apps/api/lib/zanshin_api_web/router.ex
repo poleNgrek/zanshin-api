@@ -13,6 +13,9 @@ defmodule ZanshinApiWeb.Router do
     pipe_through :api
 
     get "/health", HealthController, :index
+    get "/tournaments", TournamentController, :index
+    get "/divisions", DivisionController, :index
+    get "/competitors", CompetitorController, :index
     get "/matches", MatchController, :index
     get "/matches/:id", MatchController, :show
   end
@@ -20,6 +23,9 @@ defmodule ZanshinApiWeb.Router do
   scope "/api/v1", ZanshinApiWeb do
     pipe_through [:api, :api_auth]
 
+    post "/tournaments", TournamentController, :create
+    post "/divisions", DivisionController, :create
+    post "/competitors", CompetitorController, :create
     post "/matches", MatchController, :create
     post "/matches/:id/transition", MatchStateController, :transition
   end
