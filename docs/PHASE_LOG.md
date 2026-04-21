@@ -377,6 +377,16 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - per-result compute/finalize actions directly from list rows
   - Updated `apps/frontend/README.md` with complete local run instructions and auth token usage.
 
+### Increment 3.2 - Frontend Test Hardening
+
+- **Status:** `in_progress`
+- **Goal:** improve confidence for critical admin paths and client auth behavior.
+- **Done in workspace:**
+  - Expanded Playwright suite with API-mocked critical-path coverage for:
+    - tournaments page data/render flow
+    - grading results page data/render flow
+  - Added Bun unit tests for token storage behavior used by auth header injection.
+
 ---
 
 ## Phase 4 - Analytics Foundation
