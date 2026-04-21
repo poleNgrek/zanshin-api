@@ -90,6 +90,26 @@ defmodule ZanshinApi.CompetitionsFixtures do
     member
   end
 
+  def team_match_fixture(division, team_a, team_b, overrides \\ %{}) do
+    attrs =
+      Map.merge(
+        %{
+          "division_id" => division.id,
+          "team_a_id" => team_a.id,
+          "team_b_id" => team_b.id,
+          "state" => "completed",
+          "team_a_wins" => 3,
+          "team_b_wins" => 2,
+          "team_a_ippon" => 6,
+          "team_b_ippon" => 4
+        },
+        overrides
+      )
+
+    {:ok, match} = Teams.create_team_match(attrs)
+    match
+  end
+
   def division_medal_result_fixture(division, overrides \\ %{}) do
     attrs =
       Map.merge(

@@ -17,7 +17,7 @@ defmodule ZanshinApi.Competitions do
 
   alias ZanshinApi.Matches.{Match, MatchEvent, ScoreEvent}
   alias ZanshinApi.Repo
-  alias ZanshinApi.Teams.{Team, TeamMember}
+  alias ZanshinApi.Teams.{Team, TeamMatch, TeamMember}
 
   def create_tournament(attrs) do
     %Tournament{}
@@ -55,6 +55,12 @@ defmodule ZanshinApi.Competitions do
       team_members =
         TeamMember
         |> where([tm], tm.team_id in ^team_ids)
+        |> Repo.all()
+
+      team_matches =
+        TeamMatch
+        |> where([tm], tm.division_id in ^division_ids)
+        |> order_by([tm], asc: tm.inserted_at)
         |> Repo.all()
 
       matches =
@@ -117,6 +123,7 @@ defmodule ZanshinApi.Competitions do
          competitors: Enum.map(competitors, &export_map/1),
          teams: Enum.map(teams, &export_map/1),
          team_members: Enum.map(team_members, &export_map/1),
+         team_matches: Enum.map(team_matches, &export_map/1),
          matches: Enum.map(matches, &export_map/1),
          match_events: Enum.map(match_events, &export_map/1),
          score_events: Enum.map(score_events, &export_map/1),
@@ -131,12 +138,8 @@ defmodule ZanshinApi.Competitions do
   def compute_division_results(division_id) do
     with {:ok, division} <- fetch_division(division_id),
          :ok <- ensure_computable_division(division),
-         {:ok, winners, matches} <- resolve_completed_match_winners(division.id),
-         {:ok, final_match} <- final_match(matches),
-         {:ok, final_result} <- fetch_winner(winners, final_match.id),
-         {:ok, bronze_competitors} <-
-           resolve_semifinal_losers(winners, matches, final_match, final_result),
-         {:ok, _} <- replace_division_medal_results(division.id, final_result, bronze_competitors) do
+         {:ok, final_result, bronze_recipients} <- compute_podium(division),
+         {:ok, _} <- replace_division_medal_results(division, final_result, bronze_recipients) do
       {:ok, list_division_medal_results(division.id)}
     end
   end
@@ -241,6 +244,7 @@ defmodule ZanshinApi.Competitions do
 
   defp validate_medal_payload(%Division{format: :team} = division, attrs) do
     with :ok <- require_team_recipient(attrs),
+         :ok <- validate_team_in_division(division, attrs),
          :ok <- reject_competitor_recipient(attrs),
          :ok <- validate_team_membership(division, attrs) do
       :ok
@@ -257,6 +261,7 @@ defmodule ZanshinApi.Competitions do
   defp validate_award_payload(%Division{format: :team} = division, attrs) do
     with :ok <- require_competitor_recipient(attrs),
          :ok <- require_team_recipient(attrs),
+         :ok <- validate_team_in_division(division, attrs),
          :ok <- validate_team_membership(division, attrs) do
       :ok
     end
@@ -288,6 +293,19 @@ defmodule ZanshinApi.Competitions do
       case Repo.one(query) do
         nil -> {:error, :competitor_not_in_team}
         _ -> :ok
+      end
+    end
+  end
+
+  defp validate_team_in_division(%Division{id: division_id}, attrs) do
+    team_id = Map.get(attrs, "team_id") || Map.get(attrs, :team_id)
+
+    if is_nil(team_id) do
+      :ok
+    else
+      case Repo.get(Team, team_id) do
+        %Team{division_id: ^division_id} -> :ok
+        _ -> {:error, :team_not_in_division}
       end
     end
   end
@@ -336,10 +354,27 @@ defmodule ZanshinApi.Competitions do
   defp expected_medal(3), do: :bronze
   defp expected_medal(_), do: :bronze
 
-  defp ensure_computable_division(%Division{format: :team}),
-    do: {:error, :team_result_computation_not_supported}
-
   defp ensure_computable_division(%Division{}), do: :ok
+
+  defp compute_podium(%Division{format: :team, id: division_id}) do
+    with {:ok, winners, matches} <- resolve_completed_team_match_winners(division_id),
+         {:ok, final_match} <- final_match(matches),
+         {:ok, final_result} <- fetch_winner(winners, final_match.id),
+         {:ok, bronze_teams} <-
+           resolve_semifinal_losers(winners, matches, final_match, final_result) do
+      {:ok, final_result, bronze_teams}
+    end
+  end
+
+  defp compute_podium(%Division{id: division_id}) do
+    with {:ok, winners, matches} <- resolve_completed_match_winners(division_id),
+         {:ok, final_match} <- final_match(matches),
+         {:ok, final_result} <- fetch_winner(winners, final_match.id),
+         {:ok, bronze_competitors} <-
+           resolve_semifinal_losers(winners, matches, final_match, final_result) do
+      {:ok, final_result, bronze_competitors}
+    end
+  end
 
   defp export_map(struct) do
     struct
@@ -412,6 +447,56 @@ defmodule ZanshinApi.Competitions do
     end
   end
 
+  defp resolve_completed_team_match_winners(division_id) do
+    matches =
+      TeamMatch
+      |> where([m], m.division_id == ^division_id and m.state == :completed)
+      |> order_by([m], asc: m.inserted_at)
+      |> Repo.all()
+
+    if Enum.empty?(matches) do
+      {:error, :insufficient_completed_matches}
+    else
+      winners =
+        Enum.reduce_while(matches, %{}, fn match, acc ->
+          case resolve_team_match_winner(match) do
+            {:ok, winner} -> {:cont, Map.put(acc, match.id, winner)}
+            {:error, reason} -> {:halt, {:error, reason}}
+          end
+        end)
+
+      case winners do
+        {:error, reason} -> {:error, reason}
+        winner_map -> {:ok, winner_map, matches}
+      end
+    end
+  end
+
+  defp resolve_team_match_winner(%TeamMatch{} = match) do
+    cond do
+      match.winner_team_id && match.loser_team_id ->
+        {:ok, %{winner_id: match.winner_team_id, loser_id: match.loser_team_id}}
+
+      match.representative_match_required and match.representative_winner_team_id ->
+        loser_id =
+          if(match.representative_winner_team_id == match.team_a_id,
+            do: match.team_b_id,
+            else: match.team_a_id
+          )
+
+        {:ok, %{winner_id: match.representative_winner_team_id, loser_id: loser_id}}
+
+      match.team_a_wins > match.team_b_wins ->
+        {:ok, %{winner_id: match.team_a_id, loser_id: match.team_b_id}}
+
+      match.team_b_wins > match.team_a_wins ->
+        {:ok, %{winner_id: match.team_b_id, loser_id: match.team_a_id}}
+
+      true ->
+        {:error, :cannot_compute_team_match_winner}
+    end
+  end
+
   defp final_match(matches) do
     case List.last(matches) do
       nil -> {:error, :insufficient_completed_matches}
@@ -450,7 +535,43 @@ defmodule ZanshinApi.Competitions do
     if length(losers) == 2, do: {:ok, losers}, else: {:error, :insufficient_semifinal_data}
   end
 
-  defp replace_division_medal_results(division_id, final_result, bronze_competitors) do
+  defp replace_division_medal_results(
+         %Division{id: division_id, format: :team},
+         final_result,
+         bronze_teams
+       ) do
+    Repo.transaction(fn ->
+      from(r in DivisionMedalResult, where: r.division_id == ^division_id) |> Repo.delete_all()
+
+      with {:ok, _} <-
+             create_division_medal_result(%{
+               "division_id" => division_id,
+               "place" => 1,
+               "team_id" => final_result.winner_id
+             }),
+           {:ok, _} <-
+             create_division_medal_result(%{
+               "division_id" => division_id,
+               "place" => 2,
+               "team_id" => final_result.loser_id
+             }),
+           {:ok, _} <- insert_bronze_team_medals(division_id, bronze_teams) do
+        :ok
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+    |> case do
+      {:ok, :ok} -> {:ok, :ok}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp replace_division_medal_results(
+         %Division{id: division_id},
+         final_result,
+         bronze_competitors
+       ) do
     Repo.transaction(fn ->
       from(r in DivisionMedalResult, where: r.division_id == ^division_id) |> Repo.delete_all()
 
@@ -484,6 +605,19 @@ defmodule ZanshinApi.Competitions do
              "division_id" => division_id,
              "place" => 3,
              "competitor_id" => competitor_id
+           }) do
+        {:ok, _} -> {:cont, {:ok, :ok}}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
+  end
+
+  defp insert_bronze_team_medals(division_id, teams) do
+    Enum.reduce_while(teams, {:ok, :ok}, fn team_id, _acc ->
+      case create_division_medal_result(%{
+             "division_id" => division_id,
+             "place" => 3,
+             "team_id" => team_id
            }) do
         {:ok, _} -> {:cont, {:ok, :ok}}
         {:error, reason} -> {:halt, {:error, reason}}

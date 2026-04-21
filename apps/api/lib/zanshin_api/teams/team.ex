@@ -13,6 +13,8 @@ defmodule ZanshinApi.Teams.Team do
 
     belongs_to :division, ZanshinApi.Competitions.Division
     has_many :members, ZanshinApi.Teams.TeamMember
+    has_many :home_team_matches, ZanshinApi.Teams.TeamMatch, foreign_key: :team_a_id
+    has_many :away_team_matches, ZanshinApi.Teams.TeamMatch, foreign_key: :team_b_id
 
     timestamps(type: :utc_datetime)
   end

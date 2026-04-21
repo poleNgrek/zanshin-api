@@ -174,6 +174,32 @@ defmodule ZanshinApi.CompetitionsTest do
     assert length(snapshot.matches) >= 1
   end
 
+  test "compute_division_results/1 derives team podium and supports representative match" do
+    tournament = tournament_fixture()
+    division = division_fixture(tournament, %{"format" => "team"})
+    t1 = team_fixture(division)
+    t2 = team_fixture(division)
+    t3 = team_fixture(division)
+    t4 = team_fixture(division)
+
+    _semi_1 = team_match_fixture(division, t1, t2, %{"team_a_wins" => 3, "team_b_wins" => 2})
+
+    _semi_2 =
+      team_match_fixture(division, t3, t4, %{
+        "team_a_wins" => 2,
+        "team_b_wins" => 2,
+        "representative_match_required" => true,
+        "representative_winner_team_id" => t3.id
+      })
+
+    _final = team_match_fixture(division, t1, t3, %{"team_a_wins" => 1, "team_b_wins" => 3})
+
+    assert {:ok, results} = Competitions.compute_division_results(division.id)
+    assert Enum.any?(results, &(&1.medal == :gold and &1.team_id == t3.id))
+    assert Enum.any?(results, &(&1.medal == :silver and &1.team_id == t1.id))
+    assert Enum.count(results, &(&1.medal == :bronze)) == 2
+  end
+
   defp completed_match_fixture(tournament, division, aka, shiro, aka_points, shiro_points) do
     {:ok, match} =
       ZanshinApi.Matches.create_match(%{

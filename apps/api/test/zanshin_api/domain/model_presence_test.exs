@@ -11,6 +11,7 @@ defmodule ZanshinApi.Domain.ModelPresenceTest do
       ZanshinApi.Competitions.DivisionMedalResult,
       ZanshinApi.Competitions.DivisionSpecialAward,
       ZanshinApi.Teams.Team,
+      ZanshinApi.Teams.TeamMatch,
       ZanshinApi.Teams.TeamMember,
       ZanshinApi.Matches.Match,
       ZanshinApi.Matches.MatchEvent,

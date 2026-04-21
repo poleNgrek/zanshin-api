@@ -29,6 +29,7 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - `POST /api/v1/competitors`
   - `POST /api/v1/teams`
   - `POST /api/v1/teams/:id/members`
+  - `POST /api/v1/team_matches`
   - `GET /api/v1/tournaments/:id/export`
   - `GET /api/v1/tournaments`
   - `GET /api/v1/divisions?tournament_id=<TOURNAMENT_ID>`
@@ -45,6 +46,7 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - `GET /api/v1/gradings/results/:id/notes`
   - `GET /api/v1/teams?division_id=<DIVISION_ID>`
   - `GET /api/v1/teams/:id/members`
+  - `GET /api/v1/team_matches?division_id=<DIVISION_ID>`
 - Match lifecycle state machine: `ZanshinApi.Matches.StateMachine`
 - OAuth/JWKS auth baseline with Bearer token verification
 - Role-aware transition policy (`admin`, `timekeeper`, `shinpan`)
@@ -63,6 +65,7 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - team creation per division
   - team avatar/profile image URL support
   - lineup positions: `senpo`, `jiho`, `chuken`, `fukusho`, `taisho`
+  - team-vs-team match records with optional representative (`daihyo-sen`) winner
 - Competitor profile support:
   - avatar/photo URL support (`avatar_url`; `photo_url` accepted as alias on write)
   - preferred stance support (`chudan`, `jodan_left`, `jodan_right`, `nito`, etc.)
@@ -77,6 +80,7 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
 - Result computation engine:
   - computes gold/silver/dual-bronze for bracket-style individual divisions from completed match score events
   - supports semifinal-loser dual bronze output
+  - computes team podium from completed team matches, including tied rounds resolved by representative match
 - Tournament export:
   - full tournament snapshot export as JSON (`GET /api/v1/tournaments/:id/export`)
 - Grading support:

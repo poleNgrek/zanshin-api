@@ -22,6 +22,7 @@ defmodule ZanshinApiWeb.Router do
     get "/competitors", CompetitorController, :index
     get "/teams", TeamController, :index
     get "/teams/:id/members", TeamController, :members
+    get "/team_matches", TeamMatchController, :index
     get "/gradings/examiners", GradingExaminerController, :index
     get "/gradings/sessions", GradingSessionController, :index
     get "/gradings/sessions/:id/results", GradingResultController, :index
@@ -47,6 +48,7 @@ defmodule ZanshinApiWeb.Router do
     post "/competitors", CompetitorController, :create
     post "/teams", TeamController, :create
     post "/teams/:id/members", TeamController, :add_member
+    post "/team_matches", TeamMatchController, :create
     post "/gradings/examiners", GradingExaminerController, :create
     post "/gradings/sessions", GradingSessionController, :create
     post "/gradings/sessions/:id/results", GradingResultController, :create

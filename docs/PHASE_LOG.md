@@ -269,6 +269,29 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - `mix format`
     - `MIX_ENV=test mix test` (53 tests, 0 failures)
 
+### Increment 2.10 - Team Match Engine and Daihyo-sen Support
+
+- **Status:** `done`
+- **Goal:** model team-vs-team match outcomes and enable automated team podium computation with representative tie-breaks.
+- **Done in workspace:**
+  - Added `TeamMatch` domain model and migration:
+    - team-vs-team match rows per division
+    - team wins/ippon counters
+    - optional representative (`daihyo-sen`) tie-break winner
+    - persisted winner/loser team IDs
+  - Added team match API:
+    - `POST /api/v1/team_matches`
+    - `GET /api/v1/team_matches?division_id=...`
+  - Extended tournament export snapshot with `team_matches`.
+  - Extended `compute_division_results/1`:
+    - team-format divisions now compute gold/silver/dual-bronze from completed team matches
+    - supports semifinal ties resolved by representative winner.
+  - Added fixtures and tests for team match creation and team podium computation.
+- **Verification:**
+  - Docker checks passed:
+    - `mix format`
+    - `MIX_ENV=test mix test` (55 tests, 0 failures)
+
 ---
 
 ## Phase 3 - Frontend Foundation
