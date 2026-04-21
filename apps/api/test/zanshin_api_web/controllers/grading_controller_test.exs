@@ -1,0 +1,79 @@
+defmodule ZanshinApiWeb.GradingControllerTest do
+  use ZanshinApiWeb.ConnCase, async: true
+
+  import ZanshinApi.AuthHelpers
+  import ZanshinApi.CompetitionsFixtures
+
+  test "grading API supports session, panel, result, vote, and note flow", %{conn: conn} do
+    tournament = tournament_fixture()
+    competitor = competitor_fixture()
+
+    conn =
+      conn
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/sessions", %{
+        "tournament_id" => tournament.id,
+        "name" => "Autumn Shinsa",
+        "written_required" => false
+      })
+
+    assert %{"data" => %{"id" => session_id}} = json_response(conn, 201)
+
+    conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/examiners", %{
+        "display_name" => "Examiner A",
+        "grade" => "7dan",
+        "title" => "kyoshi"
+      })
+
+    assert %{"data" => %{"id" => examiner_id}} = json_response(conn, 201)
+
+    conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/sessions/#{session_id}/panel_assignments", %{
+        "examiner_id" => examiner_id,
+        "role" => "head"
+      })
+
+    assert %{"data" => %{"role" => "head"}} = json_response(conn, 201)
+
+    conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/sessions/#{session_id}/results", %{
+        "competitor_id" => competitor.id,
+        "target_grade" => "5dan",
+        "declared_stance" => "chudan",
+        "jitsugi_result" => "pass",
+        "kata_result" => "pass"
+      })
+
+    assert %{"data" => %{"id" => result_id, "final_result" => "pass"}} = json_response(conn, 201)
+
+    conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/results/#{result_id}/votes", %{
+        "examiner_id" => examiner_id,
+        "part" => "jitsugi",
+        "decision" => "pass",
+        "note" => "Solid pressure and seme."
+      })
+
+    assert %{"data" => %{"decision" => "pass"}} = json_response(conn, 201)
+
+    conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/results/#{result_id}/notes", %{
+        "examiner_id" => examiner_id,
+        "part" => "kata",
+        "note" => "Maai and metsuke were consistent."
+      })
+
+    assert %{"data" => %{"part" => "kata"}} = json_response(conn, 201)
+  end
+end

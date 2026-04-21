@@ -22,6 +22,12 @@ defmodule ZanshinApiWeb.Router do
     get "/competitors", CompetitorController, :index
     get "/teams", TeamController, :index
     get "/teams/:id/members", TeamController, :members
+    get "/gradings/examiners", GradingExaminerController, :index
+    get "/gradings/sessions", GradingSessionController, :index
+    get "/gradings/sessions/:id/results", GradingResultController, :index
+    get "/gradings/sessions/:id/panel_assignments", GradingExaminerController, :panel
+    get "/gradings/results/:id/votes", GradingResultController, :votes
+    get "/gradings/results/:id/notes", GradingResultController, :notes
     get "/matches", MatchController, :index
     get "/matches/:id", MatchController, :show
     get "/matches/:id/score", MatchScoreController, :index
@@ -31,14 +37,22 @@ defmodule ZanshinApiWeb.Router do
     pipe_through [:api, :api_auth]
 
     post "/tournaments", TournamentController, :create
+    get "/tournaments/:id/export", TournamentController, :export
     post "/divisions", DivisionController, :create
     put "/divisions/:id/rules", DivisionRuleController, :upsert
     post "/division_stages", DivisionStageController, :create
     post "/division_medal_results", DivisionMedalResultController, :create
+    post "/divisions/:id/compute_results", DivisionMedalResultController, :compute
     post "/division_special_awards", DivisionSpecialAwardController, :create
     post "/competitors", CompetitorController, :create
     post "/teams", TeamController, :create
     post "/teams/:id/members", TeamController, :add_member
+    post "/gradings/examiners", GradingExaminerController, :create
+    post "/gradings/sessions", GradingSessionController, :create
+    post "/gradings/sessions/:id/results", GradingResultController, :create
+    post "/gradings/sessions/:id/panel_assignments", GradingExaminerController, :assign
+    post "/gradings/results/:id/votes", GradingResultController, :create_vote
+    post "/gradings/results/:id/notes", GradingResultController, :create_note
     post "/matches", MatchController, :create
     post "/matches/:id/transition", MatchStateController, :transition
     post "/matches/:id/score", MatchScoreController, :create

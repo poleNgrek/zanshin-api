@@ -32,7 +32,14 @@ defmodule ZanshinApiWeb.CompetitorController do
     %{
       id: competitor.id,
       display_name: competitor.display_name,
-      federation_id: competitor.federation_id
+      federation_id: competitor.federation_id,
+      birth_date: competitor.birth_date,
+      avatar_url: competitor.avatar_url,
+      preferred_stance:
+        if(competitor.preferred_stance, do: to_string(competitor.preferred_stance), else: nil),
+      grade_value: competitor.grade_value,
+      grade_type: if(competitor.grade_type, do: to_string(competitor.grade_type), else: nil),
+      grade_title: if(competitor.grade_title, do: to_string(competitor.grade_title), else: nil)
     }
   end
 

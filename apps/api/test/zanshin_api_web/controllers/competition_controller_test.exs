@@ -25,4 +25,26 @@ defmodule ZanshinApiWeb.CompetitionControllerTest do
 
     assert %{"data" => %{"name" => "Secured Cup"}} = json_response(conn, 201)
   end
+
+  test "GET /api/v1/tournaments/:id/export returns tournament snapshot for admin", %{conn: conn} do
+    tournament = tournament_fixture()
+    division = division_fixture(tournament)
+    _rules = division_rule_fixture(division)
+
+    conn =
+      conn
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> get("/api/v1/tournaments/#{tournament.id}/export")
+
+    assert %{
+             "data" => %{
+               "metadata" => %{"schema_version" => 1},
+               "tournament" => %{"id" => id},
+               "divisions" => divisions
+             }
+           } = json_response(conn, 200)
+
+    assert id == tournament.id
+    assert Enum.any?(divisions, fn d -> d["id"] == division.id end)
+  end
 end

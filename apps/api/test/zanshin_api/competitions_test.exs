@@ -2,11 +2,24 @@ defmodule ZanshinApi.CompetitionsTest do
   use ZanshinApi.DataCase, async: true
 
   alias ZanshinApi.Competitions
+  alias ZanshinApi.Matches.Match
+  alias ZanshinApi.Matches.ScoreEvent
+  alias ZanshinApi.Repo
   import ZanshinApi.CompetitionsFixtures
 
   test "create_tournament/1 persists tournament" do
     assert {:ok, tournament} = Competitions.create_tournament(%{"name" => "Regional Open"})
     assert tournament.name == "Regional Open"
+  end
+
+  test "create_competitor/1 accepts photo_url alias into avatar_url" do
+    assert {:ok, competitor} =
+             Competitions.create_competitor(%{
+               "display_name" => "Photo Competitor",
+               "photo_url" => "https://cdn.example.com/photo.png"
+             })
+
+    assert competitor.avatar_url == "https://cdn.example.com/photo.png"
   end
 
   test "create_division/1 requires valid tournament reference" do
@@ -124,5 +137,82 @@ defmodule ZanshinApi.CompetitionsTest do
     assert award.award_type == :fighting_spirit
     assert award.team_id == team.id
     assert award.competitor_id == competitor.id
+  end
+
+  test "compute_division_results/1 derives gold silver and dual bronze from bracket matches" do
+    tournament = tournament_fixture()
+    division = division_fixture(tournament, %{"format" => "bracket"})
+    c1 = competitor_fixture()
+    c2 = competitor_fixture()
+    c3 = competitor_fixture()
+    c4 = competitor_fixture()
+
+    _semi_1 = completed_match_fixture(tournament, division, c1, c2, 2, 0)
+    _semi_2 = completed_match_fixture(tournament, division, c3, c4, 2, 1)
+    _final = completed_match_fixture(tournament, division, c1, c3, 2, 1)
+
+    assert {:ok, results} = Competitions.compute_division_results(division.id)
+    assert length(results) == 4
+    assert Enum.count(results, &(&1.medal == :bronze)) == 2
+    assert Enum.any?(results, &(&1.medal == :gold and &1.competitor_id == c1.id))
+    assert Enum.any?(results, &(&1.medal == :silver and &1.competitor_id == c3.id))
+  end
+
+  test "export_tournament_snapshot/1 returns nested tournament data" do
+    tournament = tournament_fixture()
+    division = division_fixture(tournament)
+    _rules = division_rule_fixture(division, %{"age_group" => "adult"})
+    _stage = division_stage_fixture(division, %{"stage_type" => "knockout", "sequence" => 1})
+    competitor = competitor_fixture(%{"avatar_url" => "https://cdn.example.com/a.png"})
+    _match = completed_match_fixture(tournament, division, competitor, competitor_fixture(), 2, 1)
+
+    assert {:ok, snapshot} = Competitions.export_tournament_snapshot(tournament.id)
+    assert snapshot.metadata.schema_version == 1
+    assert snapshot.tournament.id == tournament.id
+    assert Enum.any?(snapshot.divisions, &(&1.id == division.id))
+    assert Enum.any?(snapshot.competitors, &(&1.id == competitor.id))
+    assert length(snapshot.matches) >= 1
+  end
+
+  defp completed_match_fixture(tournament, division, aka, shiro, aka_points, shiro_points) do
+    {:ok, match} =
+      ZanshinApi.Matches.create_match(%{
+        "tournament_id" => tournament.id,
+        "division_id" => division.id,
+        "aka_competitor_id" => aka.id,
+        "shiro_competitor_id" => shiro.id
+      })
+
+    {:ok, completed} = match |> Match.transition_changeset(%{state: :completed}) |> Repo.update()
+
+    if aka_points > 0 do
+      Enum.each(1..aka_points, fn _ ->
+        %ScoreEvent{}
+        |> ScoreEvent.changeset(%{
+          "match_id" => completed.id,
+          "score_type" => "ippon",
+          "side" => "aka",
+          "target" => "men",
+          "actor_role" => "admin"
+        })
+        |> Repo.insert!()
+      end)
+    end
+
+    if shiro_points > 0 do
+      Enum.each(1..shiro_points, fn _ ->
+        %ScoreEvent{}
+        |> ScoreEvent.changeset(%{
+          "match_id" => completed.id,
+          "score_type" => "ippon",
+          "side" => "shiro",
+          "target" => "men",
+          "actor_role" => "admin"
+        })
+        |> Repo.insert!()
+      end)
+    end
+
+    completed
   end
 end

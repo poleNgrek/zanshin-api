@@ -12,9 +12,19 @@ defmodule ZanshinApiWeb.TeamControllerTest do
     conn =
       conn
       |> put_req_header("authorization", bearer_token_for("admin"))
-      |> post("/api/v1/teams", %{"division_id" => division.id, "name" => "Budokan"})
+      |> post("/api/v1/teams", %{
+        "division_id" => division.id,
+        "name" => "Budokan",
+        "avatar_url" => "https://cdn.example.com/team-budokan.png"
+      })
 
-    assert %{"data" => %{"id" => team_id}} = json_response(conn, 201)
+    assert %{
+             "data" => %{
+               "id" => team_id,
+               "avatar_url" => "https://cdn.example.com/team-budokan.png"
+             }
+           } =
+             json_response(conn, 201)
 
     conn =
       build_conn()

@@ -19,9 +19,17 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - `POST /api/v1/division_stages`
   - `POST /api/v1/division_medal_results`
   - `POST /api/v1/division_special_awards`
+  - `POST /api/v1/divisions/:id/compute_results`
+  - `POST /api/v1/gradings/sessions`
+  - `POST /api/v1/gradings/sessions/:id/results`
+  - `POST /api/v1/gradings/examiners`
+  - `POST /api/v1/gradings/sessions/:id/panel_assignments`
+  - `POST /api/v1/gradings/results/:id/votes`
+  - `POST /api/v1/gradings/results/:id/notes`
   - `POST /api/v1/competitors`
   - `POST /api/v1/teams`
   - `POST /api/v1/teams/:id/members`
+  - `GET /api/v1/tournaments/:id/export`
   - `GET /api/v1/tournaments`
   - `GET /api/v1/divisions?tournament_id=<TOURNAMENT_ID>`
   - `GET /api/v1/competitors`
@@ -29,6 +37,12 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - `GET /api/v1/division_stages?division_id=<DIVISION_ID>`
   - `GET /api/v1/division_medal_results?division_id=<DIVISION_ID>`
   - `GET /api/v1/division_special_awards?division_id=<DIVISION_ID>`
+  - `GET /api/v1/gradings/sessions?tournament_id=<TOURNAMENT_ID>`
+  - `GET /api/v1/gradings/sessions/:id/results`
+  - `GET /api/v1/gradings/examiners`
+  - `GET /api/v1/gradings/sessions/:id/panel_assignments`
+  - `GET /api/v1/gradings/results/:id/votes`
+  - `GET /api/v1/gradings/results/:id/notes`
   - `GET /api/v1/teams?division_id=<DIVISION_ID>`
   - `GET /api/v1/teams/:id/members`
 - Match lifecycle state machine: `ZanshinApi.Matches.StateMachine`
@@ -47,7 +61,12 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - match duration, enchō mode, and team size
 - Team support:
   - team creation per division
+  - team avatar/profile image URL support
   - lineup positions: `senpo`, `jiho`, `chuken`, `fukusho`, `taisho`
+- Competitor profile support:
+  - avatar/photo URL support (`avatar_url`; `photo_url` accepted as alias on write)
+  - preferred stance support (`chudan`, `jodan_left`, `jodan_right`, `nito`, etc.)
+  - grade profile support (`grade_type`, `grade_value`, optional `grade_title`)
 - Division progression stages:
   - explicit ordered format plan per division
   - supported stage types: `round_robin`, `knockout`, `pool_to_knockout`, `king_of_hill`, `points_accumulation`
@@ -55,6 +74,16 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - medals are modeled by place (`1`, `2`, `3`) and derived medal type (`gold`, `silver`, `bronze`)
   - third place supports two bronze medal recipients (semifinal losers)
   - fighting spirit award is modeled for both individual and team divisions
+- Result computation engine:
+  - computes gold/silver/dual-bronze for bracket-style individual divisions from completed match score events
+  - supports semifinal-loser dual bronze output
+- Tournament export:
+  - full tournament snapshot export as JSON (`GET /api/v1/tournaments/:id/export`)
+- Grading support:
+  - per-part grading outcomes (`jitsugi`, `kata`, `written`) with binary final result modeling
+  - optional written requirement by session
+  - carryover window support for non-finalized sessions
+  - examiner registry, panel assignments, pass/fail votes, and free-form examiner notes
 - Real tournament/division/competitor entities with DB-level FK constraints on matches
 - Persistent audit trail in `match_events` table
 - Initial tests for:
@@ -114,6 +143,6 @@ Auth modes:
 
 ## Next Phase 2 steps
 
-- Add tournament/division/competitor schemas and foreign-key constraints.
-- Add round progression and team match resolution rules (including representative match handling).
-- Extend scoring with explicit target validation policies by age category defaults.
+- Add team-result computation once team-vs-team match entities and representative match flow are modeled.
+- Add tournament import endpoint compatible with export snapshot (`POST /api/v1/tournaments/import`).
+- Add snapshot version migration tools for long-term analytics compatibility.

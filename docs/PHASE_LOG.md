@@ -222,6 +222,53 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - team divisions: fighting spirit awarded to one competitor linked to a team
   - Added domain and controller tests covering these constraints.
 
+### Increment 2.8 - Tournament Export, Result Compute, and Avatar Profiles
+
+- **Status:** `done`
+- **Goal:** provide portable tournament snapshots for analytics, automate podium derivation, and support profile images.
+- **Done in workspace:**
+  - Added tournament export endpoint:
+    - `GET /api/v1/tournaments/:id/export`
+    - snapshot includes tournament, divisions/rules/stages, competitors, teams/team members, matches/events, score events, medals, and awards.
+  - Added result computation endpoint:
+    - `POST /api/v1/divisions/:id/compute_results`
+    - computes gold/silver + dual-bronze from completed bracket-style individual match results.
+  - Added avatar support:
+    - competitors now support `avatar_url` (with `photo_url` write alias)
+    - teams now support `avatar_url`
+  - Added migrations, context logic, and tests for export/compute/avatar support.
+- **Verification:**
+  - Docker checks passed:
+    - `mix format`
+    - `MIX_ENV=test mix test` (49 tests, 0 failures)
+
+### Increment 2.9 - Grading Workflow and Examiner Panel Modeling
+
+- **Status:** `done`
+- **Goal:** model realistic shinsa workflow with per-part outcomes, examiner panel voting, and stance/grade profile data.
+- **Done in workspace:**
+  - Expanded competitor profile:
+    - preferred stance (`chudan`, `jodan_left/right`, `nito`, etc.)
+    - grade profile (`grade_type`, `grade_value`, optional `grade_title`)
+  - Expanded grading session/rules:
+    - optional written requirement per session
+    - carryover month configuration for kata and written parts
+  - Expanded grading result model:
+    - final result (`pass`/`fail`/`pending`)
+    - per-part outcomes for `jitsugi`, `kata`, `written`
+    - carryover deadline and declared stance per candidate entry
+  - Added examiner and panel domain:
+    - examiner registry
+    - session panel assignments (head/member)
+    - per-part examiner votes
+    - examiner notes/comments
+  - Added API namespaces under `/api/v1/gradings/...` for sessions, results, examiners, panel assignments, votes, and notes.
+  - Added migrations, context logic, and controller/domain tests for the new grading flow.
+- **Verification:**
+  - Docker checks passed:
+    - `mix format`
+    - `MIX_ENV=test mix test` (53 tests, 0 failures)
+
 ---
 
 ## Phase 3 - Frontend Foundation

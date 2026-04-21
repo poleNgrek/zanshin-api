@@ -19,7 +19,11 @@ defmodule ZanshinApi.Domain.ModelPresenceTest do
       ZanshinApi.Competitions.Shiaijo,
       ZanshinApi.Matches.Timer,
       ZanshinApi.Grading.GradingSession,
-      ZanshinApi.Grading.GradingResult
+      ZanshinApi.Grading.GradingResult,
+      ZanshinApi.Grading.GradingExaminer,
+      ZanshinApi.Grading.GradingPanelAssignment,
+      ZanshinApi.Grading.GradingVote,
+      ZanshinApi.Grading.GradingNote
     ]
 
     assert Enum.all?(required_models, &Code.ensure_loaded?/1)
