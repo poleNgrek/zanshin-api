@@ -29,6 +29,22 @@ defmodule ZanshinApiWeb.DivisionMedalResultController do
     end
   end
 
+  def compute(conn, %{"id" => division_id}) do
+    with :ok <- authorize_write(conn),
+         {:ok, results} <- Competitions.compute_division_results(division_id) do
+      json(conn, %{data: Enum.map(results, &serialize/1)})
+    else
+      {:error, :forbidden} ->
+        conn |> put_status(:forbidden) |> json(%{error: "forbidden"})
+
+      {:error, :division_not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "division_not_found"})
+
+      {:error, reason} when is_atom(reason) ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: Atom.to_string(reason)})
+    end
+  end
+
   defp authorize_write(conn) do
     if conn.assigns[:current_role] in [:admin, :timekeeper], do: :ok, else: {:error, :forbidden}
   end

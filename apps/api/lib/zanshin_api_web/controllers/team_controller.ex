@@ -9,9 +9,9 @@ defmodule ZanshinApiWeb.TeamController do
     json(conn, %{data: Enum.map(teams, &serialize_team/1)})
   end
 
-  def create(conn, %{"division_id" => division_id, "name" => name}) do
+  def create(conn, params) do
     with :ok <- authorize_write(conn),
-         {:ok, team} <- Teams.create_team(%{"division_id" => division_id, "name" => name}) do
+         {:ok, team} <- Teams.create_team(params) do
       conn
       |> put_status(:created)
       |> json(%{data: serialize_team(team)})
@@ -62,7 +62,7 @@ defmodule ZanshinApiWeb.TeamController do
   end
 
   defp serialize_team(%Team{} = team) do
-    %{id: team.id, division_id: team.division_id, name: team.name}
+    %{id: team.id, division_id: team.division_id, name: team.name, avatar_url: team.avatar_url}
   end
 
   defp serialize_member(%TeamMember{} = member) do

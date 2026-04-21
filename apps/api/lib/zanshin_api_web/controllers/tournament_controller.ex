@@ -28,6 +28,23 @@ defmodule ZanshinApiWeb.TournamentController do
     end
   end
 
+  def export(conn, %{"id" => tournament_id}) do
+    with :ok <- authorize_write(conn),
+         {:ok, snapshot} <- Competitions.export_tournament_snapshot(tournament_id) do
+      json(conn, %{data: snapshot})
+    else
+      {:error, :forbidden} ->
+        conn
+        |> put_status(:forbidden)
+        |> json(%{error: "forbidden"})
+
+      {:error, :tournament_not_found} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "tournament_not_found"})
+    end
+  end
+
   defp serialize(%Tournament{} = tournament) do
     %{
       id: tournament.id,
