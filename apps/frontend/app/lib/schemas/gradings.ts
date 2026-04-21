@@ -15,5 +15,6 @@ export const gradingResultSchema = z.object({
 });
 
 export const gradingResultListResponseSchema = dataEnvelopeSchema(z.array(gradingResultSchema));
+export const gradingResultResponseSchema = dataEnvelopeSchema(gradingResultSchema);
 
 export type GradingResult = z.infer<typeof gradingResultSchema>;

@@ -343,7 +343,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ### Increment 3.0 - Frontend Scaffold (Bun + Remix SPA + TS + MUI + Zod)
 
-- **Status:** `in_progress`
+- **Status:** `done`
 - **Goal:** establish frontend runtime, UI framework, validation layer, and testing baseline.
 - **Done in workspace:**
   - Scaffolded `apps/frontend` with Bun-managed Remix SPA + TypeScript project files.
@@ -359,6 +359,23 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 - **Verification:**
   - API regression suite remains green after integration work (`58 tests, 0 failures`).
   - Frontend Bun verification pending on local machine because Bun runtime is not available in this tool environment.
+
+### Increment 3.1 - Admin Flows and Auth Token UX
+
+- **Status:** `done`
+- **Goal:** remove manual-ID-heavy interactions by wiring practical admin flows for tournaments and grading.
+- **Done in workspace:**
+  - Upgraded frontend runtime to React 19 and Remix 2.17.x package line.
+  - Added persistent auth token UI in app header and automatic token injection in API client.
+  - Extended tournaments screen:
+    - create/list tournaments
+    - create/list divisions scoped to selected tournament
+    - create/list grading sessions scoped to selected tournament
+  - Extended grading results screen:
+    - tournament/session selectors
+    - competitor selector + grading result creation
+    - per-result compute/finalize actions directly from list rows
+  - Updated `apps/frontend/README.md` with complete local run instructions and auth token usage.
 
 ---
 

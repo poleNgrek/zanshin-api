@@ -1,5 +1,6 @@
 import type { z } from "zod";
 
+import { getStoredToken } from "~/lib/auth/tokenStore";
 import { getApiBaseUrl } from "~/lib/config";
 import { errorEnvelopeSchema } from "~/lib/schemas/common";
 
@@ -25,11 +26,13 @@ export async function fetchWithSchema<TSchema extends z.ZodTypeAny>(
   schema: TSchema,
   options: FetchOptions = {}
 ): Promise<z.infer<TSchema>> {
+  const token = options.token || getStoredToken() || undefined;
+
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
     method: options.method ?? "GET",
     headers: {
       "Content-Type": "application/json",
-      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {})
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
     },
     body: options.body ? JSON.stringify(options.body) : undefined
   });
