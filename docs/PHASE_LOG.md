@@ -379,13 +379,30 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ### Increment 3.2 - Frontend Test Hardening
 
-- **Status:** `in_progress`
+- **Status:** `done`
 - **Goal:** improve confidence for critical admin paths and client auth behavior.
 - **Done in workspace:**
   - Expanded Playwright suite with API-mocked critical-path coverage for:
     - tournaments page data/render flow
     - grading results page data/render flow
   - Added Bun unit tests for token storage behavior used by auth header injection.
+
+### Increment 3.3 - Real API UX Hardening and Admin Coverage
+
+- **Status:** `in_progress`
+- **Goal:** improve real API usability with stronger client validation, loading/error states, and less ID-driven operator workflow.
+- **Done in workspace:**
+  - Upgraded frontend dependencies to latest requested baseline, including:
+    - Zod v4
+    - MUI v9 line
+    - TypeScript v6
+    - latest Remix/react/playwright/eslint ecosystem versions currently published
+  - Added dedicated competitor admin route (`/competitors`) with list/create flow.
+  - Improved tournaments and grading screens with:
+    - client-side Zod validation before write requests
+    - loading and in-flight action states
+    - clearer empty-state and failure feedback
+    - persistent token-based auth flow through app shell + API client
 
 ---
 

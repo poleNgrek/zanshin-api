@@ -1,5 +1,6 @@
 import { Alert, Button, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 
 import { ApiError, fetchWithSchema } from "~/lib/api/client";
 import {
@@ -29,8 +30,27 @@ export default function TournamentsRoute() {
   const [divisionFormat, setDivisionFormat] = useState("bracket");
   const [sessions, setSessions] = useState<GradingSession[]>([]);
   const [sessionName, setSessionName] = useState("");
+  const [loadingTournaments, setLoadingTournaments] = useState(false);
+  const [creatingTournament, setCreatingTournament] = useState(false);
+  const [creatingDivision, setCreatingDivision] = useState(false);
+  const [creatingSession, setCreatingSession] = useState(false);
+
+  const createTournamentSchema = z.object({
+    name: z.string().trim().min(3, "Tournament name must be at least 3 characters"),
+    starts_on: z.string().optional()
+  });
+
+  const createDivisionSchema = z.object({
+    name: z.string().trim().min(2, "Division name must be at least 2 characters"),
+    format: z.enum(["bracket", "swiss", "round_robin", "team", "hybrid"])
+  });
+
+  const createSessionSchema = z.object({
+    name: z.string().trim().min(2, "Session name must be at least 2 characters")
+  });
 
   async function loadTournaments() {
+    setLoadingTournaments(true);
     try {
       const response = await fetchWithSchema("/api/v1/tournaments", tournamentListResponseSchema);
       setItems(response.data);
@@ -41,6 +61,8 @@ export default function TournamentsRoute() {
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "failed_to_load_tournaments";
       setError(message);
+    } finally {
+      setLoadingTournaments(false);
     }
   }
 
@@ -55,13 +77,21 @@ export default function TournamentsRoute() {
   }, [selectedTournamentId]);
 
   async function createTournament() {
+    const parsed = createTournamentSchema.safeParse({
+      name,
+      starts_on: startsOn || undefined
+    });
+
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "invalid_tournament_payload");
+      return;
+    }
+
+    setCreatingTournament(true);
     try {
       await fetchWithSchema("/api/v1/tournaments", tournamentResponseSchema, {
         method: "POST",
-        body: {
-          name,
-          starts_on: startsOn || undefined
-        }
+        body: parsed.data
       });
       setName("");
       setStartsOn("");
@@ -69,6 +99,8 @@ export default function TournamentsRoute() {
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "failed_to_create_tournament";
       setError(message);
+    } finally {
+      setCreatingTournament(false);
     }
   }
 
@@ -88,13 +120,23 @@ export default function TournamentsRoute() {
 
   async function createDivision() {
     if (!selectedTournamentId) return;
+    const parsed = createDivisionSchema.safeParse({
+      name: divisionName,
+      format: divisionFormat
+    });
+
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "invalid_division_payload");
+      return;
+    }
+
+    setCreatingDivision(true);
     try {
       await fetchWithSchema("/api/v1/divisions", divisionResponseSchema, {
         method: "POST",
         body: {
           tournament_id: selectedTournamentId,
-          name: divisionName,
-          format: divisionFormat
+          ...parsed.data
         }
       });
       setDivisionName("");
@@ -102,6 +144,8 @@ export default function TournamentsRoute() {
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "failed_to_create_division";
       setError(message);
+    } finally {
+      setCreatingDivision(false);
     }
   }
 
@@ -121,12 +165,20 @@ export default function TournamentsRoute() {
 
   async function createSession() {
     if (!selectedTournamentId) return;
+    const parsed = createSessionSchema.safeParse({ name: sessionName });
+
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "invalid_grading_session_payload");
+      return;
+    }
+
+    setCreatingSession(true);
     try {
       await fetchWithSchema("/api/v1/gradings/sessions", gradingSessionResponseSchema, {
         method: "POST",
         body: {
           tournament_id: selectedTournamentId,
-          name: sessionName
+          name: parsed.data.name
         }
       });
       setSessionName("");
@@ -134,6 +186,8 @@ export default function TournamentsRoute() {
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "failed_to_create_grading_session";
       setError(message);
+    } finally {
+      setCreatingSession(false);
     }
   }
 
@@ -155,10 +209,15 @@ export default function TournamentsRoute() {
           onChange={(e) => setStartsOn(e.target.value)}
           InputLabelProps={{ shrink: true }}
         />
-        <Button variant="contained" onClick={createTournament} disabled={!name.trim()}>
-          Create
+        <Button variant="contained" onClick={createTournament} disabled={creatingTournament}>
+          {creatingTournament ? "Creating..." : "Create"}
         </Button>
       </Stack>
+
+      {loadingTournaments ? <Alert severity="info">Loading tournaments...</Alert> : null}
+      {!loadingTournaments && items.length === 0 ? (
+        <Alert severity="warning">No tournaments yet. Create your first tournament to continue.</Alert>
+      ) : null}
 
       <Stack spacing={1}>
         {items.map((item) => (
@@ -201,9 +260,9 @@ export default function TournamentsRoute() {
         <Button
           variant="contained"
           onClick={createDivision}
-          disabled={!selectedTournamentId || !divisionName.trim()}
+          disabled={creatingDivision || !selectedTournamentId}
         >
-          Create Division
+          {creatingDivision ? "Creating..." : "Create Division"}
         </Button>
       </Stack>
 
@@ -225,8 +284,8 @@ export default function TournamentsRoute() {
           onChange={(e) => setSessionName(e.target.value)}
           fullWidth
         />
-        <Button variant="contained" onClick={createSession} disabled={!selectedTournamentId || !sessionName.trim()}>
-          Create Session
+        <Button variant="contained" onClick={createSession} disabled={creatingSession || !selectedTournamentId}>
+          {creatingSession ? "Creating..." : "Create Session"}
         </Button>
       </Stack>
 

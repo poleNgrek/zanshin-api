@@ -1,5 +1,6 @@
 import { Alert, Button, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
+import { z } from "zod";
 
 import { ApiError, fetchWithSchema } from "~/lib/api/client";
 import {
@@ -27,6 +28,18 @@ export default function GradingResultsRoute() {
   const [targetGrade, setTargetGrade] = useState("4dan");
   const [results, setResults] = useState<GradingResult[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loadingResults, setLoadingResults] = useState(false);
+  const [creatingResult, setCreatingResult] = useState(false);
+  const [processingResultId, setProcessingResultId] = useState<string | null>(null);
+
+  const createResultSchema = z.object({
+    competitor_id: z.string().uuid("Please select a valid competitor"),
+    target_grade: z
+      .string()
+      .trim()
+      .min(2, "Target grade is required")
+      .regex(/^\d+\s*(kyu|dan)$/i, "Use format like 2kyu or 4dan")
+  });
 
   useEffect(() => {
     void loadTournaments();
@@ -85,6 +98,7 @@ export default function GradingResultsRoute() {
 
   async function loadResults() {
     if (!selectedSessionId) return;
+    setLoadingResults(true);
     try {
       const response = await fetchWithSchema(
         `/api/v1/gradings/sessions/${selectedSessionId}/results`,
@@ -95,31 +109,44 @@ export default function GradingResultsRoute() {
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "failed_to_load_grading_results";
       setError(message);
+    } finally {
+      setLoadingResults(false);
     }
   }
 
   async function createResult() {
     if (!selectedSessionId || !selectedCompetitorId || !targetGrade.trim()) return;
+    const parsed = createResultSchema.safeParse({
+      competitor_id: selectedCompetitorId,
+      target_grade: targetGrade
+    });
+
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "invalid_grading_result_payload");
+      return;
+    }
+
+    setCreatingResult(true);
     try {
       await fetchWithSchema(
         `/api/v1/gradings/sessions/${selectedSessionId}/results`,
         gradingResultResponseSchema,
         {
           method: "POST",
-          body: {
-            competitor_id: selectedCompetitorId,
-            target_grade: targetGrade
-          }
+          body: parsed.data
         }
       );
       await loadResults();
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "failed_to_create_result";
       setError(message);
+    } finally {
+      setCreatingResult(false);
     }
   }
 
   async function compute(resultId: string) {
+    setProcessingResultId(resultId);
     try {
       await fetchWithSchema(`/api/v1/gradings/results/${resultId}/compute`, gradingResultResponseSchema, {
         method: "POST"
@@ -129,10 +156,13 @@ export default function GradingResultsRoute() {
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "failed_to_compute_result";
       setError(message);
+    } finally {
+      setProcessingResultId(null);
     }
   }
 
   async function finalizeResult(resultId: string) {
+    setProcessingResultId(resultId);
     try {
       await fetchWithSchema(`/api/v1/gradings/results/${resultId}/finalize`, gradingResultResponseSchema, {
         method: "POST"
@@ -142,6 +172,8 @@ export default function GradingResultsRoute() {
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "failed_to_finalize_result";
       setError(message);
+    } finally {
+      setProcessingResultId(null);
     }
   }
 
@@ -205,11 +237,16 @@ export default function GradingResultsRoute() {
         <Button
           variant="contained"
           onClick={createResult}
-          disabled={!selectedSessionId || !selectedCompetitorId || !targetGrade.trim()}
+          disabled={creatingResult || !selectedSessionId || !selectedCompetitorId || !targetGrade.trim()}
         >
-          Create Result
+          {creatingResult ? "Creating..." : "Create Result"}
         </Button>
       </Stack>
+
+      {loadingResults ? <Alert severity="info">Loading grading results...</Alert> : null}
+      {!loadingResults && results.length === 0 ? (
+        <Alert severity="warning">No grading results loaded yet for this session.</Alert>
+      ) : null}
 
       <Stack spacing={1}>
         {results.map((item) => (
@@ -218,11 +255,21 @@ export default function GradingResultsRoute() {
             severity={item.locked_at ? "success" : "info"}
             action={
               <Stack direction="row" spacing={1}>
-                <Button size="small" variant="outlined" onClick={() => compute(item.id)}>
-                  Compute
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => compute(item.id)}
+                  disabled={processingResultId === item.id}
+                >
+                  {processingResultId === item.id ? "..." : "Compute"}
                 </Button>
-                <Button size="small" variant="contained" onClick={() => finalizeResult(item.id)}>
-                  Finalize
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={() => finalizeResult(item.id)}
+                  disabled={processingResultId === item.id}
+                >
+                  {processingResultId === item.id ? "..." : "Finalize"}
                 </Button>
               </Stack>
             }
