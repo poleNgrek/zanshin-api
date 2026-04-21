@@ -133,9 +133,9 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ### Increment 2.4 - Scoring Events and Match-State Guards
 
-- **Status:** `in_progress`
+- **Status:** `done`
 - **Goal:** implement `ippon`/`hansoku` scoring flow with role and lifecycle guardrails.
-- **Done (workspace):**
+- **Done:**
   - Added `ScoreEvent` model and migration.
   - Added score recording/listing APIs:
     - `POST /api/v1/matches/:id/score`
@@ -146,13 +146,13 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - supported score types: `ippon`, `hansoku`
     - supported sides: `aka`, `shiro`
   - Added context and controller tests for valid, forbidden, and invalid state flows.
-- **Verification (workspace):**
+- **Verification:**
   - Docker checks passed:
     - `mix format --check-formatted`
     - `MIX_ENV=test mix test` (31 tests, 0 failures)
 - **What went wrong / notes:**
   - Initial format check failed for the new score controller; fixed with `mix format`.
-- **Outcome:** scoring flow is implemented and validated locally; awaiting final commit/push.
+- **Outcome:** scoring flow is implemented, tested, and pushed.
 
 ---
 
