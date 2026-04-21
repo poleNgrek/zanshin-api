@@ -35,6 +35,8 @@ defmodule ZanshinApi.Gradings do
     |> Repo.insert()
   end
 
+  def get_result(result_id), do: Repo.get(GradingResult, result_id)
+
   def list_results_by_session(session_id) do
     GradingResult
     |> where([r], r.grading_session_id == ^session_id)
@@ -70,11 +72,14 @@ defmodule ZanshinApi.Gradings do
   end
 
   def create_vote(result_id, attrs) do
-    attrs = Map.put(attrs, "grading_result_id", result_id)
+    with {:ok, result} <- fetch_result(result_id),
+         :ok <- ensure_unlocked(result) do
+      attrs = Map.put(attrs, "grading_result_id", result_id)
 
-    %GradingVote{}
-    |> GradingVote.changeset(attrs)
-    |> Repo.insert()
+      %GradingVote{}
+      |> GradingVote.changeset(attrs)
+      |> Repo.insert()
+    end
   end
 
   def list_votes(result_id) do
@@ -85,11 +90,14 @@ defmodule ZanshinApi.Gradings do
   end
 
   def create_note(result_id, attrs) do
-    attrs = Map.put(attrs, "grading_result_id", result_id)
+    with {:ok, result} <- fetch_result(result_id),
+         :ok <- ensure_unlocked(result) do
+      attrs = Map.put(attrs, "grading_result_id", result_id)
 
-    %GradingNote{}
-    |> GradingNote.changeset(attrs)
-    |> Repo.insert()
+      %GradingNote{}
+      |> GradingNote.changeset(attrs)
+      |> Repo.insert()
+    end
   end
 
   def list_notes(result_id) do
@@ -97,6 +105,103 @@ defmodule ZanshinApi.Gradings do
     |> where([n], n.grading_result_id == ^result_id)
     |> order_by([n], asc: n.inserted_at)
     |> Repo.all()
+  end
+
+  def compute_result_decision(result_id) do
+    with {:ok, result} <- fetch_result(result_id),
+         {:ok, session} <- fetch_session(result.grading_session_id) do
+      panel_size = panel_size(session.id)
+      required_pass_votes = required_pass_votes(session, panel_size)
+      votes = list_votes(result.id)
+      today = Date.utc_today()
+
+      {jitsugi_outcome, jitsugi_stats, jitsugi_expired?} =
+        evaluate_part(result, :jitsugi, votes, required_pass_votes, today, true)
+
+      {kata_outcome, kata_stats, kata_expired?} =
+        evaluate_part(result, :kata, votes, required_pass_votes, today, true)
+
+      {written_outcome, written_stats, written_expired?} =
+        evaluate_part(
+          result,
+          :written,
+          votes,
+          required_pass_votes,
+          today,
+          session.written_required
+        )
+
+      final_result =
+        decide_final_result(
+          jitsugi_outcome,
+          kata_outcome,
+          written_outcome,
+          session.written_required,
+          kata_expired? or written_expired?
+        )
+
+      carryover_until =
+        next_carryover_until(
+          result,
+          session,
+          final_result,
+          jitsugi_outcome,
+          kata_outcome,
+          written_outcome,
+          today
+        )
+
+      snapshot = %{
+        computed_at: DateTime.utc_now(),
+        panel_size: panel_size,
+        required_pass_votes: required_pass_votes,
+        parts: %{
+          jitsugi: stats_map(jitsugi_outcome, jitsugi_stats, jitsugi_expired?),
+          kata: stats_map(kata_outcome, kata_stats, kata_expired?),
+          written: stats_map(written_outcome, written_stats, written_expired?)
+        },
+        final_result: Atom.to_string(final_result)
+      }
+
+      attrs = %{
+        "jitsugi_result" => Atom.to_string(jitsugi_outcome),
+        "kata_result" => Atom.to_string(kata_outcome),
+        "written_result" => Atom.to_string(written_outcome),
+        "final_result" => Atom.to_string(final_result),
+        "carryover_until" => carryover_until,
+        "computed_at" => DateTime.utc_now(),
+        "decision_snapshot" => snapshot
+      }
+
+      result
+      |> GradingResult.changeset(attrs)
+      |> Repo.update()
+    end
+  end
+
+  def finalize_result(result_id, actor_role) do
+    with {:ok, result} <- fetch_result(result_id),
+         :ok <- ensure_unlocked(result) do
+      case result.decision_snapshot do
+        nil ->
+          with {:ok, computed} <- compute_result_decision(result_id) do
+            lock_result(computed, actor_role)
+          end
+
+        _ ->
+          lock_result(result, actor_role)
+      end
+    end
+  end
+
+  def result_decision_snapshot(result_id) do
+    with {:ok, result} <- fetch_result(result_id),
+         snapshot when is_map(snapshot) <- result.decision_snapshot do
+      {:ok, snapshot}
+    else
+      {:error, _} = err -> err
+      _ -> {:error, :decision_not_computed}
+    end
   end
 
   defp with_result_defaults(attrs, session_id) do
@@ -151,5 +256,147 @@ defmodule ZanshinApi.Gradings do
 
   defp part_result(attrs, key, default) do
     Map.get(attrs, key) || Map.get(attrs, String.to_atom(key)) || default
+  end
+
+  defp fetch_result(result_id) do
+    case Repo.get(GradingResult, result_id) do
+      nil -> {:error, :grading_result_not_found}
+      result -> {:ok, result}
+    end
+  end
+
+  defp fetch_session(session_id) do
+    case Repo.get(GradingSession, session_id) do
+      nil -> {:error, :grading_session_not_found}
+      session -> {:ok, session}
+    end
+  end
+
+  defp ensure_unlocked(%GradingResult{locked_at: nil}), do: :ok
+  defp ensure_unlocked(_), do: {:error, :grading_result_locked}
+
+  defp panel_size(session_id) do
+    GradingPanelAssignment
+    |> where([a], a.grading_session_id == ^session_id)
+    |> Repo.aggregate(:count)
+  end
+
+  defp required_pass_votes(%GradingSession{required_pass_votes: value}, _panel_size)
+       when is_integer(value),
+       do: value
+
+  defp required_pass_votes(_session, panel_size) when panel_size > 0, do: div(panel_size, 2) + 1
+  defp required_pass_votes(_session, _panel_size), do: 1
+
+  defp evaluate_part(result, part, votes, required_pass_votes, today, required?) do
+    part_votes = Enum.filter(votes, &(&1.part == part))
+    pass_votes = Enum.count(part_votes, &(&1.decision == :pass))
+    fail_votes = Enum.count(part_votes, &(&1.decision == :fail))
+    existing = Map.get(result, :"#{part}_result")
+    carryover_expired? = existing == :carried_over and carryover_expired?(result, today)
+
+    outcome =
+      cond do
+        part == :written and not required? ->
+          :waived
+
+        carryover_expired? ->
+          :fail
+
+        pass_votes + fail_votes > 0 and pass_votes >= required_pass_votes ->
+          :pass
+
+        pass_votes + fail_votes > 0 ->
+          :fail
+
+        existing in [:pass, :carried_over, :waived] ->
+          existing
+
+        true ->
+          :not_attempted
+      end
+
+    stats = %{pass_votes: pass_votes, fail_votes: fail_votes}
+    {outcome, stats, carryover_expired?}
+  end
+
+  defp decide_final_result(jitsugi, kata, written, written_required, carryover_expired?) do
+    cond do
+      jitsugi == :fail ->
+        :fail
+
+      carryover_expired? ->
+        :fail
+
+      jitsugi != :pass ->
+        :pending
+
+      kata in [:fail, :not_attempted] ->
+        :pending
+
+      written_required and written in [:fail, :not_attempted] ->
+        :pending
+
+      true ->
+        :pass
+    end
+  end
+
+  defp next_carryover_until(result, session, final_result, jitsugi, kata, written, today) do
+    if final_result == :pending and jitsugi == :pass do
+      months =
+        []
+        |> maybe_add_months(kata in [:fail, :not_attempted], session.kata_carryover_months || 12)
+        |> maybe_add_months(
+          session.written_required and written in [:fail, :not_attempted],
+          session.written_carryover_months || 12
+        )
+
+      case months do
+        [] ->
+          result.carryover_until
+
+        values ->
+          candidate = Date.add(today, Enum.max(values) * 30)
+
+          if result.carryover_until && Date.compare(result.carryover_until, candidate) == :gt,
+            do: result.carryover_until,
+            else: candidate
+      end
+    else
+      nil
+    end
+  end
+
+  defp maybe_add_months(list, true, months), do: [months | list]
+  defp maybe_add_months(list, false, _months), do: list
+
+  defp carryover_expired?(%GradingResult{carryover_until: nil}, _today), do: false
+
+  defp carryover_expired?(%GradingResult{carryover_until: carryover_until}, today),
+    do: Date.compare(carryover_until, today) == :lt
+
+  defp stats_map(outcome, stats, expired?) do
+    stats
+    |> Map.put(:outcome, Atom.to_string(outcome))
+    |> Map.put(:carryover_expired, expired?)
+  end
+
+  defp lock_result(result, actor_role) do
+    snapshot =
+      case result.decision_snapshot do
+        %{} = map -> Map.put(map, :finalized_by_role, Atom.to_string(actor_role))
+        _ -> %{finalized_by_role: Atom.to_string(actor_role)}
+      end
+
+    attrs = %{
+      "locked_at" => DateTime.utc_now(),
+      "finalized_at" => DateTime.utc_now(),
+      "decision_snapshot" => snapshot
+    }
+
+    result
+    |> GradingResult.changeset(attrs)
+    |> Repo.update()
   end
 end

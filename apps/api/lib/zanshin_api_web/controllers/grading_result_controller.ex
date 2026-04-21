@@ -36,6 +36,9 @@ defmodule ZanshinApiWeb.GradingResultController do
       {:error, :forbidden} ->
         conn |> put_status(:forbidden) |> json(%{error: "forbidden"})
 
+      {:error, :grading_result_locked} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: "grading_result_locked"})
+
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
@@ -58,6 +61,9 @@ defmodule ZanshinApiWeb.GradingResultController do
       {:error, :forbidden} ->
         conn |> put_status(:forbidden) |> json(%{error: "forbidden"})
 
+      {:error, :grading_result_locked} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: "grading_result_locked"})
+
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
@@ -68,6 +74,55 @@ defmodule ZanshinApiWeb.GradingResultController do
   def notes(conn, %{"id" => result_id}) do
     data = Gradings.list_notes(result_id) |> Enum.map(&serialize_note/1)
     json(conn, %{data: data})
+  end
+
+  def compute(conn, %{"id" => result_id}) do
+    with :ok <- authorize_write(conn),
+         {:ok, result} <- Gradings.compute_result_decision(result_id) do
+      json(conn, %{data: serialize_result(result)})
+    else
+      {:error, :forbidden} ->
+        conn |> put_status(:forbidden) |> json(%{error: "forbidden"})
+
+      {:error, reason} when is_atom(reason) ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: Atom.to_string(reason)})
+
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "invalid_grading_compute_payload", details: changeset_errors(changeset)})
+    end
+  end
+
+  def finalize(conn, %{"id" => result_id}) do
+    with :ok <- authorize_write(conn),
+         {:ok, result} <- Gradings.finalize_result(result_id, conn.assigns[:current_role]) do
+      json(conn, %{data: serialize_result(result)})
+    else
+      {:error, :forbidden} ->
+        conn |> put_status(:forbidden) |> json(%{error: "forbidden"})
+
+      {:error, reason} when is_atom(reason) ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: Atom.to_string(reason)})
+
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "invalid_grading_finalize_payload", details: changeset_errors(changeset)})
+    end
+  end
+
+  def decision_snapshot(conn, %{"id" => result_id}) do
+    case Gradings.result_decision_snapshot(result_id) do
+      {:ok, snapshot} ->
+        json(conn, %{data: snapshot})
+
+      {:error, :decision_not_computed} ->
+        conn |> put_status(:not_found) |> json(%{error: "decision_not_computed"})
+
+      {:error, :grading_result_not_found} ->
+        conn |> put_status(:not_found) |> json(%{error: "grading_result_not_found"})
+    end
   end
 
   defp serialize_result(%GradingResult{} = result) do
@@ -82,7 +137,10 @@ defmodule ZanshinApiWeb.GradingResultController do
       written_result: to_string(result.written_result),
       carryover_until: result.carryover_until,
       declared_stance:
-        if(result.declared_stance, do: to_string(result.declared_stance), else: nil)
+        if(result.declared_stance, do: to_string(result.declared_stance), else: nil),
+      computed_at: result.computed_at,
+      finalized_at: result.finalized_at,
+      locked_at: result.locked_at
     }
   end
 

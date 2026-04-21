@@ -20,6 +20,10 @@ defmodule ZanshinApi.Grading.GradingResult do
     field :written_result, Ecto.Enum, values: @part_results, default: :not_attempted
     field :carryover_until, :date
     field :declared_stance, Ecto.Enum, values: @stances
+    field :decision_snapshot, :map
+    field :computed_at, :utc_datetime
+    field :finalized_at, :utc_datetime
+    field :locked_at, :utc_datetime
 
     belongs_to :session, ZanshinApi.Grading.GradingSession, foreign_key: :grading_session_id
     belongs_to :competitor, ZanshinApi.Competitions.Competitor
@@ -43,6 +47,10 @@ defmodule ZanshinApi.Grading.GradingResult do
       :written_result,
       :carryover_until,
       :declared_stance,
+      :decision_snapshot,
+      :computed_at,
+      :finalized_at,
+      :locked_at,
       :grading_session_id,
       :competitor_id
     ])

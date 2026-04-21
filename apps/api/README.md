@@ -26,6 +26,8 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - `POST /api/v1/gradings/sessions/:id/panel_assignments`
   - `POST /api/v1/gradings/results/:id/votes`
   - `POST /api/v1/gradings/results/:id/notes`
+  - `POST /api/v1/gradings/results/:id/compute`
+  - `POST /api/v1/gradings/results/:id/finalize`
   - `POST /api/v1/competitors`
   - `POST /api/v1/teams`
   - `POST /api/v1/teams/:id/members`
@@ -44,6 +46,7 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - `GET /api/v1/gradings/sessions/:id/panel_assignments`
   - `GET /api/v1/gradings/results/:id/votes`
   - `GET /api/v1/gradings/results/:id/notes`
+  - `GET /api/v1/gradings/results/:id/decision_snapshot`
   - `GET /api/v1/teams?division_id=<DIVISION_ID>`
   - `GET /api/v1/teams/:id/members`
   - `GET /api/v1/team_matches?division_id=<DIVISION_ID>`
@@ -88,6 +91,8 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - optional written requirement by session
   - carryover window support for non-finalized sessions
   - examiner registry, panel assignments, pass/fail votes, and free-form examiner notes
+  - decision engine computes per-part outcomes from votes using quorum and stores decision snapshots
+  - finalize/lock flow prevents post-finalization vote and note changes
 - Real tournament/division/competitor entities with DB-level FK constraints on matches
 - Persistent audit trail in `match_events` table
 - Initial tests for:

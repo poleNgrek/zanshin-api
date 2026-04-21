@@ -29,6 +29,7 @@ defmodule ZanshinApiWeb.Router do
     get "/gradings/sessions/:id/panel_assignments", GradingExaminerController, :panel
     get "/gradings/results/:id/votes", GradingResultController, :votes
     get "/gradings/results/:id/notes", GradingResultController, :notes
+    get "/gradings/results/:id/decision_snapshot", GradingResultController, :decision_snapshot
     get "/matches", MatchController, :index
     get "/matches/:id", MatchController, :show
     get "/matches/:id/score", MatchScoreController, :index
@@ -55,6 +56,8 @@ defmodule ZanshinApiWeb.Router do
     post "/gradings/sessions/:id/panel_assignments", GradingExaminerController, :assign
     post "/gradings/results/:id/votes", GradingResultController, :create_vote
     post "/gradings/results/:id/notes", GradingResultController, :create_note
+    post "/gradings/results/:id/compute", GradingResultController, :compute
+    post "/gradings/results/:id/finalize", GradingResultController, :finalize
     post "/matches", MatchController, :create
     post "/matches/:id/transition", MatchStateController, :transition
     post "/matches/:id/score", MatchScoreController, :create

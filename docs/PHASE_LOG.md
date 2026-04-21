@@ -292,6 +292,25 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - `mix format`
     - `MIX_ENV=test mix test` (55 tests, 0 failures)
 
+### Increment 2.11 - Grading Decision Engine and Finalize/Lock Flow
+
+- **Status:** `in_progress`
+- **Goal:** compute grading outcomes from examiner votes and enforce finalization locks for result integrity.
+- **Done in workspace:**
+  - Added grading decision fields:
+    - session-level `required_pass_votes` override
+    - result-level `decision_snapshot`, `computed_at`, `finalized_at`, `locked_at`
+  - Added decision engine in `Gradings` context:
+    - computes per-part outcomes (`jitsugi`, `kata`, `written`) from vote counts and quorum
+    - respects optional written requirement and carryover expiry
+    - stores a decision snapshot for audit/read APIs
+  - Added finalize/lock flow:
+    - `POST /api/v1/gradings/results/:id/compute`
+    - `POST /api/v1/gradings/results/:id/finalize`
+    - `GET /api/v1/gradings/results/:id/decision_snapshot`
+    - vote/note creation now blocked once result is locked
+  - Added context and controller tests for compute/finalize/lock behavior.
+
 ---
 
 ## Phase 3 - Frontend Foundation

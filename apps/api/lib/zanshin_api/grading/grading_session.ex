@@ -13,6 +13,7 @@ defmodule ZanshinApi.Grading.GradingSession do
     field :written_required, :boolean, default: true
     field :kata_carryover_months, :integer, default: 12
     field :written_carryover_months, :integer, default: 12
+    field :required_pass_votes, :integer
 
     belongs_to :tournament, ZanshinApi.Competitions.Tournament
     has_many :results, ZanshinApi.Grading.GradingResult
@@ -29,11 +30,13 @@ defmodule ZanshinApi.Grading.GradingSession do
       :tournament_id,
       :written_required,
       :kata_carryover_months,
-      :written_carryover_months
+      :written_carryover_months,
+      :required_pass_votes
     ])
     |> validate_required([:name, :tournament_id])
     |> validate_number(:kata_carryover_months, greater_than_or_equal_to: 0)
     |> validate_number(:written_carryover_months, greater_than_or_equal_to: 0)
+    |> validate_number(:required_pass_votes, greater_than: 0)
     |> foreign_key_constraint(:tournament_id)
   end
 end

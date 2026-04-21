@@ -75,5 +75,31 @@ defmodule ZanshinApiWeb.GradingControllerTest do
       })
 
     assert %{"data" => %{"part" => "kata"}} = json_response(conn, 201)
+
+    conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/results/#{result_id}/compute", %{})
+
+    assert %{"data" => %{"final_result" => "pass"}} = json_response(conn, 200)
+
+    conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/results/#{result_id}/finalize", %{})
+
+    assert %{"data" => %{"locked_at" => locked_at}} = json_response(conn, 200)
+    assert is_binary(locked_at)
+
+    conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/results/#{result_id}/notes", %{
+        "examiner_id" => examiner_id,
+        "part" => "kata",
+        "note" => "Late note should fail due lock."
+      })
+
+    assert %{"error" => "grading_result_locked"} = json_response(conn, 422)
   end
 end

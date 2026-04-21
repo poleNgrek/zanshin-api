@@ -34,7 +34,8 @@ defmodule ZanshinApiWeb.GradingSessionController do
       held_on: session.held_on,
       written_required: session.written_required,
       kata_carryover_months: session.kata_carryover_months,
-      written_carryover_months: session.written_carryover_months
+      written_carryover_months: session.written_carryover_months,
+      required_pass_votes: session.required_pass_votes
     }
   end
 
