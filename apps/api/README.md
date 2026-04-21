@@ -11,6 +11,7 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - `GET /api/v1/matches/:id`
   - `POST /api/v1/matches/:id/transition`
 - Match lifecycle state machine: `ZanshinApi.Matches.StateMachine`
+- JWT auth baseline with Bearer token verification
 - Role-aware transition policy (`admin`, `timekeeper`, `shinpan`)
 - Persistent audit trail in `match_events` table
 - Initial tests for:
@@ -46,16 +47,29 @@ mix test
 mix phx.server
 ```
 
+## CI
+
+GitHub Actions CI runs from `.github/workflows/ci.yml` and currently validates:
+
+- `mix format --check-formatted`
+- `mix test` (with PostgreSQL service in the workflow job)
+
 Then test:
 
 - Health check: `curl http://localhost:4000/api/v1/health`
 - Create match:
-  - `curl -X POST http://localhost:4000/api/v1/matches -H 'content-type: application/json' -d '{"tournament_id":"t1","division_id":"d1","aka_competitor_id":"c1","shiro_competitor_id":"c2"}'`
+  - `curl -X POST http://localhost:4000/api/v1/matches -H 'content-type: application/json' -H 'authorization: Bearer <JWT>' -d '{"tournament_id":"t1","division_id":"d1","aka_competitor_id":"c1","shiro_competitor_id":"c2"}'`
 - Transition check:
-  - `curl -X POST http://localhost:4000/api/v1/matches/<MATCH_ID>/transition -H 'content-type: application/json' -H 'x-actor-role: admin' -d '{"event":"prepare"}'`
+  - `curl -X POST http://localhost:4000/api/v1/matches/<MATCH_ID>/transition -H 'content-type: application/json' -H 'authorization: Bearer <JWT>' -d '{"event":"prepare"}'`
+
+Generate a local test token in `iex -S mix`:
+
+```elixir
+ZanshinApi.Auth.JWT.generate_token("local-user-1", "admin")
+```
 
 ## Next Phase 2 steps
 
 - Add tournament/division/competitor schemas and foreign-key constraints.
-- Introduce auth baseline (JWT/OAuth-compatible) replacing header-based role simulation.
+- Replace local JWT baseline with full OAuth/JWKS integration.
 - Add scoring events (`ippon`, `hansoku`) and tighter role-state guards.

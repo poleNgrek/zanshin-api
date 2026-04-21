@@ -134,9 +134,18 @@ Planned commands:
 - WordPress plugin tests (Phase 5+):
   - `cd apps/wordpress-plugin && <test-command-to-be-defined>`
 
+## CI/CD Status
+
+- CI is now enabled via GitHub Actions in `.github/workflows/ci.yml`.
+- Current CI scope:
+  - Phoenix API format check (`mix format --check-formatted`)
+  - Phoenix API test suite (`mix test`) with PostgreSQL service
+- CD is intentionally deferred until later hardening/release phases, once deployment targets and secrets strategy are finalized.
+
 ## Phase 2 Status
 
 - Phoenix-oriented API skeleton added in `apps/api`.
+- JWT auth baseline added for protected mutating API endpoints.
 - First API endpoints:
   - `GET /api/v1/health`
   - `POST /api/v1/matches`

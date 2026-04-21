@@ -3,6 +3,10 @@ import Config
 config :zanshin_api,
   ecto_repos: [ZanshinApi.Repo]
 
+config :zanshin_api, ZanshinApi.Auth.JWT,
+  secret: System.get_env("JWT_SECRET") || "zanshin-dev-jwt-secret-change-me",
+  issuer: "zanshin_api"
+
 config :zanshin_api, ZanshinApiWeb.Endpoint,
   url: [host: "localhost"],
   render_errors: [

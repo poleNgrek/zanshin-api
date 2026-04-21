@@ -13,8 +13,13 @@ defmodule ZanshinApi.Matches.MatchEvent do
 
   schema "match_events" do
     field :event, Ecto.Enum, values: @events
-    field :from_state, Ecto.Enum, values: [:scheduled, :ready, :ongoing, :paused, :completed, :verified]
-    field :to_state, Ecto.Enum, values: [:scheduled, :ready, :ongoing, :paused, :completed, :verified]
+
+    field :from_state, Ecto.Enum,
+      values: [:scheduled, :ready, :ongoing, :paused, :completed, :verified]
+
+    field :to_state, Ecto.Enum,
+      values: [:scheduled, :ready, :ongoing, :paused, :completed, :verified]
+
     field :actor_role, Ecto.Enum, values: @roles
 
     belongs_to :match, ZanshinApi.Matches.Match

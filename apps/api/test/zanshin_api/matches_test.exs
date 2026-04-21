@@ -28,7 +28,13 @@ defmodule ZanshinApi.MatchesTest do
       assert updated.state == :ready
 
       event = Repo.one!(Ecto.assoc(updated, :match_events))
-      assert %MatchEvent{event: :prepare, from_state: :scheduled, to_state: :ready, actor_role: :admin} = event
+
+      assert %MatchEvent{
+               event: :prepare,
+               from_state: :scheduled,
+               to_state: :ready,
+               actor_role: :admin
+             } = event
     end
 
     test "rejects unauthorized role action" do

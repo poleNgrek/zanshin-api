@@ -13,11 +13,17 @@ defmodule ZanshinApiWeb.MatchController do
   end
 
   def create(conn, params) do
-    with {:ok, match} <- Matches.create_match(params) do
+    with :ok <- authorize_create(conn),
+         {:ok, match} <- Matches.create_match(params) do
       conn
       |> put_status(:created)
       |> json(%{data: serialize_match(match)})
     else
+      {:error, :forbidden} ->
+        conn
+        |> put_status(:forbidden)
+        |> json(%{error: "forbidden"})
+
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
@@ -47,6 +53,13 @@ defmodule ZanshinApiWeb.MatchController do
       state: to_string(match.state),
       inserted_at: match.inserted_at
     }
+  end
+
+  defp authorize_create(conn) do
+    case conn.assigns[:current_role] do
+      role when role in [:admin, :timekeeper] -> :ok
+      _ -> {:error, :forbidden}
+    end
   end
 
   defp changeset_errors(changeset) do

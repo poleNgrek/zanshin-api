@@ -55,7 +55,8 @@ defmodule ZanshinApi.Matches.StateMachine do
   end
 
   @spec transition(match_state(), transition_event()) ::
-          {:ok, match_state()} | {:error, {:invalid_transition, match_state(), transition_event()}}
+          {:ok, match_state()}
+          | {:error, {:invalid_transition, match_state(), transition_event()}}
   def transition(current_state, event) do
     case get_in(@transitions, [current_state, event]) do
       nil -> {:error, {:invalid_transition, current_state, event}}

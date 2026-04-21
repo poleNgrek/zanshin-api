@@ -6,7 +6,7 @@ defmodule ZanshinApiWeb.MatchStateController do
 
   def transition(conn, %{"id" => id, "event" => event}) do
     with {:ok, event_atom} <- StateMachine.parse_event(event),
-         {:ok, role} <- parse_actor_role(conn),
+         {:ok, role} <- current_actor_role(conn),
          {:ok, match} <- Matches.transition_match(id, event_atom, role) do
       json(conn, %{data: %{id: match.id, new_state: to_string(match.state)}})
     else
@@ -15,10 +15,10 @@ defmodule ZanshinApiWeb.MatchStateController do
         |> put_status(:unprocessable_entity)
         |> json(%{error: "invalid_event"})
 
-      {:error, :invalid_actor_role} ->
+      {:error, :missing_actor_role} ->
         conn
-        |> put_status(:bad_request)
-        |> json(%{error: "invalid_or_missing_actor_role"})
+        |> put_status(:unauthorized)
+        |> json(%{error: "unauthorized"})
 
       {:error, :forbidden_transition_for_role} ->
         conn
@@ -48,17 +48,12 @@ defmodule ZanshinApiWeb.MatchStateController do
     |> json(%{error: "match_id_and_event_are_required"})
   end
 
-  defp parse_actor_role(conn) do
-    case get_req_header(conn, "x-actor-role") do
-      [role] -> normalize_actor_role(role)
-      _ -> {:error, :invalid_actor_role}
+  defp current_actor_role(conn) do
+    case conn.assigns[:current_role] do
+      nil -> {:error, :missing_actor_role}
+      role -> {:ok, role}
     end
   end
-
-  defp normalize_actor_role("admin"), do: {:ok, :admin}
-  defp normalize_actor_role("timekeeper"), do: {:ok, :timekeeper}
-  defp normalize_actor_role("shinpan"), do: {:ok, :shinpan}
-  defp normalize_actor_role(_), do: {:error, :invalid_actor_role}
 
   defp changeset_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
