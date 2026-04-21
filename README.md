@@ -76,6 +76,64 @@ docker compose down
 6. **Phase 5** - WordPress plugin integration
 7. **Phase 6** - Hardening, CI/CD, release readiness
 
+## Testing Strategy by Phase
+
+- **Phase 2 (API/Phoenix):**
+  - Unit and integration tests with `mix test`
+  - State machine transition tests for match lifecycle
+  - Auth/authorization tests by role (admin/shinpan/spectator)
+- **Phase 3 (Frontend/React):**
+  - Unit/component tests with Vitest + Testing Library
+  - End-to-end tests with Playwright for critical admin workflows
+- **Phase 4 (Analytics):**
+  - Projection and query correctness tests
+  - Replay/resilience tests for event pipeline behavior
+- **Phase 5 (WordPress plugin):**
+  - Plugin unit tests and API integration tests
+  - Manual compatibility checks for install/upgrade
+- **Phase 6 (Hardening):**
+  - Full regression suite across API, frontend, analytics, and plugin
+  - Performance and security checks
+
+## How We Will Explain Implementation
+
+This project is intentionally learning-oriented for Elixir/Phoenix. Each phase will include:
+
+- A short architecture note describing what was built and why
+- Comments around non-obvious domain logic (for example, state transitions and event projection rules)
+- Test notes showing what behaviors are covered and how to run/extend those tests
+
+See `docs/IMPLEMENTATION_GUIDE.md` for the detailed approach.
+
+## How to Review the App
+
+1. Read `docs/PRD.md` to understand product requirements and phase scope.
+2. Review `docs/IMPLEMENTATION_GUIDE.md` for architecture and code conventions.
+3. Start local dependencies:
+   - `docker compose up -d postgres neo4j`
+4. In later phases, run API/frontend apps and verify primary flow:
+   - Create tournament
+   - Start/pause/resume/complete match
+   - Record score and verify role constraints
+5. Run automated tests before approving changes.
+
+## How to Run Tests
+
+Current status: bootstrap phase only; phase-specific test suites will be added as services are scaffolded.
+
+Planned commands:
+
+- API tests (Phase 2+):
+  - `cd apps/api && mix test`
+- Frontend unit tests (Phase 3+):
+  - `cd apps/frontend && npm test`
+- Frontend E2E tests with Playwright (Phase 3+):
+  - `cd apps/frontend && npx playwright test`
+- Analytics tests (Phase 4+):
+  - `cd apps/analytics && <test-command-to-be-defined>`
+- WordPress plugin tests (Phase 5+):
+  - `cd apps/wordpress-plugin && <test-command-to-be-defined>`
+
 ## GitHub Push Validation
 
 This repository is configured with remote `origin`:

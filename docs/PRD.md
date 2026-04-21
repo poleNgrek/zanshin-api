@@ -223,27 +223,47 @@ Rules:
 - Phoenix project scaffold
 - Core contexts and domain contracts
 - Initial match lifecycle and auth boundaries
+- Testing:
+  - Unit tests for domain and context logic (`mix test`)
+  - Integration tests for REST endpoints and auth/role checks
+  - Contract tests for match lifecycle state transitions
 
 ### Phase 3 - Frontend Foundation
 
 - React + TypeScript scaffold
 - Admin starter flows
 - API contract integration
+- Testing:
+  - Component tests (Vitest + Testing Library)
+  - End-to-end tests with Playwright for key admin flows
+  - Accessibility smoke checks on critical screens
 
 ### Phase 4 - Analytics Foundation
 
 - Event pipeline
 - Neo4j integration
 - Initial analytics endpoints
+- Testing:
+  - Projection tests from domain events to analytics models
+  - Query correctness tests for initial analytics endpoints
+  - Pipeline resilience tests for delayed/replayed events
 
 ### Phase 5 - WordPress Plugin
 
 - API-consumer plugin scaffolding
 - Initial widgets and live embeds
+- Testing:
+  - Plugin unit tests for rendering and configuration logic
+  - Integration tests against staging API endpoints
+  - Manual install/upgrade compatibility checks in WordPress
 
 ### Phase 6 - Hardening and Release
 
 - Testing, observability, CI/CD, deployment playbooks
+- Testing:
+  - End-to-end regression pack across API + frontend + plugin
+  - Performance baseline checks for live scoring and timer updates
+  - Security checks for auth, permissions, and public/private endpoint separation
 
 ## 14. Success Metrics
 
@@ -252,7 +272,15 @@ Rules:
 - Event history supports reconstruction and audit.
 - Architecture supports future analytics and federation features without core rewrites.
 
-## 15. Acceptance Criteria for Current Execution Cycle
+## 15. Testing and Documentation Requirements
+
+- Every phase must ship with automated tests matching its scope.
+- New business rules must include either unit tests or contract/integration tests before merge.
+- Frontend user flows must be covered by Playwright tests once frontend scaffolding exists.
+- Documentation updates are required in `README.md` (usage/testing) and dedicated docs for non-obvious implementation details.
+- Code comments should explain intent for complex domain logic, not obvious syntax.
+
+## 16. Acceptance Criteria for Current Execution Cycle
 
 1. This PRD is committed in the repository and becomes the requirements baseline.
 2. Repository contains a practical bootstrap layout and Docker baseline.
