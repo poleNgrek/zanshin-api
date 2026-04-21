@@ -119,7 +119,7 @@ See `docs/IMPLEMENTATION_GUIDE.md` for the detailed approach.
 
 ## How to Run Tests
 
-Current status: bootstrap phase only; phase-specific test suites will be added as services are scaffolded.
+Current status: Phase 2 API foundation has started in `apps/api`.
 
 Planned commands:
 
@@ -133,6 +133,15 @@ Planned commands:
   - `cd apps/analytics && <test-command-to-be-defined>`
 - WordPress plugin tests (Phase 5+):
   - `cd apps/wordpress-plugin && <test-command-to-be-defined>`
+
+## Phase 2 Status
+
+- Phoenix-oriented API skeleton added in `apps/api`.
+- First API endpoints:
+  - `GET /api/v1/health`
+  - `POST /api/v1/matches/transition`
+- First automated tests are included in `apps/api/test`.
+- See `apps/api/README.md` for detailed setup and learning notes.
 
 ## GitHub Push Validation
 
