@@ -45,4 +45,29 @@ defmodule ZanshinApi.MatchesTest do
                Matches.transition_match(match.id, :complete, :shinpan)
     end
   end
+
+  describe "record_score_event/4" do
+    test "records ippon for ongoing match by shinpan" do
+      match = match_fixture(%{"state" => "ongoing"})
+
+      assert {:ok, score_event} = Matches.record_score_event(match.id, :ippon, :aka, :shinpan)
+      assert score_event.score_type == :ippon
+      assert score_event.side == :aka
+      assert score_event.actor_role == :shinpan
+    end
+
+    test "rejects scoring when match is not ongoing" do
+      match = match_fixture(%{"state" => "ready"})
+
+      assert {:error, :match_not_ongoing} =
+               Matches.record_score_event(match.id, :hansoku, :shiro, :shinpan)
+    end
+
+    test "rejects forbidden role for scoring" do
+      match = match_fixture(%{"state" => "ongoing"})
+
+      assert {:error, :forbidden_score_for_role} =
+               Matches.record_score_event(match.id, :ippon, :aka, :timekeeper)
+    end
+  end
 end

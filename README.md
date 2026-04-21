@@ -155,6 +155,8 @@ Planned commands:
   - `POST /api/v1/matches`
   - `GET /api/v1/matches/:id`
   - `POST /api/v1/matches/:id/transition`
+  - `POST /api/v1/matches/:id/score`
+  - `GET /api/v1/matches/:id/score`
 - First automated tests are included in `apps/api/test`.
 - See `apps/api/README.md` for detailed setup and learning notes.
 

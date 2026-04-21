@@ -18,6 +18,7 @@ defmodule ZanshinApiWeb.Router do
     get "/competitors", CompetitorController, :index
     get "/matches", MatchController, :index
     get "/matches/:id", MatchController, :show
+    get "/matches/:id/score", MatchScoreController, :index
   end
 
   scope "/api/v1", ZanshinApiWeb do
@@ -28,5 +29,6 @@ defmodule ZanshinApiWeb.Router do
     post "/competitors", CompetitorController, :create
     post "/matches", MatchController, :create
     post "/matches/:id/transition", MatchStateController, :transition
+    post "/matches/:id/score", MatchScoreController, :create
   end
 end

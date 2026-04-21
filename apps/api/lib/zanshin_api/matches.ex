@@ -5,10 +5,12 @@ defmodule ZanshinApi.Matches do
 
   import Ecto.Query, warn: false
   alias Ecto.Multi
-  alias ZanshinApi.Matches.{Match, MatchEvent, StateMachine}
+  alias ZanshinApi.Matches.{Match, MatchEvent, ScoreEvent, StateMachine}
   alias ZanshinApi.Repo
 
   @type actor_role :: :admin | :timekeeper | :shinpan
+  @type score_type :: :ippon | :hansoku
+  @type side :: :aka | :shiro
 
   @spec create_match(map()) :: {:ok, Match.t()} | {:error, Ecto.Changeset.t()}
   def create_match(attrs) do
@@ -74,4 +76,44 @@ defmodule ZanshinApi.Matches do
 
   defp normalize_actor_role(role) when role in [:admin, :timekeeper, :shinpan], do: {:ok, role}
   defp normalize_actor_role(_), do: {:error, :invalid_actor_role}
+
+  @spec record_score_event(Ecto.UUID.t(), score_type(), side(), actor_role()) ::
+          {:ok, ScoreEvent.t()} | {:error, atom() | Ecto.Changeset.t()}
+  def record_score_event(match_id, score_type, side, actor_role) do
+    with {:ok, role} <- normalize_actor_role(actor_role),
+         :ok <- authorize_score_role(role),
+         {:ok, normalized_score_type} <- normalize_score_type(score_type),
+         {:ok, normalized_side} <- normalize_side(side),
+         {:ok, match} <- fetch_match(match_id),
+         :ok <- require_ongoing_match(match) do
+      %ScoreEvent{}
+      |> ScoreEvent.changeset(%{
+        match_id: match.id,
+        score_type: normalized_score_type,
+        side: normalized_side,
+        actor_role: role
+      })
+      |> Repo.insert()
+    end
+  end
+
+  @spec list_score_events(Ecto.UUID.t()) :: [ScoreEvent.t()]
+  def list_score_events(match_id) do
+    ScoreEvent
+    |> where([s], s.match_id == ^match_id)
+    |> order_by([s], asc: s.inserted_at)
+    |> Repo.all()
+  end
+
+  defp authorize_score_role(role) when role in [:admin, :shinpan], do: :ok
+  defp authorize_score_role(_), do: {:error, :forbidden_score_for_role}
+
+  defp require_ongoing_match(%Match{state: :ongoing}), do: :ok
+  defp require_ongoing_match(_), do: {:error, :match_not_ongoing}
+
+  defp normalize_score_type(value) when value in [:ippon, :hansoku], do: {:ok, value}
+  defp normalize_score_type(_), do: {:error, :invalid_score_type}
+
+  defp normalize_side(value) when value in [:aka, :shiro], do: {:ok, value}
+  defp normalize_side(_), do: {:error, :invalid_side}
 end

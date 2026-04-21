@@ -17,6 +17,7 @@ defmodule ZanshinApi.Matches.Match do
     belongs_to :shiro_competitor, ZanshinApi.Competitions.Competitor
     field :state, Ecto.Enum, values: @states, default: :scheduled
     has_many :match_events, ZanshinApi.Matches.MatchEvent
+    has_many :score_events, ZanshinApi.Matches.ScoreEvent
 
     timestamps(type: :utc_datetime)
   end

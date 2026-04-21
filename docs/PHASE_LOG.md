@@ -107,9 +107,9 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ### Increment 2.3 - Competition Core Entities and FK Wiring
 
-- **Status:** `in_progress`
+- **Status:** `done`
 - **Goal:** replace placeholder match references with real `Tournament`/`Division`/`Competitor` entities and foreign keys.
-- **Done (workspace):**
+- **Done:**
   - Added `Competitions` context and schemas:
     - `Tournament`
     - `Division`
@@ -122,14 +122,37 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - create/list competitors
   - Updated fixtures and tests to use real entity IDs.
   - Updated docs (`README.md`, `apps/api/README.md`) for new endpoints.
-- **Verification (workspace):**
+- **Verification:**
   - Docker checks passed:
     - `mix format --check-formatted`
     - `MIX_ENV=test mix test` (24 tests, 0 failures)
 - **What went wrong / notes:**
   - One fixture test failed due to tournament name minimum length (`"T1"`); fixed by using valid names.
   - Repeated non-interactive Hex setup required in ephemeral containers.
-- **Outcome:** implemented and validated locally; pending final commit/push decision.
+- **Outcome:** competition and required domain entities are in place with FK-backed match consistency.
+
+### Increment 2.4 - Scoring Events and Match-State Guards
+
+- **Status:** `in_progress`
+- **Goal:** implement `ippon`/`hansoku` scoring flow with role and lifecycle guardrails.
+- **Done (workspace):**
+  - Added `ScoreEvent` model and migration.
+  - Added score recording/listing APIs:
+    - `POST /api/v1/matches/:id/score`
+    - `GET /api/v1/matches/:id/score`
+  - Implemented guards:
+    - allowed roles for scoring: `shinpan`, `admin`
+    - allowed match state: `ongoing`
+    - supported score types: `ippon`, `hansoku`
+    - supported sides: `aka`, `shiro`
+  - Added context and controller tests for valid, forbidden, and invalid state flows.
+- **Verification (workspace):**
+  - Docker checks passed:
+    - `mix format --check-formatted`
+    - `MIX_ENV=test mix test` (31 tests, 0 failures)
+- **What went wrong / notes:**
+  - Initial format check failed for the new score controller; fixed with `mix format`.
+- **Outcome:** scoring flow is implemented and validated locally; awaiting final commit/push.
 
 ---
 

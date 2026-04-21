@@ -10,6 +10,8 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - `POST /api/v1/matches`
   - `GET /api/v1/matches/:id`
   - `POST /api/v1/matches/:id/transition`
+  - `POST /api/v1/matches/:id/score`
+  - `GET /api/v1/matches/:id/score`
 - Competition setup contracts:
   - `POST /api/v1/tournaments`
   - `POST /api/v1/divisions`
@@ -20,6 +22,10 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
 - Match lifecycle state machine: `ZanshinApi.Matches.StateMachine`
 - JWT auth baseline with Bearer token verification
 - Role-aware transition policy (`admin`, `timekeeper`, `shinpan`)
+- Score policy:
+  - score types: `ippon`, `hansoku`
+  - actor roles allowed: `shinpan`, `admin`
+  - allowed only when match state is `ongoing`
 - Real tournament/division/competitor entities with DB-level FK constraints on matches
 - Persistent audit trail in `match_events` table
 - Initial tests for:
