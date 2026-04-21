@@ -52,6 +52,38 @@ Stop services:
 docker compose down
 ```
 
+## Local Dev Scripts
+
+Use helper scripts from repo root:
+
+```bash
+bash scripts/dev_api_local.sh
+bash scripts/dev_frontend.sh
+```
+
+- `dev_api_local.sh` runs backend locally (Elixir on host) and Postgres in Docker.
+- `dev_frontend.sh` runs frontend locally (Bun on host).
+- `dev_api_docker.sh` runs backend inside Docker on `http://localhost:4000`.
+- `dev_frontend_docker.sh` runs frontend inside Docker on `http://localhost:3000`.
+- `dev_all_docker.sh` opens two Terminal tabs and starts full Docker mode.
+- If Bun is missing on host, `dev_frontend.sh` prints Bun install instructions.
+
+### Common Run Variations
+
+```bash
+# Variation A: both local app processes (DB in Docker)
+bash scripts/dev_api_local.sh
+bash scripts/dev_frontend.sh
+
+# Variation B: backend in Docker, frontend local (recommended hybrid)
+bash scripts/dev_api_docker.sh
+bash scripts/dev_frontend.sh
+
+# Variation C: both backend + frontend in Docker
+bash scripts/dev_api_docker.sh
+bash scripts/dev_frontend_docker.sh
+```
+
 ## Environment Defaults
 
 - PostgreSQL

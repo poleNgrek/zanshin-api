@@ -1,0 +1,22 @@
+---
+description: Resume protocol for multi-phase continuation across agents
+alwaysApply: true
+---
+# Continuation and Handoff Rule
+
+- Start every new session by reading `docs/PHASE_LOG.md`, `README.md`, `apps/api/README.md`, and `apps/frontend/README.md`.
+- Identify the latest pushed commit before making changes and continue from the next planned increment.
+- Keep phase scope strict: do not jump ahead unless explicitly requested.
+- Update `docs/PHASE_LOG.md` for each increment with status, done scope, and verification results.
+- Prefer small, phase-scoped commits with clear why-focused messages.
+- Never amend old commits unless explicitly requested.
+- Never force-push.
+- Keep terminals clean: avoid leaving interactive or hanging processes.
+- Run verification before closing an increment and report exact pass/fail outcomes.
+- If verification fails, fix blockers first; do not mark increment done until checks pass.
+- Frontend verification order should be explicit: `install -> typecheck -> lint -> unit tests -> e2e`.
+- Keep unit tests and Playwright E2E isolated; do not run Playwright specs via Bun unit test command.
+- After dependency upgrades, expect compatibility follow-up (TS config, lint/plugin changes, API/type updates) before closing increment.
+- Do not leave strict lint rules disabled without tracking: log rationale and add a dedicated cleanup increment to re-enable.
+- If Bun is unavailable in tool runtime, use a Bun container fallback and report that verification context clearly.
+- Split dependency refresh commits from feature commits unless user explicitly asks to bundle them.

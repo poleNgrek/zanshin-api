@@ -23,5 +23,3 @@ deps/
 # Docker local overrides
 docker-compose.override.yml
 
-# Local Cursor rule customizations
-.cursor/rules/

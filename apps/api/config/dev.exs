@@ -9,7 +9,11 @@ config :zanshin_api, ZanshinApi.Repo,
   pool_size: 10
 
 config :zanshin_api, ZanshinApiWeb.Endpoint,
-  http: [ip: {127, 0, 0, 1}, port: String.to_integer(System.get_env("PORT") || "4000")],
+  http: [
+    ip:
+      if(System.get_env("PHX_DOCKER") == "1", do: {0, 0, 0, 0}, else: {127, 0, 0, 1}),
+    port: String.to_integer(System.get_env("PORT") || "4000")
+  ],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,

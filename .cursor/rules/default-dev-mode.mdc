@@ -1,0 +1,12 @@
+---
+description: Prefer hybrid dev mode by default
+alwaysApply: true
+---
+# Default Dev Mode Rule
+
+- Default workflow is hybrid: backend via Docker script and frontend local script.
+- Unless the user asks otherwise, prefer:
+  - `bash scripts/dev_api_docker.sh`
+  - `bash scripts/dev_frontend.sh`
+- Use full Docker mode (`bash scripts/dev_all_docker.sh` or docker scripts directly) only when explicitly requested or when local Bun tooling is unavailable.
+- Keep docs and script references aligned whenever startup commands change.

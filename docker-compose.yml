@@ -36,6 +36,10 @@ services:
     command: ["sh", "-c", "sleep infinity"]
     environment:
       DB_HOST: postgres
+      PORT: "4000"
+      PHX_DOCKER: "1"
+    ports:
+      - "4000:4000"
     volumes:
       - ./apps/api:/workspace
     depends_on:
@@ -43,11 +47,15 @@ services:
         condition: service_healthy
 
   frontend:
-    image: node:22
+    image: oven/bun:1
     container_name: zanshin-frontend
     profiles: ["dev"]
     working_dir: /workspace
     command: ["sh", "-c", "sleep infinity"]
+    environment:
+      API_BASE_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
     volumes:
       - ./apps/frontend:/workspace
 

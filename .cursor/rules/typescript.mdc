@@ -1,0 +1,14 @@
+---
+description: TypeScript usage standards for frontend and tooling code
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+# TypeScript Rules
+
+- Use strict typing; avoid `any` unless there is a documented, temporary reason.
+- Model API payloads with explicit interfaces or type aliases.
+- Prefer type inference for local variables when clarity is preserved.
+- Validate external/untrusted input at boundaries before using typed internals.
+- Use discriminated unions for stateful UI and async result states when helpful.
+- Keep function signatures small and explicit rather than passing broad objects.
+- Prefer immutable update patterns for state and data transformations.

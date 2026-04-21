@@ -1,0 +1,11 @@
+---
+description: Always prefer and maintain project dev scripts
+alwaysApply: true
+---
+# Dev Script Awareness Rule
+
+- Before suggesting manual command sequences, check `scripts/` for existing helpers.
+- Prefer using and updating `scripts/dev_api_local.sh`, `scripts/dev_frontend.sh`, `scripts/dev_api_docker.sh`, and `scripts/dev_frontend_docker.sh`.
+- Keep both workflows supported when possible: hybrid (`backend in Docker + frontend local`) and full Docker.
+- When behavior changes, update script-related docs in `README.md` and `apps/frontend/README.md` in the same increment.
+- Keep scripts non-interactive and safe for repeated runs.

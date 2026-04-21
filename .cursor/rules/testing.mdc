@@ -1,0 +1,20 @@
+---
+description: Testing requirements across Phoenix API and React frontend
+alwaysApply: true
+---
+# Testing Rules
+
+- Every behavior change must include or update automated tests.
+- API domain rules should be covered with ExUnit unit tests (`mix test`).
+- API contracts and authorization paths should be covered with integration/controller tests.
+- For Phoenix endpoints, test both valid and invalid payloads with clear status assertions.
+- For state-machine logic, include invalid transition tests in addition to happy paths.
+- Prefer `ConnCase`/`DataCase` style organization for maintainable backend tests.
+- Frontend components should be tested with Testing Library-style behavior tests.
+- Critical frontend flows must have Playwright end-to-end coverage.
+- Keep frontend verification order explicit: `install -> typecheck -> lint -> unit tests -> e2e`.
+- Keep unit tests and Playwright E2E isolated; never run Playwright specs via Bun unit test command.
+- After dependency upgrades, run a full verification pass and resolve compatibility issues before closing an increment.
+- Test success, error, and edge states (not just happy paths).
+- Keep tests deterministic; avoid hidden inter-test coupling and timing flakiness.
+- Update test docs/commands in `README.md` when introducing new test suites.

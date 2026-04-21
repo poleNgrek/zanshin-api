@@ -1,0 +1,17 @@
+---
+description: Cross-project conventions for API, frontend, docs, and workflow
+alwaysApply: true
+---
+# General Project Rules
+
+- Follow the PRD in `docs/PRD.md` and keep phase scope strict.
+- Keep business rules in domain/context modules, not controllers or UI handlers.
+- In Phoenix, keep controllers thin and delegate validation/logic to contexts.
+- Use Ecto changesets for input validation and normalization at persistence boundaries.
+- Keep API error payloads consistent and explicit for client consumption.
+- Update docs (`README.md` and relevant docs in `docs/`) when behavior changes.
+- Add short comments only for non-obvious intent, constraints, or edge cases.
+- Prefer small, reviewable commits with clear messages focused on why.
+- For backend changes, include explicit role/permission checks for mutating actions.
+- Preserve auditability: changes to match lifecycle or scoring must remain traceable.
+- Keep API contracts stable and versioned under `/api/v1`.

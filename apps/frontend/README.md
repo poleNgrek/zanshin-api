@@ -16,7 +16,23 @@ This folder contains the Remix SPA admin app for Zanshin.
 - API service running at `http://localhost:4000`
 - PostgreSQL running (API dependency)
 
-## Run Locally
+## Run Options
+
+### Option A: Hybrid (backend Docker + frontend local)
+
+1) Start backend in Docker from repository root:
+
+```bash
+bash scripts/dev_api_docker.sh
+```
+
+2) In a second terminal, run frontend locally:
+
+```bash
+bash scripts/dev_frontend.sh
+```
+
+### Option B: Full local app processes (DB in Docker)
 
 1) Start infrastructure and API from repository root:
 
@@ -35,7 +51,16 @@ bun install
 API_BASE_URL=http://localhost:4000 bun run dev
 ```
 
-3) Open:
+### Option C: Full Docker (backend + frontend)
+
+Run in two terminals from repository root:
+
+```bash
+bash scripts/dev_api_docker.sh
+bash scripts/dev_frontend_docker.sh
+```
+
+Open:
 
 - Frontend: `http://localhost:3000`
 - API docs: `http://localhost:4000/api/docs`

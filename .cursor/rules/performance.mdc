@@ -1,0 +1,15 @@
+---
+description: Performance guardrails for API and frontend implementation
+alwaysApply: true
+---
+# Performance Rules
+
+- Avoid unnecessary re-renders in React; memoize only when profiling indicates value.
+- Use code splitting/lazy loading for route-level and heavy UI modules.
+- Paginate or virtualize large lists instead of rendering all items at once.
+- Keep API responses focused; avoid over-fetching payloads.
+- Prefer efficient database access patterns and avoid N+1 query behavior in API code.
+- In Phoenix/Ecto code, preload associations intentionally and avoid unnecessary query chains.
+- Use pagination or bounded queries for list endpoints by default.
+- Add lightweight instrumentation for critical paths (match updates, live scoring, timers).
+- Treat performance regressions in core tournament flows as release blockers.
