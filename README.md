@@ -126,9 +126,9 @@ Planned commands:
 - API tests (Phase 2+):
   - `cd apps/api && mix test`
 - Frontend unit tests (Phase 3+):
-  - `cd apps/frontend && npm test`
+  - `cd apps/frontend && bun test`
 - Frontend E2E tests with Playwright (Phase 3+):
-  - `cd apps/frontend && npx playwright test`
+  - `cd apps/frontend && bun run test:e2e`
 - Analytics tests (Phase 4+):
   - `cd apps/analytics && <test-command-to-be-defined>`
 - WordPress plugin tests (Phase 5+):

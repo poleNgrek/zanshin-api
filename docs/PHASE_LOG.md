@@ -338,12 +338,27 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ## Phase 3 - Frontend Foundation
 
-- **Status:** `planned`
+- **Status:** `in_progress`
 - **Goal:** scaffold React + TypeScript frontend with API integration and Playwright baseline.
-- **Planned increments:**
-  - app scaffold + routing/state baseline
-  - tournament/match admin starter flows
-  - Playwright smoke + critical path tests
+
+### Increment 3.0 - Frontend Scaffold (Bun + Remix SPA + TS + MUI + Zod)
+
+- **Status:** `in_progress`
+- **Goal:** establish frontend runtime, UI framework, validation layer, and testing baseline.
+- **Done in workspace:**
+  - Scaffolded `apps/frontend` with Bun-managed Remix SPA + TypeScript project files.
+  - Added MUI theme + shared app shell/navigation.
+  - Added Zod-based API client and starter schemas.
+  - Added starter routes:
+    - dashboard
+    - tournaments list/create flow
+    - grading results list + compute/finalize actions scaffold
+  - Added ESLint configuration and scripts.
+  - Added Bun unit tests (`bun test`) for schemas and API client.
+  - Added Playwright config and smoke test.
+- **Verification:**
+  - API regression suite remains green after integration work (`58 tests, 0 failures`).
+  - Frontend Bun verification pending on local machine because Bun runtime is not available in this tool environment.
 
 ---
 

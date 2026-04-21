@@ -155,8 +155,7 @@ Auth modes:
 - Default: OAuth/JWKS validation (`AUTH_MODE=oauth_jwks`)
 - Optional local fallback for development: `AUTH_MODE=legacy_hs256`
 
-## Next Phase 2 steps
+## Next steps
 
-- Add team-result computation once team-vs-team match entities and representative match flow are modeled.
-- Add tournament import endpoint compatible with export snapshot (`POST /api/v1/tournaments/import`).
-- Add snapshot version migration tools for long-term analytics compatibility.
+- Start Phase 3 frontend foundation in `apps/frontend` with Bun + Remix + TypeScript + MUI.
+- Integrate Zod-backed API client and Playwright smoke tests.
