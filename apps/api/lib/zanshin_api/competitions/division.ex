@@ -13,6 +13,7 @@ defmodule ZanshinApi.Competitions.Division do
     field :format, Ecto.Enum, values: @formats
 
     belongs_to :tournament, ZanshinApi.Competitions.Tournament
+    has_one :rules, ZanshinApi.Competitions.DivisionRule
 
     timestamps(type: :utc_datetime)
   end

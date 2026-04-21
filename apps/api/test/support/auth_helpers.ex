@@ -1,9 +1,9 @@
 defmodule ZanshinApi.AuthHelpers do
   @moduledoc false
 
-  alias ZanshinApi.Auth.JWT
+  alias ZanshinApi.TestOAuth
 
   def bearer_token_for(role, subject \\ "test-user-1") when is_binary(role) do
-    "Bearer " <> JWT.generate_token(subject, role)
+    "Bearer " <> TestOAuth.sign_token(role, subject)
   end
 end

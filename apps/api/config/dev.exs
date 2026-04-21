@@ -18,6 +18,14 @@ config :zanshin_api, ZanshinApiWeb.Endpoint,
 
 config :zanshin_api, dev_routes: true
 
+auth_mode =
+  case System.get_env("AUTH_MODE") do
+    "legacy_hs256" -> :legacy_hs256
+    _ -> :oauth_jwks
+  end
+
+config :zanshin_api, ZanshinApi.Auth, mode: auth_mode
+
 config :logger, :default_formatter, format: "[$level] $message\n"
 
 config :phoenix, :stacktrace_depth, 20

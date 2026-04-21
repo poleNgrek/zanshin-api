@@ -5,12 +5,14 @@ defmodule ZanshinApi.Matches do
 
   import Ecto.Query, warn: false
   alias Ecto.Multi
+  alias ZanshinApi.Competitions
   alias ZanshinApi.Matches.{Match, MatchEvent, ScoreEvent, StateMachine}
   alias ZanshinApi.Repo
 
   @type actor_role :: :admin | :timekeeper | :shinpan
   @type score_type :: :ippon | :hansoku
   @type side :: :aka | :shiro
+  @type target :: :men | :kote | :do | :tsuki
 
   @spec create_match(map()) :: {:ok, Match.t()} | {:error, Ecto.Changeset.t()}
   def create_match(attrs) do
@@ -77,20 +79,23 @@ defmodule ZanshinApi.Matches do
   defp normalize_actor_role(role) when role in [:admin, :timekeeper, :shinpan], do: {:ok, role}
   defp normalize_actor_role(_), do: {:error, :invalid_actor_role}
 
-  @spec record_score_event(Ecto.UUID.t(), score_type(), side(), actor_role()) ::
+  @spec record_score_event(Ecto.UUID.t(), score_type(), side(), target() | nil, actor_role()) ::
           {:ok, ScoreEvent.t()} | {:error, atom() | Ecto.Changeset.t()}
-  def record_score_event(match_id, score_type, side, actor_role) do
+  def record_score_event(match_id, score_type, side, target, actor_role) do
     with {:ok, role} <- normalize_actor_role(actor_role),
          :ok <- authorize_score_role(role),
          {:ok, normalized_score_type} <- normalize_score_type(score_type),
          {:ok, normalized_side} <- normalize_side(side),
+         {:ok, normalized_target} <- normalize_target(target),
          {:ok, match} <- fetch_match(match_id),
-         :ok <- require_ongoing_match(match) do
+         :ok <- require_ongoing_match(match),
+         :ok <- validate_target_rules(match, normalized_score_type, normalized_target) do
       %ScoreEvent{}
       |> ScoreEvent.changeset(%{
         match_id: match.id,
         score_type: normalized_score_type,
         side: normalized_side,
+        target: normalized_target,
         actor_role: role
       })
       |> Repo.insert()
@@ -116,4 +121,30 @@ defmodule ZanshinApi.Matches do
 
   defp normalize_side(value) when value in [:aka, :shiro], do: {:ok, value}
   defp normalize_side(_), do: {:error, :invalid_side}
+
+  defp normalize_target(nil), do: {:ok, nil}
+  defp normalize_target(value) when value in [:men, :kote, :do, :tsuki], do: {:ok, value}
+  defp normalize_target(_), do: {:error, :invalid_target}
+
+  defp validate_target_rules(_match, :hansoku, _target), do: :ok
+
+  defp validate_target_rules(match, :ippon, target) do
+    with :ok <- require_target_for_ippon(target),
+         :ok <- ensure_tsuki_allowed(match, target) do
+      :ok
+    end
+  end
+
+  defp require_target_for_ippon(nil), do: {:error, :invalid_target}
+  defp require_target_for_ippon(_), do: :ok
+
+  defp ensure_tsuki_allowed(_match, target) when target != :tsuki, do: :ok
+
+  defp ensure_tsuki_allowed(%Match{division_id: division_id}, :tsuki) do
+    case Competitions.get_division_rules(division_id) do
+      nil -> :ok
+      %{allow_tsuki: true} -> :ok
+      %{allow_tsuki: false} -> {:error, :tsuki_not_allowed}
+    end
+  end
 end

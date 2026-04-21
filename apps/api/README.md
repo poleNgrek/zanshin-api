@@ -15,17 +15,33 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
 - Competition setup contracts:
   - `POST /api/v1/tournaments`
   - `POST /api/v1/divisions`
+  - `PUT /api/v1/divisions/:id/rules`
   - `POST /api/v1/competitors`
+  - `POST /api/v1/teams`
+  - `POST /api/v1/teams/:id/members`
   - `GET /api/v1/tournaments`
   - `GET /api/v1/divisions?tournament_id=<TOURNAMENT_ID>`
   - `GET /api/v1/competitors`
+  - `GET /api/v1/divisions/:id/rules`
+  - `GET /api/v1/teams?division_id=<DIVISION_ID>`
+  - `GET /api/v1/teams/:id/members`
 - Match lifecycle state machine: `ZanshinApi.Matches.StateMachine`
-- JWT auth baseline with Bearer token verification
+- OAuth/JWKS auth baseline with Bearer token verification
 - Role-aware transition policy (`admin`, `timekeeper`, `shinpan`)
 - Score policy:
   - score types: `ippon`, `hansoku`
+  - targets: `men`, `kote`, `do`, `tsuki` (target required for `ippon`)
   - actor roles allowed: `shinpan`, `admin`
   - allowed only when match state is `ongoing`
+  - `tsuki` can be restricted per division rules (for example children categories)
+- Division rules support:
+  - category type (`women`, `men`, `mixed`, `open`)
+  - age group (`children`, `youth`, `adult`, `masters`, `open`)
+  - age range (`min_age`, `max_age`)
+  - match duration, enchō mode, and team size
+- Team support:
+  - team creation per division
+  - lineup positions: `senpo`, `jiho`, `chuken`, `fukusho`, `taisho`
 - Real tournament/division/competitor entities with DB-level FK constraints on matches
 - Persistent audit trail in `match_events` table
 - Initial tests for:
@@ -72,18 +88,19 @@ Then test:
 
 - Health check: `curl http://localhost:4000/api/v1/health`
 - Create match:
-  - `curl -X POST http://localhost:4000/api/v1/matches -H 'content-type: application/json' -H 'authorization: Bearer <JWT>' -d '{"tournament_id":"t1","division_id":"d1","aka_competitor_id":"c1","shiro_competitor_id":"c2"}'`
+  - `curl -X POST http://localhost:4000/api/v1/matches -H 'content-type: application/json' -H 'authorization: Bearer <TOKEN>' -d '{"tournament_id":"t1","division_id":"d1","aka_competitor_id":"c1","shiro_competitor_id":"c2"}'`
 - Transition check:
-  - `curl -X POST http://localhost:4000/api/v1/matches/<MATCH_ID>/transition -H 'content-type: application/json' -H 'authorization: Bearer <JWT>' -d '{"event":"prepare"}'`
+  - `curl -X POST http://localhost:4000/api/v1/matches/<MATCH_ID>/transition -H 'content-type: application/json' -H 'authorization: Bearer <TOKEN>' -d '{"event":"prepare"}'`
+- Score check:
+  - `curl -X POST http://localhost:4000/api/v1/matches/<MATCH_ID>/score -H 'content-type: application/json' -H 'authorization: Bearer <TOKEN>' -d '{"score_type":"ippon","side":"aka","target":"men"}'`
 
-Generate a local test token in `iex -S mix`:
+Auth modes:
 
-```elixir
-ZanshinApi.Auth.JWT.generate_token("local-user-1", "admin")
-```
+- Default: OAuth/JWKS validation (`AUTH_MODE=oauth_jwks`)
+- Optional local fallback for development: `AUTH_MODE=legacy_hs256`
 
 ## Next Phase 2 steps
 
 - Add tournament/division/competitor schemas and foreign-key constraints.
-- Replace local JWT baseline with full OAuth/JWKS integration.
-- Add scoring events (`ippon`, `hansoku`) and tighter role-state guards.
+- Add round progression and team match resolution rules (including representative match handling).
+- Extend scoring with explicit target validation policies by age category defaults.

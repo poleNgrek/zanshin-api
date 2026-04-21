@@ -4,7 +4,7 @@ defmodule ZanshinApi.Competitions do
   """
 
   import Ecto.Query, warn: false
-  alias ZanshinApi.Competitions.{Competitor, Division, Tournament}
+  alias ZanshinApi.Competitions.{Competitor, Division, DivisionRule, Tournament}
   alias ZanshinApi.Repo
 
   def create_tournament(attrs) do
@@ -39,4 +39,22 @@ defmodule ZanshinApi.Competitions do
   def list_competitors do
     Competitor |> order_by([c], asc: c.display_name) |> Repo.all()
   end
+
+  def upsert_division_rules(division_id, attrs) do
+    attrs = Map.put(attrs, "division_id", division_id)
+
+    case Repo.get_by(DivisionRule, division_id: division_id) do
+      nil ->
+        %DivisionRule{}
+        |> DivisionRule.changeset(attrs)
+        |> Repo.insert()
+
+      existing ->
+        existing
+        |> DivisionRule.changeset(attrs)
+        |> Repo.update()
+    end
+  end
+
+  def get_division_rules(division_id), do: Repo.get_by(DivisionRule, division_id: division_id)
 end

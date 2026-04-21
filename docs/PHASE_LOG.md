@@ -154,6 +154,37 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
   - Initial format check failed for the new score controller; fixed with `mix format`.
 - **Outcome:** scoring flow is implemented, tested, and pushed.
 
+### Increment 2.5 - Format Rules and OAuth/JWKS Hardening
+
+- **Status:** `done`
+- **Goal:** support key individual/team rules in data model and harden auth with OAuth/JWKS verification.
+- **Done in workspace:**
+  - Added division rules model + API (`PUT/GET /api/v1/divisions/:id/rules`) with:
+    - category type (`women`, `men`, `mixed`, `open`)
+    - age group and age range (`children/youth/adult/masters/open`, `min_age`, `max_age`)
+    - match duration and enchō settings
+    - `allow_tsuki`, `team_size`, representative-match flag
+  - Added team domain + APIs:
+    - `POST /api/v1/teams`
+    - `POST /api/v1/teams/:id/members`
+    - `GET /api/v1/teams?division_id=...`
+    - `GET /api/v1/teams/:id/members`
+    - lineup positions include `senpo`, `jiho`, `chuken`, `fukusho`, `taisho`
+  - Extended `score_events` with strike target (`men`, `kote`, `do`, `tsuki`) and enforced:
+    - target required for `ippon`
+    - `tsuki` rejected when division rule sets `allow_tsuki: false`
+  - Added OAuth/JWKS verification path and switched auth plug to token verifier abstraction.
+    - default mode: `oauth_jwks`
+    - optional dev fallback: `legacy_hs256`
+  - Added/updated tests for new rules/team/auth behavior.
+- **Verification:**
+  - Docker checks passed:
+    - `mix format`
+    - `MIX_ENV=test mix test` (37 tests, 0 failures)
+- **What went wrong / notes:**
+  - Initial OAuth/JWKS implementation failed due JOSE JWK representation mismatch; fixed by accepting JOSE key structs in configured JWKS.
+  - One run was manually interrupted at interactive Hex prompt; rerun with forced non-interactive setup.
+
 ---
 
 ## Phase 3 - Frontend Foundation

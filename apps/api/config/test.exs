@@ -15,4 +15,6 @@ config :zanshin_api, ZanshinApiWeb.Endpoint,
 
 config :logger, level: :warning
 
+config :zanshin_api, ZanshinApi.Auth, mode: :oauth_jwks
+
 config :phoenix, :plug_init_mode, :runtime

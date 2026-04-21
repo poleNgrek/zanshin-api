@@ -6,13 +6,13 @@ defmodule ZanshinApiWeb.Plugs.RequireAuth do
   import Plug.Conn
   import Phoenix.Controller
 
-  alias ZanshinApi.Auth.JWT
+  alias ZanshinApi.Auth.TokenVerifier
 
   def init(opts), do: opts
 
   def call(conn, _opts) do
     with {:ok, token} <- bearer_token(conn),
-         {:ok, actor} <- JWT.verify_token(token) do
+         {:ok, actor} <- TokenVerifier.verify_token(token) do
       conn
       |> assign(:current_actor, actor)
       |> assign(:current_role, actor.role)

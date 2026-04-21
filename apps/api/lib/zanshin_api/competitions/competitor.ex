@@ -10,13 +10,14 @@ defmodule ZanshinApi.Competitions.Competitor do
   schema "competitors" do
     field :display_name, :string
     field :federation_id, :string
+    field :birth_date, :date
 
     timestamps(type: :utc_datetime)
   end
 
   def changeset(competitor, attrs) do
     competitor
-    |> cast(attrs, [:display_name, :federation_id])
+    |> cast(attrs, [:display_name, :federation_id, :birth_date])
     |> validate_required([:display_name])
     |> validate_length(:display_name, min: 2, max: 120)
     |> unique_constraint(:federation_id)

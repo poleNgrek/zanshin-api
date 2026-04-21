@@ -15,7 +15,10 @@ defmodule ZanshinApiWeb.Router do
     get "/health", HealthController, :index
     get "/tournaments", TournamentController, :index
     get "/divisions", DivisionController, :index
+    get "/divisions/:id/rules", DivisionRuleController, :show
     get "/competitors", CompetitorController, :index
+    get "/teams", TeamController, :index
+    get "/teams/:id/members", TeamController, :members
     get "/matches", MatchController, :index
     get "/matches/:id", MatchController, :show
     get "/matches/:id/score", MatchScoreController, :index
@@ -26,7 +29,10 @@ defmodule ZanshinApiWeb.Router do
 
     post "/tournaments", TournamentController, :create
     post "/divisions", DivisionController, :create
+    put "/divisions/:id/rules", DivisionRuleController, :upsert
     post "/competitors", CompetitorController, :create
+    post "/teams", TeamController, :create
+    post "/teams/:id/members", TeamController, :add_member
     post "/matches", MatchController, :create
     post "/matches/:id/transition", MatchStateController, :transition
     post "/matches/:id/score", MatchScoreController, :create

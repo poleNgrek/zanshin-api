@@ -35,4 +35,20 @@ defmodule ZanshinApi.CompetitionsFixtures do
     {:ok, competitor} = Competitions.create_competitor(attrs)
     competitor
   end
+
+  def division_rule_fixture(division, overrides \\ %{}) do
+    attrs =
+      Map.merge(
+        %{
+          "category_type" => "open",
+          "age_group" => "open",
+          "allow_tsuki" => true,
+          "match_duration_seconds" => 300
+        },
+        overrides
+      )
+
+    {:ok, rules} = Competitions.upsert_division_rules(division.id, attrs)
+    rules
+  end
 end

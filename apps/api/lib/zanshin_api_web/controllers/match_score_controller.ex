@@ -4,13 +4,14 @@ defmodule ZanshinApiWeb.MatchScoreController do
   alias ZanshinApi.Matches
   alias ZanshinApi.Matches.ScoreEvent
 
-  def create(conn, %{"id" => match_id, "score_type" => score_type, "side" => side}) do
+  def create(conn, %{"id" => match_id, "score_type" => score_type, "side" => side} = params) do
     with {:ok, role} <- current_actor_role(conn),
          {:ok, score_event} <-
            Matches.record_score_event(
              match_id,
              parse_score_type(score_type),
              parse_side(side),
+             parse_target(Map.get(params, "target")),
              role
            ) do
       conn
@@ -26,11 +27,17 @@ defmodule ZanshinApiWeb.MatchScoreController do
       {:error, :invalid_side} ->
         conn |> put_status(:unprocessable_entity) |> json(%{error: "invalid_side"})
 
+      {:error, :invalid_target} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: "invalid_target"})
+
       {:error, :match_not_found} ->
         conn |> put_status(:not_found) |> json(%{error: "match_not_found"})
 
       {:error, :match_not_ongoing} ->
         conn |> put_status(:unprocessable_entity) |> json(%{error: "match_not_ongoing"})
+
+      {:error, :tsuki_not_allowed} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: "tsuki_not_allowed"})
 
       {:error, :forbidden_score_for_role} ->
         conn |> put_status(:forbidden) |> json(%{error: "forbidden_score_for_role"})
@@ -74,10 +81,18 @@ defmodule ZanshinApiWeb.MatchScoreController do
       match_id: event.match_id,
       score_type: to_string(event.score_type),
       side: to_string(event.side),
+      target: if(event.target, do: to_string(event.target), else: nil),
       actor_role: to_string(event.actor_role),
       inserted_at: event.inserted_at
     }
   end
+
+  defp parse_target(nil), do: nil
+  defp parse_target("men"), do: :men
+  defp parse_target("kote"), do: :kote
+  defp parse_target("do"), do: :do
+  defp parse_target("tsuki"), do: :tsuki
+  defp parse_target(_), do: :invalid
 
   defp changeset_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->

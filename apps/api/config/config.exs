@@ -7,6 +7,15 @@ config :zanshin_api, ZanshinApi.Auth.JWT,
   secret: System.get_env("JWT_SECRET") || "zanshin-dev-jwt-secret-change-me",
   issuer: "zanshin_api"
 
+config :zanshin_api, ZanshinApi.Auth, mode: :oauth_jwks
+
+config :zanshin_api, ZanshinApi.Auth.OAuth,
+  issuer: System.get_env("OAUTH_ISSUER") || "https://auth.example.com",
+  audience: System.get_env("OAUTH_AUDIENCE") || "zanshin-api",
+  jwks_url: System.get_env("OAUTH_JWKS_URL"),
+  jwks: nil,
+  jwks_cache_ttl_seconds: 300
+
 config :zanshin_api, ZanshinApiWeb.Endpoint,
   url: [host: "localhost"],
   render_errors: [
