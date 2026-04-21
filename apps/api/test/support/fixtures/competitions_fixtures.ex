@@ -2,6 +2,7 @@ defmodule ZanshinApi.CompetitionsFixtures do
   @moduledoc false
 
   alias ZanshinApi.Competitions
+  alias ZanshinApi.Teams
 
   def tournament_fixture(overrides \\ %{}) do
     attrs =
@@ -50,5 +51,64 @@ defmodule ZanshinApi.CompetitionsFixtures do
 
     {:ok, rules} = Competitions.upsert_division_rules(division.id, attrs)
     rules
+  end
+
+  def division_stage_fixture(division, overrides \\ %{}) do
+    attrs =
+      Map.merge(
+        %{
+          "division_id" => division.id,
+          "stage_type" => "round_robin",
+          "sequence" => 1
+        },
+        overrides
+      )
+
+    {:ok, stage} = Competitions.create_division_stage(attrs)
+    stage
+  end
+
+  def team_fixture(division, overrides \\ %{}) do
+    attrs =
+      Map.merge(
+        %{"division_id" => division.id, "name" => "Team #{System.unique_integer([:positive])}"},
+        overrides
+      )
+
+    {:ok, team} = Teams.create_team(attrs)
+    team
+  end
+
+  def team_member_fixture(team, competitor, overrides \\ %{}) do
+    attrs =
+      Map.merge(
+        %{"team_id" => team.id, "competitor_id" => competitor.id, "position" => "taisho"},
+        overrides
+      )
+
+    {:ok, member} = Teams.add_team_member(attrs)
+    member
+  end
+
+  def division_medal_result_fixture(division, overrides \\ %{}) do
+    attrs =
+      Map.merge(
+        %{"division_id" => division.id, "place" => 1},
+        overrides
+      )
+
+    {:ok, result} = Competitions.create_division_medal_result(attrs)
+    result
+  end
+
+  def division_special_award_fixture(division, overrides \\ %{}) do
+    attrs =
+      Map.merge(
+        %{"division_id" => division.id, "award_type" => "fighting_spirit"},
+        overrides
+      )
+
+    {:ok, award} = Competitions.create_division_special_award(attrs)
+    award
   end
 end

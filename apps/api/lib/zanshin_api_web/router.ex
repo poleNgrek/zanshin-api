@@ -16,6 +16,9 @@ defmodule ZanshinApiWeb.Router do
     get "/tournaments", TournamentController, :index
     get "/divisions", DivisionController, :index
     get "/divisions/:id/rules", DivisionRuleController, :show
+    get "/division_stages", DivisionStageController, :index
+    get "/division_medal_results", DivisionMedalResultController, :index
+    get "/division_special_awards", DivisionSpecialAwardController, :index
     get "/competitors", CompetitorController, :index
     get "/teams", TeamController, :index
     get "/teams/:id/members", TeamController, :members
@@ -30,6 +33,9 @@ defmodule ZanshinApiWeb.Router do
     post "/tournaments", TournamentController, :create
     post "/divisions", DivisionController, :create
     put "/divisions/:id/rules", DivisionRuleController, :upsert
+    post "/division_stages", DivisionStageController, :create
+    post "/division_medal_results", DivisionMedalResultController, :create
+    post "/division_special_awards", DivisionSpecialAwardController, :create
     post "/competitors", CompetitorController, :create
     post "/teams", TeamController, :create
     post "/teams/:id/members", TeamController, :add_member

@@ -16,6 +16,9 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - `POST /api/v1/tournaments`
   - `POST /api/v1/divisions`
   - `PUT /api/v1/divisions/:id/rules`
+  - `POST /api/v1/division_stages`
+  - `POST /api/v1/division_medal_results`
+  - `POST /api/v1/division_special_awards`
   - `POST /api/v1/competitors`
   - `POST /api/v1/teams`
   - `POST /api/v1/teams/:id/members`
@@ -23,6 +26,9 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - `GET /api/v1/divisions?tournament_id=<TOURNAMENT_ID>`
   - `GET /api/v1/competitors`
   - `GET /api/v1/divisions/:id/rules`
+  - `GET /api/v1/division_stages?division_id=<DIVISION_ID>`
+  - `GET /api/v1/division_medal_results?division_id=<DIVISION_ID>`
+  - `GET /api/v1/division_special_awards?division_id=<DIVISION_ID>`
   - `GET /api/v1/teams?division_id=<DIVISION_ID>`
   - `GET /api/v1/teams/:id/members`
 - Match lifecycle state machine: `ZanshinApi.Matches.StateMachine`
@@ -42,6 +48,13 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
 - Team support:
   - team creation per division
   - lineup positions: `senpo`, `jiho`, `chuken`, `fukusho`, `taisho`
+- Division progression stages:
+  - explicit ordered format plan per division
+  - supported stage types: `round_robin`, `knockout`, `pool_to_knockout`, `king_of_hill`, `points_accumulation`
+- Podium + awards:
+  - medals are modeled by place (`1`, `2`, `3`) and derived medal type (`gold`, `silver`, `bronze`)
+  - third place supports two bronze medal recipients (semifinal losers)
+  - fighting spirit award is modeled for both individual and team divisions
 - Real tournament/division/competitor entities with DB-level FK constraints on matches
 - Persistent audit trail in `match_events` table
 - Initial tests for:

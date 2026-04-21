@@ -185,6 +185,43 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
   - Initial OAuth/JWKS implementation failed due JOSE JWK representation mismatch; fixed by accepting JOSE key structs in configured JWKS.
   - One run was manually interrupted at interactive Hex prompt; rerun with forced non-interactive setup.
 
+### Increment 2.6 - Division Progression Stage Modeling
+
+- **Status:** `done`
+- **Goal:** model explicit progression structure for pool/knockout/hybrid and other format variants.
+- **Done in workspace:**
+  - Added `DivisionStage` schema and migration for ordered stage plans per division.
+  - Added `stage_type` support for:
+    - `round_robin`
+    - `knockout`
+    - `pool_to_knockout`
+    - `king_of_hill`
+    - `points_accumulation`
+  - Added stage APIs:
+    - `POST /api/v1/division_stages` (authenticated write)
+    - `GET /api/v1/division_stages?division_id=...` (public read)
+  - Added context functions, fixtures, and controller/domain tests.
+
+### Increment 2.7 - Podium Results and Fighting Spirit Awards
+
+- **Status:** `done`
+- **Goal:** model official podium outcomes and special awards for individual and team divisions.
+- **Done in workspace:**
+  - Added `DivisionMedalResult` model and API:
+    - `POST /api/v1/division_medal_results`
+    - `GET /api/v1/division_medal_results?division_id=...`
+  - Added `DivisionSpecialAward` model and API:
+    - `POST /api/v1/division_special_awards`
+    - `GET /api/v1/division_special_awards?division_id=...`
+  - Enforced podium rules:
+    - place `1` => gold (max one)
+    - place `2` => silver (max one)
+    - place `3` => bronze (max two; no fourth place model)
+  - Enforced division-specific recipient rules:
+    - team divisions: medals awarded to teams
+    - team divisions: fighting spirit awarded to one competitor linked to a team
+  - Added domain and controller tests covering these constraints.
+
 ---
 
 ## Phase 3 - Frontend Foundation

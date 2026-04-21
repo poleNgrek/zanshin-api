@@ -6,7 +6,7 @@ defmodule ZanshinApi.Competitions.Division do
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
-  @formats [:bracket, :swiss, :round_robin, :team]
+  @formats [:bracket, :swiss, :round_robin, :team, :hybrid]
 
   schema "divisions" do
     field :name, :string
@@ -14,6 +14,7 @@ defmodule ZanshinApi.Competitions.Division do
 
     belongs_to :tournament, ZanshinApi.Competitions.Tournament
     has_one :rules, ZanshinApi.Competitions.DivisionRule
+    has_many :stages, ZanshinApi.Competitions.DivisionStage
 
     timestamps(type: :utc_datetime)
   end
