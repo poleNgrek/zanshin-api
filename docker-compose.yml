@@ -34,6 +34,8 @@ services:
     profiles: ["dev"]
     working_dir: /workspace
     command: ["sh", "-c", "sleep infinity"]
+    environment:
+      DB_HOST: postgres
     volumes:
       - ./apps/api:/workspace
     depends_on:

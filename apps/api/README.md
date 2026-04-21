@@ -1,4 +1,4 @@
-# API Service (Phase 2 Kickoff)
+# API Service (Phase 2 Foundation)
 
 This directory contains the initial Phoenix-oriented API foundation for the Kendo Tournament Platform.
 
@@ -6,13 +6,18 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
 
 - Phoenix app skeleton files (`mix.exs`, `config`, `application`, `endpoint`, `router`)
 - API v1 health endpoint: `GET /api/v1/health`
-- Match lifecycle transition contract:
-  - `POST /api/v1/matches/transition`
-  - Uses `ZanshinApi.Matches.StateMachine`
+- Initial match contracts:
+  - `POST /api/v1/matches`
+  - `GET /api/v1/matches/:id`
+  - `POST /api/v1/matches/:id/transition`
+- Match lifecycle state machine: `ZanshinApi.Matches.StateMachine`
+- Role-aware transition policy (`admin`, `timekeeper`, `shinpan`)
+- Persistent audit trail in `match_events` table
 - Initial tests for:
   - State machine behavior
+  - Match context behavior
   - Health endpoint
-  - Transition endpoint
+  - Match and transition endpoints
 
 ## Why we started with a state machine
 
@@ -21,6 +26,7 @@ The match lifecycle is one of the most critical business rules in your PRD. Impl
 - A stable API contract early
 - A clear place to enforce domain rules
 - Fast automated tests around the most important behavior
+- An event trail that supports future analytics and auditing
 
 ## How to run locally
 
@@ -43,11 +49,13 @@ mix phx.server
 Then test:
 
 - Health check: `curl http://localhost:4000/api/v1/health`
+- Create match:
+  - `curl -X POST http://localhost:4000/api/v1/matches -H 'content-type: application/json' -d '{"tournament_id":"t1","division_id":"d1","aka_competitor_id":"c1","shiro_competitor_id":"c2"}'`
 - Transition check:
-  - `curl -X POST http://localhost:4000/api/v1/matches/transition -H 'content-type: application/json' -d '{"current_state":"scheduled","event":"prepare"}'`
+  - `curl -X POST http://localhost:4000/api/v1/matches/<MATCH_ID>/transition -H 'content-type: application/json' -H 'x-actor-role: admin' -d '{"event":"prepare"}'`
 
 ## Next Phase 2 steps
 
-- Generate Ecto schemas and migrations for tournaments/divisions/matches.
-- Add role-based authorization paths (admin/shinpan/spectator).
-- Persist transition events to database (audit trail).
+- Add tournament/division/competitor schemas and foreign-key constraints.
+- Introduce auth baseline (JWT/OAuth-compatible) replacing header-based role simulation.
+- Add scoring events (`ippon`, `hansoku`) and tighter role-state guards.

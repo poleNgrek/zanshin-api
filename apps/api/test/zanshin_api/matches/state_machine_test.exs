@@ -18,4 +18,16 @@ defmodule ZanshinApi.Matches.StateMachineTest do
                StateMachine.transition(:scheduled, :verify)
     end
   end
+
+  describe "parsers" do
+    test "parse_event/1 accepts known events and rejects unknown event" do
+      assert {:ok, :prepare} = StateMachine.parse_event("prepare")
+      assert {:error, :invalid_event} = StateMachine.parse_event("unknown")
+    end
+
+    test "parse_state/1 accepts known states and rejects unknown state" do
+      assert {:ok, :scheduled} = StateMachine.parse_state("scheduled")
+      assert {:error, :invalid_state} = StateMachine.parse_state("unknown")
+    end
+  end
 end

@@ -139,7 +139,9 @@ Planned commands:
 - Phoenix-oriented API skeleton added in `apps/api`.
 - First API endpoints:
   - `GET /api/v1/health`
-  - `POST /api/v1/matches/transition`
+  - `POST /api/v1/matches`
+  - `GET /api/v1/matches/:id`
+  - `POST /api/v1/matches/:id/transition`
 - First automated tests are included in `apps/api/test`.
 - See `apps/api/README.md` for detailed setup and learning notes.
 

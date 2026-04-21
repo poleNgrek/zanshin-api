@@ -9,6 +9,9 @@ defmodule ZanshinApiWeb.Router do
     pipe_through :api
 
     get "/health", HealthController, :index
-    post "/matches/transition", MatchStateController, :transition
+    get "/matches", MatchController, :index
+    post "/matches", MatchController, :create
+    get "/matches/:id", MatchController, :show
+    post "/matches/:id/transition", MatchStateController, :transition
   end
 end

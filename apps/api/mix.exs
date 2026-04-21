@@ -16,7 +16,7 @@ defmodule ZanshinApi.MixProject do
   def application do
     [
       mod: {ZanshinApi.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :ecto_sql]
     ]
   end
 
@@ -39,8 +39,10 @@ defmodule ZanshinApi.MixProject do
 
   defp aliases do
     [
-      setup: ["deps.get"],
-      test: ["test"]
+      setup: ["deps.get", "ecto.setup"],
+      "ecto.setup": ["ecto.create", "ecto.migrate"],
+      "ecto.reset": ["ecto.drop", "ecto.setup"],
+      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
     ]
   end
 end
