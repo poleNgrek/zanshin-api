@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+
+# Env files
+.env
+.env.*
+
+# Logs
+*.log
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Dependencies
+node_modules/
+
+# Elixir build artifacts
+_build/
+deps/
+
+# Docker local overrides
+docker-compose.override.yml

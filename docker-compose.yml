@@ -1,0 +1,55 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: zanshin-postgres
+    environment:
+      POSTGRES_DB: zanshin_dev
+      POSTGRES_USER: zanshin
+      POSTGRES_PASSWORD: zanshin
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zanshin -d zanshin_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  neo4j:
+    image: neo4j:5
+    container_name: zanshin-neo4j
+    environment:
+      NEO4J_AUTH: neo4j/zanshin_neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+
+  api:
+    image: elixir:1.17
+    container_name: zanshin-api
+    profiles: ["dev"]
+    working_dir: /workspace
+    command: ["sh", "-c", "sleep infinity"]
+    volumes:
+      - ./apps/api:/workspace
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    image: node:22
+    container_name: zanshin-frontend
+    profiles: ["dev"]
+    working_dir: /workspace
+    command: ["sh", "-c", "sleep infinity"]
+    volumes:
+      - ./apps/frontend:/workspace
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  neo4j_logs:
