@@ -79,6 +79,10 @@ Write endpoints require authentication.
 # Development server
 bun run dev
 
+# Production-like server (used by Playwright webServer)
+bun run build
+bun run start
+
 # Type checks
 bun run typecheck
 
@@ -87,6 +91,9 @@ bun run lint
 
 # Unit tests
 bun test
+
+# One-time browser install for Playwright
+bunx playwright install chromium
 
 # E2E tests
 bun run test:e2e

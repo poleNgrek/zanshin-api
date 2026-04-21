@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const idSchema = z.string().uuid();
 
-export const genericEntitySchema = z.record(z.unknown());
+export const genericEntitySchema = z.record(z.string(), z.unknown());
 
 export const dataEnvelopeSchema = <T extends z.ZodTypeAny>(schema: T) =>
   z.object({

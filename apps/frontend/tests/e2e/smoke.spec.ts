@@ -89,7 +89,7 @@ test("tournaments page renders seeded tournaments from API", async ({ page }) =>
   });
 
   await page.goto("/tournaments");
-  await expect(page.getByText("Spring Cup")).toBeVisible();
+  await expect(page.getByText("Spring Cup (d4499989-6f77-4466-9c47-5205156f0ed6)")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Division Setup" })).toBeVisible();
 });
 

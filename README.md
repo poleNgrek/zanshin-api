@@ -160,6 +160,7 @@ Planned commands:
 - Frontend unit tests (Phase 3+):
   - `cd apps/frontend && bun test`
 - Frontend E2E tests with Playwright (Phase 3+):
+  - first run once: `cd apps/frontend && bunx playwright install chromium`
   - `cd apps/frontend && bun run test:e2e`
 - Analytics tests (Phase 4+):
   - `cd apps/analytics && <test-command-to-be-defined>`

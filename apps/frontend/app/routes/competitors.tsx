@@ -1,5 +1,6 @@
 import { Alert, Button, Stack, TextField, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useLoaderData } from "@remix-run/react";
+import { useState } from "react";
 import { z } from "zod";
 
 import { ApiError, fetchWithSchema } from "~/lib/api/client";
@@ -14,8 +15,14 @@ const competitorCreateSchema = z.object({
   federation_id: z.string().trim().optional()
 });
 
+export async function clientLoader() {
+  const response = await fetchWithSchema("/api/v1/competitors", competitorListResponseSchema);
+  return { initialCompetitors: response.data };
+}
+
 export default function CompetitorsRoute() {
-  const [items, setItems] = useState<Competitor[]>([]);
+  const { initialCompetitors } = useLoaderData<typeof clientLoader>();
+  const [items, setItems] = useState<Competitor[]>(initialCompetitors);
   const [displayName, setDisplayName] = useState("");
   const [federationId, setFederationId] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,10 +42,6 @@ export default function CompetitorsRoute() {
       setLoading(false);
     }
   }
-
-  useEffect(() => {
-    void loadCompetitors();
-  }, []);
 
   async function createCompetitor() {
     const parsed = competitorCreateSchema.safeParse({

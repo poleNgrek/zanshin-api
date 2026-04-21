@@ -389,7 +389,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ### Increment 3.3 - Real API UX Hardening and Admin Coverage
 
-- **Status:** `in_progress`
+- **Status:** `done`
 - **Goal:** improve real API usability with stronger client validation, loading/error states, and less ID-driven operator workflow.
 - **Done in workspace:**
   - Upgraded frontend dependencies to latest requested baseline, including:
@@ -403,6 +403,32 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - loading and in-flight action states
     - clearer empty-state and failure feedback
     - persistent token-based auth flow through app shell + API client
+- **Verification:**
+  - Frontend verification in containerized Bun runtime:
+    - `bun install` passed
+    - `bun run typecheck` passed
+    - `bun run lint` passed (warnings only)
+    - `bun run test` passed (6 tests, 0 failures)
+
+### Increment 3.4 - Frontend Lint Strictness Cleanup
+
+- **Status:** `done`
+- **Goal:** restore stricter React Hooks lint guardrails after dependency/tooling upgrades.
+- **Done in workspace:**
+  - Re-enabled strict hooks lint checks in frontend ESLint config:
+    - `react-hooks/set-state-in-effect`
+    - `react-hooks/immutability`
+  - Refactored route/component data-loading flow to satisfy strict hooks rules without suppressions.
+  - Switched Playwright `webServer` to a production-like startup (`bun run build && bun run start`) to avoid dev-server readiness/404 issues during E2E startup.
+  - Fixed frontend `start` script to use the correct Remix server build entry (`build/index.js`).
+  - Updated Playwright smoke assertion to avoid strict-mode ambiguity from duplicated visible text.
+  - Updated frontend README command section with Playwright browser-install prerequisite and production-like start commands.
+- **Verification:**
+  - Frontend verification passed in local Bun runtime:
+    - `bun run typecheck` passed
+    - `bun run lint` passed
+    - `bun run test` passed (6 tests, 0 failures)
+    - `bun run test:e2e` passed (3 tests, 0 failures)
 
 ---
 

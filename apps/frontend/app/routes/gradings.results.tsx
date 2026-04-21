@@ -1,5 +1,6 @@
 import { Alert, Button, MenuItem, Stack, TextField, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useLoaderData } from "@remix-run/react";
+import { useState } from "react";
 import { z } from "zod";
 
 import { ApiError, fetchWithSchema } from "~/lib/api/client";
@@ -18,13 +19,60 @@ import {
 } from "~/lib/schemas/gradingSessions";
 import { tournamentListResponseSchema, type Tournament } from "~/lib/schemas/tournaments";
 
+export async function clientLoader() {
+  const [tournamentResponse, competitorResponse] = await Promise.all([
+    fetchWithSchema("/api/v1/tournaments", tournamentListResponseSchema),
+    fetchWithSchema("/api/v1/competitors", competitorListResponseSchema)
+  ]);
+
+  const initialTournaments = tournamentResponse.data;
+  const initialCompetitors = competitorResponse.data;
+  const initialSelectedTournamentId = initialTournaments[0]?.id ?? "";
+  const initialSelectedCompetitorId = initialCompetitors[0]?.id ?? "";
+
+  if (!initialSelectedTournamentId) {
+    return {
+      initialTournaments,
+      initialSelectedTournamentId,
+      initialSessions: [] as GradingSession[],
+      initialSelectedSessionId: "",
+      initialCompetitors,
+      initialSelectedCompetitorId
+    };
+  }
+
+  const sessionResponse = await fetchWithSchema(
+    `/api/v1/gradings/sessions?tournament_id=${encodeURIComponent(initialSelectedTournamentId)}`,
+    gradingSessionListResponseSchema
+  );
+  const initialSessions = sessionResponse.data;
+
+  return {
+    initialTournaments,
+    initialSelectedTournamentId,
+    initialSessions,
+    initialSelectedSessionId: initialSessions[0]?.id ?? "",
+    initialCompetitors,
+    initialSelectedCompetitorId
+  };
+}
+
 export default function GradingResultsRoute() {
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [selectedTournamentId, setSelectedTournamentId] = useState("");
-  const [sessions, setSessions] = useState<GradingSession[]>([]);
-  const [selectedSessionId, setSelectedSessionId] = useState("");
-  const [competitors, setCompetitors] = useState<Competitor[]>([]);
-  const [selectedCompetitorId, setSelectedCompetitorId] = useState("");
+  const {
+    initialTournaments,
+    initialSelectedTournamentId,
+    initialSessions,
+    initialSelectedSessionId,
+    initialCompetitors,
+    initialSelectedCompetitorId
+  } = useLoaderData<typeof clientLoader>();
+
+  const tournaments: Tournament[] = initialTournaments;
+  const [selectedTournamentId, setSelectedTournamentId] = useState(initialSelectedTournamentId);
+  const [sessions, setSessions] = useState<GradingSession[]>(initialSessions);
+  const [selectedSessionId, setSelectedSessionId] = useState(initialSelectedSessionId);
+  const competitors: Competitor[] = initialCompetitors;
+  const [selectedCompetitorId, setSelectedCompetitorId] = useState(initialSelectedCompetitorId);
   const [targetGrade, setTargetGrade] = useState("4dan");
   const [results, setResults] = useState<GradingResult[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -41,30 +89,6 @@ export default function GradingResultsRoute() {
       .regex(/^\d+\s*(kyu|dan)$/i, "Use format like 2kyu or 4dan")
   });
 
-  useEffect(() => {
-    void loadTournaments();
-    void loadCompetitors();
-  }, []);
-
-  useEffect(() => {
-    if (!selectedTournamentId) return;
-    void loadSessions(selectedTournamentId);
-  }, [selectedTournamentId]);
-
-  async function loadTournaments() {
-    try {
-      const response = await fetchWithSchema("/api/v1/tournaments", tournamentListResponseSchema);
-      setTournaments(response.data);
-      if (!selectedTournamentId && response.data.length > 0) {
-        setSelectedTournamentId(response.data[0].id);
-      }
-      setError(null);
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : "failed_to_load_tournaments";
-      setError(message);
-    }
-  }
-
   async function loadSessions(tournamentId: string) {
     try {
       const response = await fetchWithSchema(
@@ -72,26 +96,10 @@ export default function GradingResultsRoute() {
         gradingSessionListResponseSchema
       );
       setSessions(response.data);
-      if (!selectedSessionId && response.data.length > 0) {
-        setSelectedSessionId(response.data[0].id);
-      }
+      setSelectedSessionId(response.data[0]?.id ?? "");
       setError(null);
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "failed_to_load_grading_sessions";
-      setError(message);
-    }
-  }
-
-  async function loadCompetitors() {
-    try {
-      const response = await fetchWithSchema("/api/v1/competitors", competitorListResponseSchema);
-      setCompetitors(response.data);
-      if (!selectedCompetitorId && response.data.length > 0) {
-        setSelectedCompetitorId(response.data[0].id);
-      }
-      setError(null);
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : "failed_to_load_competitors";
       setError(message);
     }
   }
@@ -177,6 +185,20 @@ export default function GradingResultsRoute() {
     }
   }
 
+  async function selectTournament(tournamentId: string) {
+    setSelectedTournamentId(tournamentId);
+    setSelectedSessionId("");
+
+    if (!tournamentId) {
+      setSessions([]);
+      setResults([]);
+      return;
+    }
+
+    await loadSessions(tournamentId);
+    setResults([]);
+  }
+
   return (
     <Stack spacing={2}>
       <Typography variant="h4">Grading Results</Typography>
@@ -187,7 +209,7 @@ export default function GradingResultsRoute() {
           select
           label="Tournament"
           value={selectedTournamentId}
-          onChange={(e) => setSelectedTournamentId(e.target.value)}
+          onChange={(e) => void selectTournament(e.target.value)}
           sx={{ minWidth: 300 }}
         >
           {tournaments.map((item) => (

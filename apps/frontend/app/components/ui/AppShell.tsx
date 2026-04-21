@@ -1,15 +1,11 @@
 import { AppBar, Box, Button, Container, Stack, TextField, Toolbar, Typography } from "@mui/material";
 import { NavLink } from "@remix-run/react";
-import { useEffect, useState, type PropsWithChildren } from "react";
+import { useState, type PropsWithChildren } from "react";
 
 import { getStoredToken, setStoredToken } from "~/lib/auth/tokenStore";
 
 export function AppShell({ children }: PropsWithChildren) {
-  const [token, setToken] = useState("");
-
-  useEffect(() => {
-    setToken(getStoredToken() ?? "");
-  }, []);
+  const [token, setToken] = useState(() => getStoredToken() ?? "");
 
   function saveToken() {
     setStoredToken(token);

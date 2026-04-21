@@ -1,5 +1,6 @@
 import { Alert, Button, MenuItem, Stack, TextField, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useLoaderData } from "@remix-run/react";
+import { useState } from "react";
 import { z } from "zod";
 
 import { ApiError, fetchWithSchema } from "~/lib/api/client";
@@ -19,16 +20,52 @@ import {
   type Tournament
 } from "~/lib/schemas/tournaments";
 
+export async function clientLoader() {
+  const tournamentResponse = await fetchWithSchema("/api/v1/tournaments", tournamentListResponseSchema);
+  const initialTournaments = tournamentResponse.data;
+  const initialSelectedTournamentId = initialTournaments[0]?.id ?? "";
+
+  if (!initialSelectedTournamentId) {
+    return {
+      initialTournaments,
+      initialSelectedTournamentId,
+      initialDivisions: [] as Division[],
+      initialSessions: [] as GradingSession[]
+    };
+  }
+
+  const [divisionResponse, sessionResponse] = await Promise.all([
+    fetchWithSchema(
+      `/api/v1/divisions?tournament_id=${encodeURIComponent(initialSelectedTournamentId)}`,
+      divisionListResponseSchema
+    ),
+    fetchWithSchema(
+      `/api/v1/gradings/sessions?tournament_id=${encodeURIComponent(initialSelectedTournamentId)}`,
+      gradingSessionListResponseSchema
+    )
+  ]);
+
+  return {
+    initialTournaments,
+    initialSelectedTournamentId,
+    initialDivisions: divisionResponse.data,
+    initialSessions: sessionResponse.data
+  };
+}
+
 export default function TournamentsRoute() {
-  const [items, setItems] = useState<Tournament[]>([]);
+  const { initialTournaments, initialSelectedTournamentId, initialDivisions, initialSessions } =
+    useLoaderData<typeof clientLoader>();
+
+  const [items, setItems] = useState<Tournament[]>(initialTournaments);
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [startsOn, setStartsOn] = useState("");
-  const [selectedTournamentId, setSelectedTournamentId] = useState("");
-  const [divisions, setDivisions] = useState<Division[]>([]);
+  const [selectedTournamentId, setSelectedTournamentId] = useState(initialSelectedTournamentId);
+  const [divisions, setDivisions] = useState<Division[]>(initialDivisions);
   const [divisionName, setDivisionName] = useState("");
   const [divisionFormat, setDivisionFormat] = useState("bracket");
-  const [sessions, setSessions] = useState<GradingSession[]>([]);
+  const [sessions, setSessions] = useState<GradingSession[]>(initialSessions);
   const [sessionName, setSessionName] = useState("");
   const [loadingTournaments, setLoadingTournaments] = useState(false);
   const [creatingTournament, setCreatingTournament] = useState(false);
@@ -54,8 +91,19 @@ export default function TournamentsRoute() {
     try {
       const response = await fetchWithSchema("/api/v1/tournaments", tournamentListResponseSchema);
       setItems(response.data);
-      if (response.data.length > 0 && !selectedTournamentId) {
-        setSelectedTournamentId(response.data[0].id);
+
+      const currentTournamentExists = response.data.some((item) => item.id === selectedTournamentId);
+      const nextSelectedTournamentId = currentTournamentExists
+        ? selectedTournamentId
+        : (response.data[0]?.id ?? "");
+
+      setSelectedTournamentId(nextSelectedTournamentId);
+
+      if (!nextSelectedTournamentId) {
+        setDivisions([]);
+        setSessions([]);
+      } else {
+        await Promise.all([loadDivisions(nextSelectedTournamentId), loadSessions(nextSelectedTournamentId)]);
       }
       setError(null);
     } catch (err) {
@@ -65,16 +113,6 @@ export default function TournamentsRoute() {
       setLoadingTournaments(false);
     }
   }
-
-  useEffect(() => {
-    void loadTournaments();
-  }, []);
-
-  useEffect(() => {
-    if (!selectedTournamentId) return;
-    void loadDivisions(selectedTournamentId);
-    void loadSessions(selectedTournamentId);
-  }, [selectedTournamentId]);
 
   async function createTournament() {
     const parsed = createTournamentSchema.safeParse({
@@ -191,6 +229,17 @@ export default function TournamentsRoute() {
     }
   }
 
+  async function selectTournament(tournamentId: string) {
+    setSelectedTournamentId(tournamentId);
+    if (!tournamentId) {
+      setDivisions([]);
+      setSessions([]);
+      return;
+    }
+
+    await Promise.all([loadDivisions(tournamentId), loadSessions(tournamentId)]);
+  }
+
   return (
     <Stack spacing={2}>
       <Typography variant="h4">Tournaments</Typography>
@@ -207,7 +256,7 @@ export default function TournamentsRoute() {
           type="date"
           value={startsOn}
           onChange={(e) => setStartsOn(e.target.value)}
-          InputLabelProps={{ shrink: true }}
+          slotProps={{ inputLabel: { shrink: true } }}
         />
         <Button variant="contained" onClick={createTournament} disabled={creatingTournament}>
           {creatingTournament ? "Creating..." : "Create"}
@@ -235,7 +284,7 @@ export default function TournamentsRoute() {
           select
           label="Tournament"
           value={selectedTournamentId}
-          onChange={(e) => setSelectedTournamentId(e.target.value)}
+          onChange={(e) => void selectTournament(e.target.value)}
           sx={{ minWidth: 280 }}
         >
           {items.map((item) => (

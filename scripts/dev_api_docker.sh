@@ -8,7 +8,7 @@ echo "Starting PostgreSQL + API containers..."
 "${COMPOSE[@]}" up -d postgres api
 
 echo "Preparing API dependencies and database inside container..."
-"${COMPOSE[@]}" exec api sh -lc "mix local.hex --force && mix local.rebar --force && mix deps.get && mix ecto.setup"
+"${COMPOSE[@]}" exec -T api sh -lc "mix local.hex --force && mix local.rebar --force && mix deps.get && mix ecto.setup"
 
 echo "Starting Phoenix API in container on http://localhost:4000 ..."
-exec "${COMPOSE[@]}" exec api sh -lc "PORT=4000 PHX_DOCKER=1 mix phx.server"
+exec "${COMPOSE[@]}" exec -T api sh -lc "PORT=4000 PHX_DOCKER=1 mix phx.server"
