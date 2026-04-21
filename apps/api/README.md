@@ -93,6 +93,11 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - examiner registry, panel assignments, pass/fail votes, and free-form examiner notes
   - decision engine computes per-part outcomes from votes using quorum and stores decision snapshots
   - finalize/lock flow prevents post-finalization vote and note changes
+- API documentation:
+  - Swagger UI: `GET /api/docs`
+  - OpenAPI document served by API: `GET /openapi.yaml`
+  - OpenAPI source file in repo: `docs/api/openapi.yaml`
+  - Postman collection: `docs/api/zanshin-api.postman_collection.json`
 - Real tournament/division/competitor entities with DB-level FK constraints on matches
 - Persistent audit trail in `match_events` table
 - Initial tests for:

@@ -1,6 +1,10 @@
 defmodule ZanshinApiWeb.Router do
   use ZanshinApiWeb, :router
 
+  scope "/api", ZanshinApiWeb do
+    get "/docs", ApiDocsController, :index
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
   end

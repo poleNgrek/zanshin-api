@@ -1,5 +1,5 @@
 defmodule ZanshinApiWeb do
-  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
+  def static_paths, do: ~w(assets fonts images favicon.ico robots.txt openapi.yaml)
 
   def controller do
     quote do

@@ -294,7 +294,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ### Increment 2.11 - Grading Decision Engine and Finalize/Lock Flow
 
-- **Status:** `in_progress`
+- **Status:** `done`
 - **Goal:** compute grading outcomes from examiner votes and enforce finalization locks for result integrity.
 - **Done in workspace:**
   - Added grading decision fields:
@@ -310,6 +310,29 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - `GET /api/v1/gradings/results/:id/decision_snapshot`
     - vote/note creation now blocked once result is locked
   - Added context and controller tests for compute/finalize/lock behavior.
+- **Verification:**
+  - Docker checks passed:
+    - `mix format --check-formatted`
+    - `MIX_ENV=test mix test` (56 tests, 0 failures)
+  - Changes committed and pushed to `main`:
+    - `8ceb051 Add Phase 2.11 grading decision engine and publish/lock flow`
+- **Outcome:** grading decisions are now auditable, reproducible from votes, and protected by a finalize/lock boundary.
+
+### Increment 2.12 - API Contract Documentation (OpenAPI + Swagger + Postman)
+
+- **Status:** `done`
+- **Goal:** publish a consumable API contract so external frontends can integrate safely.
+- **Done in workspace:**
+  - Added OpenAPI spec at `docs/api/openapi.yaml` for current `/api/v1` endpoints.
+  - Added static OpenAPI serving via API at `/openapi.yaml`.
+  - Added Swagger UI endpoint at `GET /api/docs`.
+  - Added Postman collection at `docs/api/zanshin-api.postman_collection.json`.
+  - Added API docs controller tests for docs and OpenAPI static endpoint.
+- **Verification:**
+  - Docker checks passed:
+    - `mix format --check-formatted`
+    - `MIX_ENV=test mix test` (58 tests, 0 failures)
+- **Outcome:** API contract docs are now available for internal and external client development.
 
 ---
 

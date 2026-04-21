@@ -1,0 +1,617 @@
+openapi: 3.0.3
+info:
+  title: Zanshin API
+  version: 1.0.0
+  description: |
+    API-first platform for kendo tournaments and grading workflows.
+    This contract covers current `/api/v1` endpoints.
+servers:
+  - url: http://localhost:4000
+    description: Local development
+tags:
+  - name: Health
+  - name: Tournaments
+  - name: Divisions
+  - name: Competitors
+  - name: Teams
+  - name: Team Matches
+  - name: Matches
+  - name: Gradings
+paths:
+  /api/v1/health:
+    get:
+      tags: [Health]
+      summary: API health check
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Envelope"
+  /api/v1/tournaments:
+    get:
+      tags: [Tournaments]
+      summary: List tournaments
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Tournaments]
+      summary: Create tournament
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/tournaments/{id}/export:
+    get:
+      tags: [Tournaments]
+      summary: Export full tournament snapshot
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+  /api/v1/divisions:
+    get:
+      tags: [Divisions]
+      summary: List divisions
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Divisions]
+      summary: Create division
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/divisions/{id}/rules:
+    get:
+      tags: [Divisions]
+      summary: Get division rules
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+    put:
+      tags: [Divisions]
+      summary: Upsert division rules
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+  /api/v1/division_stages:
+    get:
+      tags: [Divisions]
+      summary: List division stages
+      parameters:
+        - in: query
+          name: division_id
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Divisions]
+      summary: Create division stage
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/division_medal_results:
+    get:
+      tags: [Divisions]
+      summary: List medal results by division
+      parameters:
+        - in: query
+          name: division_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Divisions]
+      summary: Create medal result
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/division_special_awards:
+    get:
+      tags: [Divisions]
+      summary: List special awards by division
+      parameters:
+        - in: query
+          name: division_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Divisions]
+      summary: Create special award
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/divisions/{id}/compute_results:
+    post:
+      tags: [Divisions]
+      summary: Compute division podium results
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+  /api/v1/competitors:
+    get:
+      tags: [Competitors]
+      summary: List competitors
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Competitors]
+      summary: Create competitor
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/teams:
+    get:
+      tags: [Teams]
+      summary: List teams by division
+      parameters:
+        - in: query
+          name: division_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Teams]
+      summary: Create team
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/teams/{id}/members:
+    get:
+      tags: [Teams]
+      summary: List team members
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Teams]
+      summary: Add team member
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/team_matches:
+    get:
+      tags: [Team Matches]
+      summary: List team matches by division
+      parameters:
+        - in: query
+          name: division_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Team Matches]
+      summary: Create team match
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/matches:
+    get:
+      tags: [Matches]
+      summary: List matches
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Matches]
+      summary: Create match
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/matches/{id}:
+    get:
+      tags: [Matches]
+      summary: Get match by ID
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/v1/matches/{id}/transition:
+    post:
+      tags: [Matches]
+      summary: Transition match state
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+  /api/v1/matches/{id}/score:
+    get:
+      tags: [Matches]
+      summary: List score events for match
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Matches]
+      summary: Record score event
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/gradings/examiners:
+    get:
+      tags: [Gradings]
+      summary: List grading examiners
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Gradings]
+      summary: Create grading examiner
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/gradings/sessions:
+    get:
+      tags: [Gradings]
+      summary: List grading sessions
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Gradings]
+      summary: Create grading session
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/gradings/sessions/{id}/results:
+    get:
+      tags: [Gradings]
+      summary: List grading results for session
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Gradings]
+      summary: Create grading result
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/gradings/sessions/{id}/panel_assignments:
+    get:
+      tags: [Gradings]
+      summary: List session panel assignments
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Gradings]
+      summary: Assign examiner to grading session
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/gradings/results/{id}/votes:
+    get:
+      tags: [Gradings]
+      summary: List votes for grading result
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Gradings]
+      summary: Create grading vote
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/gradings/results/{id}/notes:
+    get:
+      tags: [Gradings]
+      summary: List notes for grading result
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/OkArray"
+    post:
+      tags: [Gradings]
+      summary: Create grading note
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Created"
+  /api/v1/gradings/results/{id}/compute:
+    post:
+      tags: [Gradings]
+      summary: Compute grading decision from panel votes
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+  /api/v1/gradings/results/{id}/finalize:
+    post:
+      tags: [Gradings]
+      summary: Finalize and lock grading decision
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+  /api/v1/gradings/results/{id}/decision_snapshot:
+    get:
+      tags: [Gradings]
+      summary: Read computed grading decision snapshot
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    Ok:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    OkArray:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ArrayEnvelope"
+    Created:
+      description: Created
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Envelope"
+    Unauthorized:
+      description: Missing or invalid token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+  schemas:
+    Envelope:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties: true
+      required: [data]
+    ArrayEnvelope:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      required: [data]
+    ErrorEnvelope:
+      type: object
+      properties:
+        error:
+          type: string

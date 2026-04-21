@@ -163,6 +163,10 @@ Planned commands:
   - `GET /api/v1/matches/:id/score`
 - First automated tests are included in `apps/api/test`.
 - See `apps/api/README.md` for detailed setup and learning notes.
+- API docs are available at:
+  - Swagger UI: `GET /api/docs`
+  - OpenAPI source: `docs/api/openapi.yaml`
+  - Postman collection: `docs/api/zanshin-api.postman_collection.json`
 
 ## GitHub Push Validation
 

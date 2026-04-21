@@ -1,0 +1,375 @@
+{
+  "info": {
+    "name": "Zanshin API",
+    "_postman_id": "3f0f0b2b-e8fd-4e14-af3f-8af5e6119e4f",
+    "description": "Postman collection for Zanshin `/api/v1` endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "id",
+      "value": "REPLACE_WITH_UUID"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tournaments",
+      "item": [
+        {
+          "name": "List Tournaments",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/tournaments"
+          }
+        },
+        {
+          "name": "Create Tournament",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Spring Cup\",\n  \"starts_on\": \"2026-05-10\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/tournaments"
+          }
+        },
+        {
+          "name": "Export Tournament",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/tournaments/{{id}}/export"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Divisions",
+      "item": [
+        {
+          "name": "List Divisions",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/divisions"
+          }
+        },
+        {
+          "name": "Create Division",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tournament_id\": \"{{id}}\",\n  \"name\": \"Adult Men Individual\",\n  \"format\": \"knockout\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/divisions"
+          }
+        },
+        {
+          "name": "Get Division Rules",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/divisions/{{id}}/rules"
+          }
+        },
+        {
+          "name": "Upsert Division Rules",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"match_duration_seconds\": 300,\n  \"allow_tsuki\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/divisions/{{id}}/rules"
+          }
+        },
+        {
+          "name": "List Division Stages",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/division_stages?division_id={{id}}"
+          }
+        },
+        {
+          "name": "Create Division Stage",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"division_id\": \"{{id}}\",\n  \"stage_type\": \"knockout\",\n  \"sequence\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/division_stages"
+          }
+        },
+        {
+          "name": "Compute Division Results",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/v1/divisions/{{id}}/compute_results"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Competitors and Teams",
+      "item": [
+        {
+          "name": "List Competitors",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/competitors" }
+        },
+        {
+          "name": "Create Competitor",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"display_name\": \"Kenshi One\",\n  \"division_id\": \"{{id}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/competitors"
+          }
+        },
+        {
+          "name": "List Teams",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/teams?division_id={{id}}" }
+        },
+        {
+          "name": "Create Team",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"division_id\": \"{{id}}\",\n  \"name\": \"Dojo A\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/teams"
+          }
+        },
+        {
+          "name": "Add Team Member",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"competitor_id\": \"{{id}}\",\n  \"position\": \"taisho\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/teams/{{id}}/members"
+          }
+        },
+        {
+          "name": "List Team Members",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/teams/{{id}}/members" }
+        }
+      ]
+    },
+    {
+      "name": "Matches",
+      "item": [
+        {
+          "name": "List Matches",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/matches" }
+        },
+        {
+          "name": "Create Match",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tournament_id\": \"{{id}}\",\n  \"division_id\": \"{{id}}\",\n  \"aka_competitor_id\": \"{{id}}\",\n  \"shiro_competitor_id\": \"{{id}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/matches"
+          }
+        },
+        {
+          "name": "Get Match",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/matches/{{id}}" }
+        },
+        {
+          "name": "Transition Match",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"event\": \"ready\"\n}" },
+            "url": "{{baseUrl}}/api/v1/matches/{{id}}/transition"
+          }
+        },
+        {
+          "name": "List Match Score",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/matches/{{id}}/score" }
+        },
+        {
+          "name": "Record Match Score",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"score_type\": \"ippon\",\n  \"side\": \"aka\",\n  \"target\": \"men\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/matches/{{id}}/score"
+          }
+        },
+        {
+          "name": "List Team Matches",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/team_matches?division_id={{id}}" }
+        },
+        {
+          "name": "Create Team Match",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"division_id\": \"{{id}}\",\n  \"team_a_id\": \"{{id}}\",\n  \"team_b_id\": \"{{id}}\",\n  \"team_a_wins\": 2,\n  \"team_b_wins\": 1\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/team_matches"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gradings",
+      "item": [
+        {
+          "name": "List Examiners",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/gradings/examiners" }
+        },
+        {
+          "name": "Create Examiner",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"display_name\": \"Examiner A\"\n}" },
+            "url": "{{baseUrl}}/api/v1/gradings/examiners"
+          }
+        },
+        {
+          "name": "List Sessions",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/gradings/sessions" }
+        },
+        {
+          "name": "Create Session",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tournament_id\": \"{{id}}\",\n  \"name\": \"Spring Shinsa\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/gradings/sessions"
+          }
+        },
+        {
+          "name": "List Session Results",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/gradings/sessions/{{id}}/results" }
+        },
+        {
+          "name": "Create Session Result",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"competitor_id\": \"{{id}}\",\n  \"target_grade\": \"4dan\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/gradings/sessions/{{id}}/results"
+          }
+        },
+        {
+          "name": "List Panel Assignments",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/gradings/sessions/{{id}}/panel_assignments" }
+        },
+        {
+          "name": "Assign Panel Examiner",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"examiner_id\": \"{{id}}\",\n  \"role\": \"head\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/gradings/sessions/{{id}}/panel_assignments"
+          }
+        },
+        {
+          "name": "List Votes",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/gradings/results/{{id}}/votes" }
+        },
+        {
+          "name": "Create Vote",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"examiner_id\": \"{{id}}\",\n  \"part\": \"jitsugi\",\n  \"decision\": \"pass\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/gradings/results/{{id}}/votes"
+          }
+        },
+        {
+          "name": "List Notes",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/gradings/results/{{id}}/notes" }
+        },
+        {
+          "name": "Create Note",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"examiner_id\": \"{{id}}\",\n  \"part\": \"kata\",\n  \"note\": \"Good maai\"\n}"
+            },
+            "url": "{{baseUrl}}/api/v1/gradings/results/{{id}}/notes"
+          }
+        },
+        {
+          "name": "Compute Result",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/gradings/results/{{id}}/compute" }
+        },
+        {
+          "name": "Finalize Result",
+          "request": { "method": "POST", "url": "{{baseUrl}}/api/v1/gradings/results/{{id}}/finalize" }
+        },
+        {
+          "name": "Decision Snapshot",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/gradings/results/{{id}}/decision_snapshot" }
+        }
+      ]
+    }
+  ]
+}
