@@ -1,9 +1,23 @@
-import type { AnalyticsOverview, Match, MatchRealtimeEvent } from "@zanshin/types";
+import type {
+  AnalyticsOverview,
+  Competitor,
+  Division,
+  GradingResult,
+  GradingSession,
+  Match,
+  MatchRealtimeEvent,
+  Tournament
+} from "@zanshin/types";
 
 type AnalyticsScope = {
   divisionId: string;
   fromIso: string;
   toIso: string;
+};
+
+export type AdminRealtimeEvent = {
+  event: string;
+  payload: Record<string, unknown>;
 };
 
 export function applyMatchRealtimeEvents(matches: Match[], events: MatchRealtimeEvent[]): Match[] {
@@ -227,4 +241,155 @@ function toHourBucketIso(occurredAt: string): string | null {
 
 function stringValue(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+export function applyAdminTournamentEvents(
+  tournaments: Tournament[],
+  events: AdminRealtimeEvent[]
+): Tournament[] {
+  return events.reduce((current, event) => {
+    if (event.event !== "admin_tournament_created") {
+      return current;
+    }
+
+    const tournamentId = stringValue(event.payload.tournament_id);
+    const name = stringValue(event.payload.name);
+
+    if (!tournamentId || !name) {
+      return current;
+    }
+
+    if (current.some((tournament) => tournament.id === tournamentId)) {
+      return current;
+    }
+
+    return [{ id: tournamentId, name, starts_on: null }, ...current];
+  }, tournaments);
+}
+
+export function applyAdminDivisionEvents(
+  divisions: Division[],
+  events: AdminRealtimeEvent[],
+  tournamentId: string
+): Division[] {
+  return events.reduce((current, event) => {
+    if (event.event !== "admin_division_created") {
+      return current;
+    }
+
+    const nextTournamentId = stringValue(event.payload.tournament_id);
+    const divisionId = stringValue(event.payload.division_id);
+    const name = stringValue(event.payload.name);
+
+    if (!nextTournamentId || !divisionId || !name || nextTournamentId !== tournamentId) {
+      return current;
+    }
+
+    if (current.some((division) => division.id === divisionId)) {
+      return current;
+    }
+
+    return [...current, { id: divisionId, tournament_id: nextTournamentId, name, format: "bracket" }].sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+  }, divisions);
+}
+
+export function applyAdminSessionEvents(
+  sessions: GradingSession[],
+  events: AdminRealtimeEvent[],
+  tournamentId: string
+): GradingSession[] {
+  return events.reduce((current, event) => {
+    if (event.event !== "admin_grading_session_created") {
+      return current;
+    }
+
+    const nextTournamentId = stringValue(event.payload.tournament_id);
+    const sessionId = stringValue(event.payload.grading_session_id);
+    const name = stringValue(event.payload.session_name);
+
+    if (!nextTournamentId || !sessionId || !name || nextTournamentId !== tournamentId) {
+      return current;
+    }
+
+    if (current.some((session) => session.id === sessionId)) {
+      return current;
+    }
+
+    return [{ id: sessionId, tournament_id: nextTournamentId, name, held_on: null, written_required: true }, ...current];
+  }, sessions);
+}
+
+export function applyAdminCompetitorEvents(
+  competitors: Competitor[],
+  events: AdminRealtimeEvent[]
+): Competitor[] {
+  return events.reduce((current, event) => {
+    if (event.event !== "admin_competitor_created") {
+      return current;
+    }
+
+    const competitorId = stringValue(event.payload.competitor_id);
+    const displayName = stringValue(event.payload.display_name);
+
+    if (!competitorId || !displayName) {
+      return current;
+    }
+
+    if (current.some((competitor) => competitor.id === competitorId)) {
+      return current;
+    }
+
+    return [...current, { id: competitorId, display_name: displayName, federation_id: null }].sort((a, b) =>
+      a.display_name.localeCompare(b.display_name)
+    );
+  }, competitors);
+}
+
+export function applyAdminGradingResultEvents(
+  results: GradingResult[],
+  events: AdminRealtimeEvent[],
+  selectedSessionId: string
+): { results: GradingResult[]; shouldReload: boolean } {
+  let nextResults = results;
+  let shouldReload = false;
+
+  for (const event of events) {
+    const eventSessionId = stringValue(event.payload.grading_session_id);
+    if (!eventSessionId || eventSessionId !== selectedSessionId) {
+      continue;
+    }
+
+    if (event.event === "admin_grading_result_created") {
+      shouldReload = true;
+      continue;
+    }
+
+    const resultId = stringValue(event.payload.grading_result_id);
+    if (!resultId) {
+      continue;
+    }
+
+    if (event.event === "admin_grading_result_computed") {
+      const finalResult = stringValue(event.payload.final_result);
+      if (finalResult) {
+        nextResults = nextResults.map((result) =>
+          result.id === resultId ? { ...result, final_result: finalResult } : result
+        );
+      } else {
+        shouldReload = true;
+      }
+      continue;
+    }
+
+    if (event.event === "admin_grading_result_finalized") {
+      const occurredAt = stringValue(event.payload.occurred_at) ?? new Date().toISOString();
+      nextResults = nextResults.map((result) =>
+        result.id === resultId ? { ...result, locked_at: occurredAt } : result
+      );
+    }
+  }
+
+  return { results: nextResults, shouldReload };
 }

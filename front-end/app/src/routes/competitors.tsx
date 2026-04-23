@@ -3,10 +3,11 @@ import { useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 
-import { ApiError, fetchWithSchema } from "@zanshin/api";
+import { ApiError, connectAdminRealtime, fetchWithSchema } from "@zanshin/api";
 import { InfoAlertList, PageTitle } from "@zanshin/components";
 import { CompetitorListResponseSchema, CompetitorResponseSchema } from "@zanshin/schemas";
 import { type Competitor } from "@zanshin/types";
+import { applyAdminCompetitorEvents } from "@zanshin/utils/realtime_updates";
 
 const CompetitorCreateSchema = z.object({
   display_name: z.string().trim().min(2, "Display name must be at least 2 characters"),
@@ -77,36 +78,16 @@ export default function CompetitorsRoute() {
       return;
     }
 
-    let cancelled = false;
-
-    async function refreshLiveState() {
-      try {
-        const response = await fetchWithSchema("/api/v1/competitors", CompetitorListResponseSchema);
-
-        if (cancelled) {
-          return;
-        }
-
-        setItems(response.data);
+    return connectAdminRealtime({
+      on_event: (event) => {
+        setItems((currentItems) => applyAdminCompetitorEvents(currentItems, [event]));
         setLiveError(null);
         setLastUpdatedAt(new Date());
-      } catch (err) {
-        if (!cancelled) {
-          const message = err instanceof ApiError ? err.message : "live_competitors_refresh_failed";
-          setLiveError(message);
-        }
+      },
+      on_error: (message) => {
+        setLiveError(message);
       }
-    }
-
-    void refreshLiveState();
-    const interval = window.setInterval(() => {
-      void refreshLiveState();
-    }, 5000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-    };
+    });
   }, [liveEnabled]);
 
   return (

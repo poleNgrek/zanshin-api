@@ -3,7 +3,7 @@ import { useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 
-import { ApiError, fetchWithSchema } from "@zanshin/api";
+import { ApiError, connectAdminRealtime, fetchWithSchema } from "@zanshin/api";
 import { PageTitle } from "@zanshin/components";
 import {
     CompetitorListResponseSchema,
@@ -13,6 +13,7 @@ import {
     TournamentListResponseSchema
 } from "@zanshin/schemas";
 import { type Competitor, type GradingResult, type GradingSession, type Tournament } from "@zanshin/types";
+import { applyAdminGradingResultEvents, applyAdminSessionEvents } from "@zanshin/utils/realtime_updates";
 
 export async function clientLoader() {
   const [tournamentResponse, competitorResponse] = await Promise.all([
@@ -198,53 +199,39 @@ export default function GradingResultsRoute() {
       return;
     }
 
-    let cancelled = false;
-
-    async function refreshLiveState() {
-      try {
-        const sessionsResponse = await fetchWithSchema(
-          `/api/v1/gradings/sessions?tournament_id=${encodeURIComponent(selectedTournamentId)}`,
-          GradingSessionListResponseSchema
-        );
-
-        if (cancelled) {
-          return;
-        }
-
-        setSessions(sessionsResponse.data);
+    return connectAdminRealtime({
+      on_event: (event) => {
+        setSessions((currentSessions) => applyAdminSessionEvents(currentSessions, [event], selectedTournamentId));
 
         if (selectedSessionId) {
-          const resultsResponse = await fetchWithSchema(
-            `/api/v1/gradings/sessions/${selectedSessionId}/results`,
-            GradingResultListResponseSchema
-          );
+          let shouldReload = false;
 
-          if (!cancelled) {
-            setResults(resultsResponse.data);
+          setResults((currentResults) => {
+            const next = applyAdminGradingResultEvents(currentResults, [event], selectedSessionId);
+            shouldReload = next.shouldReload;
+            return next.results;
+          });
+
+          if (shouldReload) {
+            void fetchWithSchema(`/api/v1/gradings/sessions/${selectedSessionId}/results`, GradingResultListResponseSchema)
+              .then((response) => {
+                setResults(response.data);
+                setLiveError(null);
+              })
+              .catch((error: unknown) => {
+                const message = error instanceof ApiError ? error.message : "live_grading_results_refresh_failed";
+                setLiveError(message);
+              });
           }
         }
 
-        if (!cancelled) {
-          setLiveError(null);
-          setLastUpdatedAt(new Date());
-        }
-      } catch (err) {
-        if (!cancelled) {
-          const message = err instanceof ApiError ? err.message : "live_grading_results_refresh_failed";
-          setLiveError(message);
-        }
+        setLiveError(null);
+        setLastUpdatedAt(new Date());
+      },
+      on_error: (message) => {
+        setLiveError(message);
       }
-    }
-
-    void refreshLiveState();
-    const interval = window.setInterval(() => {
-      void refreshLiveState();
-    }, 5000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-    };
+    });
   }, [liveEnabled, selectedSessionId, selectedTournamentId]);
 
   return (

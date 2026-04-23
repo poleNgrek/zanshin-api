@@ -3,7 +3,7 @@ import { useLoaderData } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 
-import { ApiError, fetchWithSchema } from "@zanshin/api";
+import { ApiError, connectAdminRealtime, fetchWithSchema } from "@zanshin/api";
 import { InfoAlertList, PageTitle, SectionCard } from "@zanshin/components";
 import {
     DivisionListResponseSchema,
@@ -14,6 +14,7 @@ import {
     TournamentResponseSchema
 } from "@zanshin/schemas";
 import { type Division, type GradingSession, type Tournament } from "@zanshin/types";
+import { applyAdminDivisionEvents, applyAdminSessionEvents, applyAdminTournamentEvents } from "@zanshin/utils/realtime_updates";
 
 export async function clientLoader() {
   const tournamentResponse = await fetchWithSchema("/api/v1/tournaments", TournamentListResponseSchema);
@@ -241,57 +242,22 @@ export default function TournamentsRoute() {
       return;
     }
 
-    let cancelled = false;
-
-    async function refreshLiveState() {
-      try {
-        const tournamentsResponse = await fetchWithSchema("/api/v1/tournaments", TournamentListResponseSchema);
-
-        if (cancelled) {
-          return;
-        }
-
-        setItems(tournamentsResponse.data);
+    return connectAdminRealtime({
+      on_event: (event) => {
+        setItems((currentItems) => applyAdminTournamentEvents(currentItems, [event]));
 
         if (selectedTournamentId) {
-          const [divisionResponse, sessionResponse] = await Promise.all([
-            fetchWithSchema(
-              `/api/v1/divisions?tournament_id=${encodeURIComponent(selectedTournamentId)}`,
-              DivisionListResponseSchema
-            ),
-            fetchWithSchema(
-              `/api/v1/gradings/sessions?tournament_id=${encodeURIComponent(selectedTournamentId)}`,
-              GradingSessionListResponseSchema
-            )
-          ]);
-
-          if (!cancelled) {
-            setDivisions(divisionResponse.data);
-            setSessions(sessionResponse.data);
-          }
+          setDivisions((currentDivisions) => applyAdminDivisionEvents(currentDivisions, [event], selectedTournamentId));
+          setSessions((currentSessions) => applyAdminSessionEvents(currentSessions, [event], selectedTournamentId));
         }
 
-        if (!cancelled) {
-          setLiveError(null);
-          setLastUpdatedAt(new Date());
-        }
-      } catch (err) {
-        if (!cancelled) {
-          const message = err instanceof ApiError ? err.message : "live_tournaments_refresh_failed";
-          setLiveError(message);
-        }
+        setLiveError(null);
+        setLastUpdatedAt(new Date());
+      },
+      on_error: (message) => {
+        setLiveError(message);
       }
-    }
-
-    void refreshLiveState();
-    const interval = window.setInterval(() => {
-      void refreshLiveState();
-    }, 5000);
-
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-    };
+    });
   }, [liveEnabled, selectedTournamentId]);
 
   return (
