@@ -8,7 +8,7 @@ export default {
   routes(defineRoutes) {
     return defineRoutes((route) => {
       route("/", "src/routes/index.tsx");
-      route("dashboard", "src/routes/index.tsx");
+      route("dashboard", "src/routes/dashboard.tsx");
       route("matches", "src/routes/matches.tsx");
       route("tournaments", "src/routes/tournaments.tsx");
       route("competitors", "src/routes/competitors.tsx");
