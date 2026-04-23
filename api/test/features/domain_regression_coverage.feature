@@ -26,6 +26,8 @@ Feature: API domain regression coverage
       | list_division_stages/1 returns progression plan by sequence |
       | bracket graph model stores ordered rounds slots and links |
       | bracket_traversal/1 returns graph envelope for division |
+      | creates shinpan assignment when schedule window has no conflicts |
+      | rejects scheduling conflicts for shinpan and shiaijo overlaps |
       | creates podium medals with two bronze entries and no fourth place |
       | team divisions award medals to team and fighting spirit to one player |
       | compute_division_results/1 derives gold silver and dual bronze from bracket matches |

@@ -110,6 +110,52 @@ defmodule ZanshinApi.CompetitionsFixtures do
     match
   end
 
+  def shiaijo_fixture(tournament, overrides \\ %{}) do
+    attrs =
+      Map.merge(
+        %{
+          "tournament_id" => tournament.id,
+          "name" => "Area #{System.unique_integer([:positive])}"
+        },
+        overrides
+      )
+
+    {:ok, shiaijo} = Competitions.create_shiaijo(attrs)
+    shiaijo
+  end
+
+  def shinpan_fixture(tournament, overrides \\ %{}) do
+    attrs =
+      Map.merge(
+        %{
+          "tournament_id" => tournament.id,
+          "display_name" => "Shinpan #{System.unique_integer([:positive])}"
+        },
+        overrides
+      )
+
+    {:ok, shinpan} = Competitions.create_shinpan(attrs)
+    shinpan
+  end
+
+  def shinpan_assignment_fixture(tournament, shiaijo, shinpan, overrides \\ %{}) do
+    attrs =
+      Map.merge(
+        %{
+          "tournament_id" => tournament.id,
+          "shiaijo_id" => shiaijo.id,
+          "shinpan_id" => shinpan.id,
+          "starts_at" => ~U[2026-04-23 10:00:00Z],
+          "ends_at" => ~U[2026-04-23 10:30:00Z],
+          "role" => "head"
+        },
+        overrides
+      )
+
+    {:ok, assignment} = Competitions.create_shinpan_assignment(attrs)
+    assignment
+  end
+
   def division_medal_result_fixture(division, overrides \\ %{}) do
     attrs =
       Map.merge(

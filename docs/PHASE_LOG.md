@@ -808,7 +808,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ### Increment 2 Execution - Wave 2.1 Timer Command/Event Model
 
-- **Status:** `in_progress`
+- **Status:** `completed`
 - **Goal:** begin Wave 2 core architecture with an auditable timer command/event stream.
 - **Done in workspace:**
   - Added timer runtime/event persistence:
@@ -839,7 +839,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ### Increment 2 Execution - Wave 2.2 Explicit Bracket Graph Model
 
-- **Status:** `in_progress`
+- **Status:** `completed`
 - **Goal:** replace insertion-order assumptions with explicit bracket graph nodes and links.
 - **Done in workspace:**
   - Added explicit bracket graph persistence:
@@ -868,6 +868,37 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
   - `cd api && mix test` (9 scenarios, 101 tests, 0 failures)
 - **Next pickup (same wave):**
   - Implement shiaijo/shinpan scheduling assignment model with conflict checks.
+
+### Increment 2 Execution - Wave 2.3 Shiaijo/Shinpan Scheduling Assignments
+
+- **Status:** `completed`
+- **Goal:** add explicit assignment workflows with schedule conflict prevention.
+- **Done in workspace:**
+  - Added assignment persistence:
+    - migration `api/priv/repo/migrations/20260423150000_create_shinpan_assignments.exs`
+    - schema `api/lib/zanshin_api/competitions/shinpan_assignment.ex`
+  - Added schema associations:
+    - `api/lib/zanshin_api/competitions/shiaijo.ex`
+    - `api/lib/zanshin_api/officials/shinpan.ex`
+  - Added competition context workflows:
+    - `create_shiaijo/1`, `list_shiaijos/1`
+    - `create_shinpan/1`, `list_shinpans/1`
+    - `create_shinpan_assignment/1`, `list_shinpan_assignments/1`
+  - Added overlap conflict checks:
+    - same shinpan overlapping window -> `:shinpan_schedule_conflict`
+    - same shiaijo overlapping window -> `:shiaijo_schedule_conflict`
+    - tournament scope mismatch guard -> `:assignment_scope_mismatch`
+  - Added fixtures + domain coverage:
+    - `creates shinpan assignment when schedule window has no conflicts`
+    - `rejects scheduling conflicts for shinpan and shiaijo overlaps`
+  - Updated domain Gherkin parity matrix:
+    - `api/test/features/domain_regression_coverage.feature`
+- **Verification:**
+  - `cd api && mix test test/zanshin_api/competitions_test.exs`
+  - `cd api && mix test` (9 scenarios, 103 tests, 0 failures)
+- **Wave 2 completion:**
+  - Wave 2 core domain architecture is now complete (`timer model`, `explicit bracket graph`, `scheduling assignments`).
+  - Next increment focus can move to Wave 3 realtime + admin operations.
 
 ---
 

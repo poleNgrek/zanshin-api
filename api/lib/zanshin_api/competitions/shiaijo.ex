@@ -11,6 +11,7 @@ defmodule ZanshinApi.Competitions.Shiaijo do
     field :name, :string
 
     belongs_to :tournament, ZanshinApi.Competitions.Tournament
+    has_many :assignments, ZanshinApi.Competitions.ShinpanAssignment
 
     timestamps(type: :utc_datetime)
   end

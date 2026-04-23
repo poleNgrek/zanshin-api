@@ -13,11 +13,14 @@ defmodule ZanshinApi.Competitions do
     Division,
     DivisionMedalResult,
     DivisionRule,
+    Shiaijo,
+    ShinpanAssignment,
     DivisionSpecialAward,
     DivisionStage,
     Tournament
   }
 
+  alias ZanshinApi.Officials.Shinpan
   alias ZanshinApi.Matches.{Match, MatchEvent, ScoreEvent}
   alias ZanshinApi.Repo
   alias ZanshinApi.Teams.{Team, TeamMatch, TeamMember}
@@ -168,6 +171,48 @@ defmodule ZanshinApi.Competitions do
 
   def list_competitors do
     Competitor |> order_by([c], asc: c.display_name) |> Repo.all()
+  end
+
+  def create_shiaijo(attrs) do
+    %Shiaijo{}
+    |> Shiaijo.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def list_shiaijos(tournament_id) do
+    Shiaijo
+    |> where([shiaijo], shiaijo.tournament_id == ^tournament_id)
+    |> order_by([shiaijo], asc: shiaijo.name)
+    |> Repo.all()
+  end
+
+  def create_shinpan(attrs) do
+    %Shinpan{}
+    |> Shinpan.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def list_shinpans(tournament_id) do
+    Shinpan
+    |> where([shinpan], shinpan.tournament_id == ^tournament_id)
+    |> order_by([shinpan], asc: shinpan.display_name)
+    |> Repo.all()
+  end
+
+  def create_shinpan_assignment(attrs) do
+    with :ok <- validate_assignment_scope(attrs),
+         changeset <- ShinpanAssignment.changeset(%ShinpanAssignment{}, attrs),
+         :ok <- ensure_shinpan_available(changeset),
+         :ok <- ensure_shiaijo_available(changeset) do
+      Repo.insert(changeset)
+    end
+  end
+
+  def list_shinpan_assignments(tournament_id) do
+    ShinpanAssignment
+    |> where([assignment], assignment.tournament_id == ^tournament_id)
+    |> order_by([assignment], asc: assignment.starts_at, asc: assignment.inserted_at)
+    |> Repo.all()
   end
 
   def upsert_division_rules(division_id, attrs) do
@@ -715,6 +760,53 @@ defmodule ZanshinApi.Competitions do
     if present?(Map.get(attrs, "competitor_id") || Map.get(attrs, :competitor_id)),
       do: {:error, :competitor_id_not_allowed},
       else: :ok
+  end
+
+  defp validate_assignment_scope(attrs) do
+    tournament_id = Map.get(attrs, "tournament_id") || Map.get(attrs, :tournament_id)
+    shiaijo_id = Map.get(attrs, "shiaijo_id") || Map.get(attrs, :shiaijo_id)
+    shinpan_id = Map.get(attrs, "shinpan_id") || Map.get(attrs, :shinpan_id)
+
+    with %Shiaijo{tournament_id: ^tournament_id} <- Repo.get(Shiaijo, shiaijo_id),
+         %Shinpan{tournament_id: ^tournament_id} <- Repo.get(Shinpan, shinpan_id) do
+      :ok
+    else
+      _ -> {:error, :assignment_scope_mismatch}
+    end
+  end
+
+  defp ensure_shinpan_available(changeset) do
+    shinpan_id = Ecto.Changeset.get_field(changeset, :shinpan_id)
+    starts_at = Ecto.Changeset.get_field(changeset, :starts_at)
+    ends_at = Ecto.Changeset.get_field(changeset, :ends_at)
+
+    conflict? =
+      ShinpanAssignment
+      |> where(
+        [assignment],
+        assignment.shinpan_id == ^shinpan_id and assignment.starts_at < ^ends_at and
+          assignment.ends_at > ^starts_at
+      )
+      |> Repo.exists?()
+
+    if conflict?, do: {:error, :shinpan_schedule_conflict}, else: :ok
+  end
+
+  defp ensure_shiaijo_available(changeset) do
+    shiaijo_id = Ecto.Changeset.get_field(changeset, :shiaijo_id)
+    starts_at = Ecto.Changeset.get_field(changeset, :starts_at)
+    ends_at = Ecto.Changeset.get_field(changeset, :ends_at)
+
+    conflict? =
+      ShinpanAssignment
+      |> where(
+        [assignment],
+        assignment.shiaijo_id == ^shiaijo_id and assignment.starts_at < ^ends_at and
+          assignment.ends_at > ^starts_at
+      )
+      |> Repo.exists?()
+
+    if conflict?, do: {:error, :shiaijo_schedule_conflict}, else: :ok
   end
 
   defp present?(value), do: not is_nil(value)

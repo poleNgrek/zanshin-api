@@ -148,6 +148,61 @@ defmodule ZanshinApi.CompetitionsTest do
     assert length(graph.links) == 2
   end
 
+  test "creates shinpan assignment when schedule window has no conflicts" do
+    tournament = tournament_fixture()
+    shiaijo = shiaijo_fixture(tournament)
+    shinpan = shinpan_fixture(tournament)
+
+    assert {:ok, assignment} =
+             Competitions.create_shinpan_assignment(%{
+               "tournament_id" => tournament.id,
+               "shiaijo_id" => shiaijo.id,
+               "shinpan_id" => shinpan.id,
+               "starts_at" => ~U[2026-04-23 09:00:00Z],
+               "ends_at" => ~U[2026-04-23 09:30:00Z],
+               "role" => "head"
+             })
+
+    assert assignment.tournament_id == tournament.id
+    assert assignment.shiaijo_id == shiaijo.id
+    assert assignment.shinpan_id == shinpan.id
+
+    all_assignments = Competitions.list_shinpan_assignments(tournament.id)
+    assert Enum.any?(all_assignments, &(&1.id == assignment.id))
+  end
+
+  test "rejects scheduling conflicts for shinpan and shiaijo overlaps" do
+    tournament = tournament_fixture()
+    shiaijo_a = shiaijo_fixture(tournament, %{"name" => "Area A"})
+    shiaijo_b = shiaijo_fixture(tournament, %{"name" => "Area B"})
+    shinpan_a = shinpan_fixture(tournament, %{"display_name" => "Ref A"})
+    shinpan_b = shinpan_fixture(tournament, %{"display_name" => "Ref B"})
+
+    _assignment =
+      shinpan_assignment_fixture(tournament, shiaijo_a, shinpan_a, %{
+        "starts_at" => ~U[2026-04-23 10:00:00Z],
+        "ends_at" => ~U[2026-04-23 10:45:00Z]
+      })
+
+    assert {:error, :shinpan_schedule_conflict} =
+             Competitions.create_shinpan_assignment(%{
+               "tournament_id" => tournament.id,
+               "shiaijo_id" => shiaijo_b.id,
+               "shinpan_id" => shinpan_a.id,
+               "starts_at" => ~U[2026-04-23 10:15:00Z],
+               "ends_at" => ~U[2026-04-23 10:30:00Z]
+             })
+
+    assert {:error, :shiaijo_schedule_conflict} =
+             Competitions.create_shinpan_assignment(%{
+               "tournament_id" => tournament.id,
+               "shiaijo_id" => shiaijo_a.id,
+               "shinpan_id" => shinpan_b.id,
+               "starts_at" => ~U[2026-04-23 10:20:00Z],
+               "ends_at" => ~U[2026-04-23 10:40:00Z]
+             })
+  end
+
   test "creates podium medals with two bronze entries and no fourth place" do
     tournament = tournament_fixture()
     division = division_fixture(tournament, %{"format" => "bracket"})

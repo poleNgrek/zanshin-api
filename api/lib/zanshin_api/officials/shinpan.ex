@@ -12,6 +12,7 @@ defmodule ZanshinApi.Officials.Shinpan do
     field :federation_id, :string
 
     belongs_to :tournament, ZanshinApi.Competitions.Tournament
+    has_many :assignments, ZanshinApi.Competitions.ShinpanAssignment
 
     timestamps(type: :utc_datetime)
   end
