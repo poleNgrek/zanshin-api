@@ -109,4 +109,12 @@ bunx playwright install chromium
 
 # E2E tests
 bun run test:e2e
+
+# Real API integration lane (expects API running on localhost:4000)
+PLAYWRIGHT_REAL_API=1 API_BASE_URL=http://127.0.0.1:4000 bunx playwright test tests/e2e/real-api.spec.ts
 ```
+
+## E2E Mock Fixtures
+
+- Shared Playwright mock data lives in `tests/e2e/fixtures.ts`.
+- Keep route mocks in specs deterministic by reusing IDs/payloads from that file.
