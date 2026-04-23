@@ -122,6 +122,74 @@ defmodule ZanshinApiWeb.AnalyticsDashboardControllerTest do
     assert Enum.any?(state_counts, fn row -> row["state"] == "ready" and row["count"] == 1 end)
   end
 
+  test "GET /api/v1/analytics/dashboard/overview returns consolidated payload", %{conn: conn} do
+    tournament_id = Ecto.UUID.generate()
+    division_id = Ecto.UUID.generate()
+
+    {:ok, _transition_event} =
+      create_domain_event(%{
+        event_type: "match.transitioned",
+        aggregate_id: Ecto.UUID.generate(),
+        payload: %{
+          "event" => "start",
+          "from_state" => "ready",
+          "to_state" => "ongoing",
+          "match_id" => Ecto.UUID.generate(),
+          "tournament_id" => tournament_id,
+          "division_id" => division_id
+        }
+      })
+
+    {:ok, _score_event} =
+      create_domain_event(%{
+        event_type: "match.score_recorded",
+        aggregate_id: Ecto.UUID.generate(),
+        payload: %{
+          "score_event_id" => Ecto.UUID.generate(),
+          "score_type" => "waza_ari",
+          "side" => "shiro",
+          "target" => "do",
+          "match_id" => Ecto.UUID.generate(),
+          "tournament_id" => tournament_id,
+          "division_id" => division_id
+        }
+      })
+
+    conn =
+      conn
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> get(
+        "/api/v1/analytics/dashboard/overview?tournament_id=#{tournament_id}&division_id=#{division_id}"
+      )
+
+    assert %{
+             "data" => %{
+               "data_source" => "postgres",
+               "summary" => %{
+                 "kpis" => %{"total_events" => 2},
+                 "event_type_breakdown" => breakdown
+               },
+               "state_overview" => %{"state_counts" => state_counts},
+               "recent_events" => recent_events,
+               "insights" => %{
+                 "throughput_trend" => throughput_trend,
+                 "top_active_matches" => top_active_matches,
+                 "actor_role_activity" => actor_role_activity
+               }
+             }
+           } = json_response(conn, 200)
+
+    assert Enum.any?(breakdown, fn row ->
+             row["event_type"] == "match.transitioned" and row["count"] == 1
+           end)
+
+    assert Enum.any?(state_counts, fn row -> row["state"] == "ongoing" and row["count"] == 1 end)
+    assert length(recent_events) == 2
+    assert Enum.any?(throughput_trend, fn row -> row["total_events"] >= 1 end)
+    assert Enum.any?(top_active_matches, fn row -> row["event_count"] >= 1 end)
+    assert Enum.any?(actor_role_activity, fn row -> row["actor_role"] == "admin" end)
+  end
+
   test "analytics dashboard endpoints require auth", %{conn: conn} do
     feed_conn = get(conn, "/api/v1/analytics/events/feed?tournament_id=#{Ecto.UUID.generate()}")
     assert %{"error" => "unauthorized"} = json_response(feed_conn, 401)

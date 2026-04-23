@@ -46,31 +46,42 @@ defmodule ZanshinApi.Analytics do
 
   def dashboard_event_feed(params) when is_map(params) do
     with {:ok, filters} <- normalize_filters(params) do
-      case analytics_summary_source() do
-        :neo4j ->
-          case dashboard_event_feed_from_neo4j(filters) do
-            {:ok, payload} -> {:ok, payload}
-            {:error, _} -> {:ok, dashboard_event_feed_from_postgres(filters, "postgres_fallback")}
-          end
-
-        _ ->
-          {:ok, dashboard_event_feed_from_postgres(filters, "postgres")}
-      end
+      dashboard_event_feed_from_source(filters)
     end
   end
 
   def match_state_overview(params) when is_map(params) do
     with {:ok, filters} <- normalize_filters(params) do
-      case analytics_summary_source() do
-        :neo4j ->
-          case match_state_overview_from_neo4j(filters) do
-            {:ok, payload} -> {:ok, payload}
-            {:error, _} -> {:ok, match_state_overview_from_postgres(filters, "postgres_fallback")}
-          end
+      match_state_overview_from_source(filters)
+    end
+  end
 
-        _ ->
-          {:ok, match_state_overview_from_postgres(filters, "postgres")}
-      end
+  def dashboard_overview(params) when is_map(params) do
+    with {:ok, filters} <- normalize_filters(params),
+         {:ok, summary} <- match_summary_from_source(filters),
+         {:ok, state_overview} <- match_state_overview_from_source(filters),
+         {:ok, event_feed} <- dashboard_event_feed_from_source(filters),
+         {:ok, throughput_trend} <- throughput_trend_from_source(filters),
+         {:ok, top_active_matches} <- top_active_matches_from_source(filters),
+         {:ok, actor_role_activity} <- actor_role_activity_from_source(filters) do
+      {:ok,
+       %{
+         scope: summary.scope,
+         data_source: summary.data_source,
+         summary: %{
+           kpis: summary.kpis,
+           event_type_breakdown: summary.event_type_breakdown
+         },
+         state_overview: %{
+           state_counts: state_overview.state_counts
+         },
+         recent_events: event_feed.events,
+         insights: %{
+           throughput_trend: throughput_trend,
+           top_active_matches: top_active_matches,
+           actor_role_activity: actor_role_activity
+         }
+       }}
     end
   end
 
@@ -87,6 +98,71 @@ defmodule ZanshinApi.Analytics do
 
       _ ->
         {:ok, match_summary_from_postgres(filters, "postgres")}
+    end
+  end
+
+  defp dashboard_event_feed_from_source(filters) do
+    case analytics_summary_source() do
+      :neo4j ->
+        case dashboard_event_feed_from_neo4j(filters) do
+          {:ok, payload} -> {:ok, payload}
+          {:error, _} -> {:ok, dashboard_event_feed_from_postgres(filters, "postgres_fallback")}
+        end
+
+      _ ->
+        {:ok, dashboard_event_feed_from_postgres(filters, "postgres")}
+    end
+  end
+
+  defp match_state_overview_from_source(filters) do
+    case analytics_summary_source() do
+      :neo4j ->
+        case match_state_overview_from_neo4j(filters) do
+          {:ok, payload} -> {:ok, payload}
+          {:error, _} -> {:ok, match_state_overview_from_postgres(filters, "postgres_fallback")}
+        end
+
+      _ ->
+        {:ok, match_state_overview_from_postgres(filters, "postgres")}
+    end
+  end
+
+  defp throughput_trend_from_source(filters) do
+    case analytics_summary_source() do
+      :neo4j ->
+        case throughput_trend_from_neo4j(filters) do
+          {:ok, payload} -> {:ok, payload}
+          {:error, _} -> {:ok, throughput_trend_from_postgres(filters)}
+        end
+
+      _ ->
+        {:ok, throughput_trend_from_postgres(filters)}
+    end
+  end
+
+  defp top_active_matches_from_source(filters) do
+    case analytics_summary_source() do
+      :neo4j ->
+        case top_active_matches_from_neo4j(filters) do
+          {:ok, payload} -> {:ok, payload}
+          {:error, _} -> {:ok, top_active_matches_from_postgres(filters)}
+        end
+
+      _ ->
+        {:ok, top_active_matches_from_postgres(filters)}
+    end
+  end
+
+  defp actor_role_activity_from_source(filters) do
+    case analytics_summary_source() do
+      :neo4j ->
+        case actor_role_activity_from_neo4j(filters) do
+          {:ok, payload} -> {:ok, payload}
+          {:error, _} -> {:ok, actor_role_activity_from_postgres(filters)}
+        end
+
+      _ ->
+        {:ok, actor_role_activity_from_postgres(filters)}
     end
   end
 
@@ -259,6 +335,50 @@ defmodule ZanshinApi.Analytics do
     """
   end
 
+  defp throughput_trend_query do
+    """
+    MATCH (e:DomainEvent)-[:APPLIES_TO]->(m:Match)
+    WHERE m.tournament_id = $tournament_id
+      AND ($division_id IS NULL OR m.division_id = $division_id)
+      AND ($from IS NULL OR e.occurred_at >= datetime($from))
+      AND ($to IS NULL OR e.occurred_at <= datetime($to))
+    WITH datetime.truncate('hour', e.occurred_at) AS bucket_start, e
+    RETURN
+      bucket_start AS bucket_start,
+      count(e) AS total_events,
+      sum(CASE WHEN e.type = 'match.transitioned' THEN 1 ELSE 0 END) AS transition_events,
+      sum(CASE WHEN e.type = 'match.score_recorded' THEN 1 ELSE 0 END) AS score_events
+    ORDER BY bucket_start ASC
+    LIMIT 48
+    """
+  end
+
+  defp top_active_matches_query do
+    """
+    MATCH (e:DomainEvent)-[:APPLIES_TO]->(m:Match)
+    WHERE m.tournament_id = $tournament_id
+      AND ($division_id IS NULL OR m.division_id = $division_id)
+      AND ($from IS NULL OR e.occurred_at >= datetime($from))
+      AND ($to IS NULL OR e.occurred_at <= datetime($to))
+    RETURN m.id AS match_id, count(e) AS event_count
+    ORDER BY event_count DESC, match_id ASC
+    LIMIT 5
+    """
+  end
+
+  defp actor_role_activity_query do
+    """
+    MATCH (e:DomainEvent)-[:APPLIES_TO]->(m:Match)
+    WHERE m.tournament_id = $tournament_id
+      AND ($division_id IS NULL OR m.division_id = $division_id)
+      AND ($from IS NULL OR e.occurred_at >= datetime($from))
+      AND ($to IS NULL OR e.occurred_at <= datetime($to))
+    RETURN coalesce(e.actor_role, 'unknown') AS actor_role, count(e) AS event_count
+    ORDER BY event_count DESC, actor_role ASC
+    LIMIT 10
+    """
+  end
+
   defp cypher_params(filters) do
     %{
       tournament_id: filters.tournament_id,
@@ -303,6 +423,56 @@ defmodule ZanshinApi.Analytics do
          data_source: "neo4j",
          events: events
        }}
+    end
+  end
+
+  defp throughput_trend_from_neo4j(filters) do
+    neo4j_client = default_neo4j_client()
+    params = cypher_params(filters)
+
+    with {:ok, rows} <-
+           neo4j_client.query(throughput_trend_query(), params, query_timeout_ms: 10_000) do
+      {:ok,
+       Enum.map(rows, fn row ->
+         %{
+           bucket_start: normalize_datetime(row["bucket_start"]),
+           total_events: to_int(row["total_events"]),
+           transition_events: to_int(row["transition_events"]),
+           score_events: to_int(row["score_events"])
+         }
+       end)}
+    end
+  end
+
+  defp top_active_matches_from_neo4j(filters) do
+    neo4j_client = default_neo4j_client()
+    params = cypher_params(filters)
+
+    with {:ok, rows} <-
+           neo4j_client.query(top_active_matches_query(), params, query_timeout_ms: 10_000) do
+      {:ok,
+       Enum.map(rows, fn row ->
+         %{
+           match_id: row["match_id"],
+           event_count: to_int(row["event_count"])
+         }
+       end)}
+    end
+  end
+
+  defp actor_role_activity_from_neo4j(filters) do
+    neo4j_client = default_neo4j_client()
+    params = cypher_params(filters)
+
+    with {:ok, rows} <-
+           neo4j_client.query(actor_role_activity_query(), params, query_timeout_ms: 10_000) do
+      {:ok,
+       Enum.map(rows, fn row ->
+         %{
+           actor_role: row["actor_role"] || "unknown",
+           event_count: to_int(row["event_count"])
+         }
+       end)}
     end
   end
 
@@ -401,6 +571,67 @@ defmodule ZanshinApi.Analytics do
     }
   end
 
+  defp throughput_trend_from_postgres(filters) do
+    scoped_domain_events_without_pagination(filters)
+    |> group_by([event], fragment("date_trunc('hour', ?)", event.occurred_at))
+    |> select([event], %{
+      bucket_start: fragment("date_trunc('hour', ?)", event.occurred_at),
+      total_events: count(event.id),
+      transition_events:
+        sum(
+          fragment(
+            "CASE WHEN ? = 'match.transitioned' THEN 1 ELSE 0 END",
+            event.event_type
+          )
+        ),
+      score_events:
+        sum(
+          fragment(
+            "CASE WHEN ? = 'match.score_recorded' THEN 1 ELSE 0 END",
+            event.event_type
+          )
+        )
+    })
+    |> order_by([event], asc: fragment("date_trunc('hour', ?)", event.occurred_at))
+    |> limit(48)
+    |> Repo.all()
+    |> Enum.map(fn row ->
+      %{
+        bucket_start: normalize_datetime(row.bucket_start),
+        total_events: to_int(row.total_events),
+        transition_events: to_int(row.transition_events),
+        score_events: to_int(row.score_events)
+      }
+    end)
+  end
+
+  defp top_active_matches_from_postgres(filters) do
+    scoped_domain_events_without_pagination(filters)
+    |> group_by([event], event.aggregate_id)
+    |> select([event], %{match_id: event.aggregate_id, event_count: count(event.id)})
+    |> order_by([event], desc: count(event.id), asc: event.aggregate_id)
+    |> limit(5)
+    |> Repo.all()
+    |> Enum.map(fn row ->
+      %{match_id: row.match_id, event_count: to_int(row.event_count)}
+    end)
+  end
+
+  defp actor_role_activity_from_postgres(filters) do
+    scoped_domain_events_without_pagination(filters)
+    |> group_by([event], event.actor_role)
+    |> select([event], %{actor_role: event.actor_role, event_count: count(event.id)})
+    |> order_by([event], desc: count(event.id), asc: event.actor_role)
+    |> limit(10)
+    |> Repo.all()
+    |> Enum.map(fn row ->
+      %{
+        actor_role: row.actor_role || "unknown",
+        event_count: to_int(row.event_count)
+      }
+    end)
+  end
+
   defp to_int(value) when is_integer(value), do: value
   defp to_int(value) when is_float(value), do: trunc(value)
 
@@ -412,6 +643,14 @@ defmodule ZanshinApi.Analytics do
   end
 
   defp to_int(_), do: 0
+
+  defp normalize_datetime(%DateTime{} = datetime), do: DateTime.to_iso8601(datetime)
+
+  defp normalize_datetime(%NaiveDateTime{} = datetime),
+    do: NaiveDateTime.to_iso8601(datetime) <> "Z"
+
+  defp normalize_datetime(value) when is_binary(value), do: value
+  defp normalize_datetime(value), do: to_string(value)
 
   defp analytics_summary_source do
     Application.get_env(:zanshin_api, :analytics_summary_source, :postgres)
@@ -468,6 +707,15 @@ defmodule ZanshinApi.Analytics do
     |> order_by([event], asc: event.inserted_at)
     |> limit(^filters.limit)
     |> offset(^filters.offset)
+  end
+
+  defp scoped_domain_events_without_pagination(filters) do
+    DomainEvent
+    |> where([event], event.aggregate_type == "match")
+    |> where([event], fragment("?->>'tournament_id' = ?", event.payload, ^filters.tournament_id))
+    |> maybe_filter_division(filters.division_id)
+    |> maybe_filter_from(filters.from)
+    |> maybe_filter_to(filters.to)
   end
 
   defp maybe_filter_division(query, nil), do: query

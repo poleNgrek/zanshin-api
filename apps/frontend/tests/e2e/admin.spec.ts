@@ -7,6 +7,41 @@ test("admin console route renders", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Admin Console" })).toBeVisible();
 });
 
+test("admin analytics route renders overview with mocked API", async ({ page }) => {
+  await page.route("**/api/v1/tournaments", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ data: [fixtureData.tournament] })
+    });
+  });
+
+  await page.route("**/api/v1/divisions**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ data: [fixtureData.division] })
+    });
+  });
+
+  await page.route("**/api/v1/analytics/dashboard/overview**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ data: fixtureData.analyticsOverview })
+    });
+  });
+
+  await page.goto("/admin/analytics");
+  await expect(page.getByRole("heading", { name: "Analytics Dashboard" })).toBeVisible();
+  await expect(page.getByText("Data source: neo4j")).toBeVisible();
+  await expect(page.getByText("Total Events")).toBeVisible();
+  await expect(page.getByText("Transition Events")).toBeVisible();
+  await expect(page.getByText("Score Events")).toBeVisible();
+  await expect(page.getByText("Top Active Matches")).toBeVisible();
+  await expect(page.getByText("Actor Role Activity")).toBeVisible();
+});
+
 test("admin tournaments route supports create flow with mocked API", async ({ page }) => {
   const tournaments = [{ ...fixtureData.tournament }];
 
@@ -192,5 +227,5 @@ test("admin grading results route supports create, compute and finalize", async 
   expect(computeCalled).toBeTruthy();
   expect(finalizeCalled).toBeTruthy();
 
-  await expect(page.getByText(fixtureIds.gradingResult)).toBeVisible();
+  await expect(page.getByText(fixtureIds.gradingResult).first()).toBeVisible();
 });

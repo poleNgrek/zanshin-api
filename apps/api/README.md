@@ -198,9 +198,15 @@ First analytics slices now exist in API:
   - `GET /api/v1/analytics/matches/summary`
   - `GET /api/v1/analytics/events/feed`
   - `GET /api/v1/analytics/matches/state_overview`
+  - `GET /api/v1/analytics/dashboard/overview`
   - required query param: `tournament_id`
   - optional filters: `division_id`, `from`, `to`, `limit`, `offset`
   - response includes `data_source` (`postgres`, `neo4j`, `postgres_fallback`)
+  - `dashboard/overview` includes consolidated sections:
+    - summary KPIs + event-type breakdown
+    - state overview
+    - recent event feed
+    - insights (`throughput_trend`, `top_active_matches`, `actor_role_activity`)
 
 ### Bolt Adapter Basics (Learning Notes)
 

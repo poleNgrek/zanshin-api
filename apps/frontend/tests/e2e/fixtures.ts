@@ -69,5 +69,52 @@ export const fixtureData = {
     shiro_competitor_id: fixtureIds.competitorTwo,
     state: "scheduled",
     inserted_at: "2026-04-21T09:44:00Z"
+  },
+  analyticsOverview: {
+    scope: {
+      tournament_id: fixtureIds.tournament,
+      division_id: fixtureIds.division,
+      from: null,
+      to: null
+    },
+    data_source: "neo4j",
+    summary: {
+      kpis: {
+        total_events: 4,
+        transition_events: 3,
+        score_events: 1
+      },
+      event_type_breakdown: [
+        { event_type: "match.transitioned", count: 3 },
+        { event_type: "match.score_recorded", count: 1 }
+      ]
+    },
+    state_overview: {
+      state_counts: [
+        { state: "ready", count: 1 },
+        { state: "ongoing", count: 1 }
+      ]
+    },
+    insights: {
+      throughput_trend: [
+        {
+          bucket_start: "2026-04-21T10:00:00Z",
+          total_events: 4,
+          transition_events: 3,
+          score_events: 1
+        }
+      ],
+      top_active_matches: [{ match_id: fixtureIds.match, event_count: 4 }],
+      actor_role_activity: [{ actor_role: "admin", event_count: 4 }]
+    },
+    recent_events: [
+      {
+        event_id: "4726f343-f254-4efa-8130-f9856c699d0f",
+        event_type: "match.transitioned",
+        aggregate_id: fixtureIds.match,
+        occurred_at: "2026-04-21T10:01:00Z",
+        payload: { to_state: "ongoing" }
+      }
+    ]
   }
 };

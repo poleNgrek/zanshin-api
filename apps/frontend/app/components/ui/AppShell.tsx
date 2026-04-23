@@ -38,6 +38,9 @@ export function AppShell({ children }: PropsWithChildren) {
               <Button component={NavLink} to="/admin/tournaments" color="inherit">
                 Tournaments
               </Button>
+              <Button component={NavLink} to="/admin/analytics" color="inherit">
+                Analytics
+              </Button>
               <Button component={NavLink} to="/admin/competitors" color="inherit">
                 Competitors
               </Button>

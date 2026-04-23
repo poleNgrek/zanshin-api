@@ -183,6 +183,73 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
+  /api/v1/analytics/dashboard/overview:
+    get:
+      tags: [Analytics]
+      summary: Read consolidated analytics dashboard payload
+      description: |
+        Returns summary KPIs, match-state overview, recent event feed, and insight slices
+        (`throughput_trend`, `top_active_matches`, `actor_role_activity`) for the scoped filters.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: query
+          name: tournament_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: division_id
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: from
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: to
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+        - in: query
+          name: offset
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          $ref: "#/components/responses/Ok"
+        "400":
+          description: Missing required filter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          description: Invalid filter values
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
   /api/v1/tournaments:
     get:
       tags: [Tournaments]
