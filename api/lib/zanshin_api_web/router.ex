@@ -66,6 +66,7 @@ defmodule ZanshinApiWeb.Router do
     get "/analytics/events/feed", AnalyticsDashboardController, :event_feed
     get "/analytics/matches/state_overview", AnalyticsDashboardController, :match_state_overview
     get "/analytics/dashboard/overview", AnalyticsDashboardController, :dashboard_overview
+    get "/realtime/matches/stream", RealtimeEventsController, :match_stream
     post "/matches", MatchController, :create
     post "/matches/:id/transition", MatchStateController, :transition
     post "/matches/:id/score", MatchScoreController, :create

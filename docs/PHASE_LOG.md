@@ -902,7 +902,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ### Increment 2 Execution - Wave 3.1 Realtime Match Event Broadcasts (Channels)
 
-- **Status:** `in_progress`
+- **Status:** `completed`
 - **Goal:** start Wave 3 by enabling realtime match/timer/score updates over Phoenix Channels.
 - **Done in workspace:**
   - Added websocket/channel wiring:
@@ -924,11 +924,17 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - `api/test/zanshin_api_web/channels/match_channel_test.exs`
   - Updated Gherkin controller regression matrix:
     - `api/test/features/controller_regression_coverage.feature`
+  - Added SSE fallback endpoint for non-websocket clients:
+    - `GET /api/v1/realtime/matches/stream`
+    - returns `text/event-stream` with `match_events_snapshot` payload scoped by `tournament_id`
+    - supports `since_id` and `limit` query params for incremental polling/reconnect flows
+  - Added controller coverage for SSE fallback:
+    - `api/test/zanshin_api_web/controllers/realtime_events_controller_test.exs`
 - **Verification:**
   - `cd api && mix test test/zanshin_api_web/channels/match_channel_test.exs`
-  - `cd api && mix test` (9 scenarios, 106 tests, 0 failures)
-- **Next pickup (same wave):**
-  - Add SSE fallback endpoint for non-websocket clients.
+  - `cd api && mix test test/zanshin_api_web/controllers/realtime_events_controller_test.exs`
+  - `cd api && mix test` (9 scenarios, 109 tests, 0 failures)
+- **Next pickup (next wave):**
   - Extend realtime coverage for admin operations and frontend live-state flows.
 
 ---
