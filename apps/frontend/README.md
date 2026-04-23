@@ -65,6 +65,18 @@ Open:
 - Frontend: `http://localhost:3000`
 - API docs: `http://localhost:4000/api/docs`
 
+## Consumer vs Admin Views
+
+- Consumer routes:
+  - `/` dashboard
+  - `/matches` read-only match list
+- Admin routes:
+  - `/admin` console
+  - `/admin/tournaments`
+  - `/admin/competitors`
+  - `/admin/gradings/results`
+- Write operations require a bearer token saved via the header token input.
+
 ## Auth Token in UI
 
 Write endpoints require authentication.

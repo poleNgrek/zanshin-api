@@ -5,10 +5,10 @@ export default function IndexRoute() {
     <Stack spacing={2}>
       <Box>
         <Typography variant="h4" component="h1" gutterBottom>
-          Tournament Operations Dashboard
+          Tournament Dashboard
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Phase 3 foundation is active. Use the navigation bar to access tournaments and grading flows.
+          Use Consumer navigation for read-only match views and Admin navigation for management workflows.
         </Typography>
       </Box>
       <Stack direction={{ xs: "column", md: "row" }} spacing={2}>

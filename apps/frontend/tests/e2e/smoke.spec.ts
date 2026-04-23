@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("homepage renders dashboard heading", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Tournament Operations Dashboard" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tournament Dashboard" })).toBeVisible();
 });
 
 test("tournaments page renders seeded tournaments from API", async ({ page }) => {
@@ -208,4 +208,70 @@ test("grading results page loads session and result data", async ({ page }) => {
   await expect(page.getByText("Kenshi One")).toBeVisible();
   await page.getByRole("button", { name: "Load Results" }).click();
   await expect(page.getByText("4dan - pending")).toBeVisible();
+});
+
+test("matches page renders consumer match list", async ({ page }) => {
+  await page.route("**/api/v1/matches", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: [
+          {
+            id: "b06e1842-c8ef-49f6-bbd5-d22f0dd96078",
+            tournament_id: "d4499989-6f77-4466-9c47-5205156f0ed6",
+            division_id: "9583d485-a8f6-4918-b8ca-a89b5838c7ac",
+            aka_competitor_id: "22f36686-cc3a-478c-a5a1-7a58faec1e9f",
+            shiro_competitor_id: "cad9d450-e970-48f7-abcc-b494a9532474",
+            state: "scheduled",
+            inserted_at: "2026-04-21T09:44:00Z"
+          }
+        ]
+      })
+    });
+  });
+
+  await page.route("**/api/v1/tournaments", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: [{ id: "d4499989-6f77-4466-9c47-5205156f0ed6", name: "Spring Cup", starts_on: null }]
+      })
+    });
+  });
+
+  await page.route("**/api/v1/divisions**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: [
+          {
+            id: "9583d485-a8f6-4918-b8ca-a89b5838c7ac",
+            tournament_id: "d4499989-6f77-4466-9c47-5205156f0ed6",
+            name: "Adult Individual",
+            format: "bracket"
+          }
+        ]
+      })
+    });
+  });
+
+  await page.route("**/api/v1/competitors", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: [
+          { id: "22f36686-cc3a-478c-a5a1-7a58faec1e9f", display_name: "Kenshi One" },
+          { id: "cad9d450-e970-48f7-abcc-b494a9532474", display_name: "Kenshi Two" }
+        ]
+      })
+    });
+  });
+
+  await page.goto("/matches");
+  await expect(page.getByRole("heading", { name: "Match List" })).toBeVisible();
+  await expect(page.getByText("Kenshi One vs Kenshi Two - scheduled")).toBeVisible();
 });

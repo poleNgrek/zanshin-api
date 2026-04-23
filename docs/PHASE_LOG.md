@@ -338,7 +338,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ## Phase 3 - Frontend Foundation
 
-- **Status:** `in_progress`
+- **Status:** `done`
 - **Goal:** scaffold React + TypeScript frontend with API integration and Playwright baseline.
 
 ### Increment 3.0 - Frontend Scaffold (Bun + Remix SPA + TS + MUI + Zod)
@@ -429,6 +429,30 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - `bun run lint` passed
     - `bun run test` passed (6 tests, 0 failures)
     - `bun run test:e2e` passed (3 tests, 0 failures)
+
+### Increment 3.5 - Consumer/Admin Split and Match List Closure
+
+- **Status:** `done`
+- **Goal:** close remaining Phase 3 scope by separating consumer/admin views and shipping an initial consumer match-list screen.
+- **Done in workspace:**
+  - Added consumer match list route (`/matches`) with:
+    - typed match schema/model (`app/lib/schemas/matches.ts`)
+    - tournament/division filter controls
+    - competitor name resolution and read-only match state listing
+  - Introduced explicit view separation in navigation:
+    - consumer links (`/`, `/matches`)
+    - admin links (`/admin`, `/admin/tournaments`, `/admin/competitors`, `/admin/gradings/results`)
+  - Added admin-prefixed route wrappers while keeping existing admin pages reusable.
+  - Extended tests for closure scope:
+    - schema parsing test for match list envelope
+    - Playwright consumer smoke test for `/matches`
+  - Cleaned leftover one-off compose `api_run` containers to normalize local dev environment.
+- **Verification:**
+  - Frontend verification passed in local Bun runtime:
+    - `bun run typecheck` passed
+    - `bun run lint` passed
+    - `bun run test` passed (7 tests, 0 failures)
+    - `bun run test:e2e` passed (4 tests, 0 failures)
 
 ---
 

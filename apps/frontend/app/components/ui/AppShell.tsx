@@ -15,25 +15,41 @@ export function AppShell({ children }: PropsWithChildren) {
     <Box sx={{ minHeight: "100vh", backgroundColor: "#f7f8fa" }}>
       <AppBar position="static" elevation={0} color="primary">
         <Toolbar sx={{ display: "flex", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
-          <Typography variant="h6">Zanshin Admin</Typography>
-          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-            <Button component={NavLink} to="/" color="inherit">
-              Dashboard
-            </Button>
-            <Button component={NavLink} to="/tournaments" color="inherit">
-              Tournaments
-            </Button>
-            <Button component={NavLink} to="/competitors" color="inherit">
-              Competitors
-            </Button>
-            <Button component={NavLink} to="/gradings/results" color="inherit">
-              Grading Results
-            </Button>
+          <Typography variant="h6">Zanshin</Typography>
+          <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", alignItems: "center" }}>
+            <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", alignItems: "center" }}>
+              <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                Consumer
+              </Typography>
+              <Button component={NavLink} to="/" color="inherit">
+                Dashboard
+              </Button>
+              <Button component={NavLink} to="/matches" color="inherit">
+                Matches
+              </Button>
+            </Stack>
+            <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", alignItems: "center" }}>
+              <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                Admin
+              </Typography>
+              <Button component={NavLink} to="/admin" color="inherit">
+                Console
+              </Button>
+              <Button component={NavLink} to="/admin/tournaments" color="inherit">
+                Tournaments
+              </Button>
+              <Button component={NavLink} to="/admin/competitors" color="inherit">
+                Competitors
+              </Button>
+              <Button component={NavLink} to="/admin/gradings/results" color="inherit">
+                Grading Results
+              </Button>
+            </Stack>
           </Stack>
           <Stack direction="row" spacing={1} sx={{ minWidth: 340 }}>
             <TextField
               size="small"
-              placeholder="Bearer token"
+              placeholder="Admin bearer token"
               value={token}
               onChange={(e) => setToken(e.target.value)}
               fullWidth
@@ -44,7 +60,7 @@ export function AppShell({ children }: PropsWithChildren) {
               }}
             />
             <Button variant="contained" color="secondary" onClick={saveToken}>
-              Save Token
+              Save Admin Token
             </Button>
           </Stack>
         </Toolbar>

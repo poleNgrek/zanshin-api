@@ -144,6 +144,8 @@ See `docs/IMPLEMENTATION_GUIDE.md` for the detailed approach.
 3. Start local dependencies:
    - `docker compose up -d postgres neo4j`
 4. In later phases, run API/frontend apps and verify primary flow:
+   - Open consumer match list view (`/matches`)
+   - Open admin console (`/admin`) and admin workflows
    - Create tournament
    - Start/pause/resume/complete match
    - Record score and verify role constraints
