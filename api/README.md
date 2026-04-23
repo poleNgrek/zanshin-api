@@ -179,6 +179,11 @@ GitHub Actions CI runs from `.github/workflows/ci.yml` and currently validates:
 - Gherkin-style API scenarios can live in:
   - `test/features/*.feature`
   - executed by ExUnit test modules that parse scenarios from `test/support/gherkin.ex`
+  - coverage matrices:
+    - `test/features/controller_regression_coverage.feature`
+    - `test/features/domain_regression_coverage.feature`
+  - parity guard:
+    - `test/zanshin_api/gherkin_coverage_catalog_test.exs` ensures ExUnit test names stay mirrored in Gherkin matrices
   - run only those scenarios with: `mix test --only gherkin`
 
 ## Domain Event Envelope (Outbox-Ready)

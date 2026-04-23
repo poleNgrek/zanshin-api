@@ -18,3 +18,7 @@ alwaysApply: true
 - Test success, error, and edge states (not just happy paths).
 - Keep tests deterministic; avoid hidden inter-test coupling and timing flakiness.
 - Update test docs/commands in `README.md` when introducing new test suites.
+- Keep Gherkin coverage in sync with ExUnit test cases:
+  - API controller test names must be represented in `api/test/features/controller_regression_coverage.feature`.
+  - API domain/context test names must be represented in `api/test/features/domain_regression_coverage.feature`.
+  - When adding/renaming/removing API tests, update the corresponding feature coverage matrix in the same change.

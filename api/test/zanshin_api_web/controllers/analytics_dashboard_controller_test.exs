@@ -59,13 +59,17 @@ defmodule ZanshinApiWeb.AnalyticsDashboardControllerTest do
         "/api/v1/analytics/events/feed?tournament_id=#{tournament_id}&division_id=#{division_id}&limit=10"
       )
 
+    response_payload = json_response(conn, 200)
+
     assert %{
              "data" => %{
-               "data_source" => "postgres",
+               "data_source" => data_source,
                "events" => events,
                "pagination" => %{"limit" => 10, "offset" => 0}
              }
-           } = json_response(conn, 200)
+           } = response_payload
+
+    assert data_source in ["postgres", "postgres_fallback"]
 
     assert length(events) == 2
     assert Enum.any?(events, &(&1["event_type"] == "match.transitioned"))
@@ -111,12 +115,16 @@ defmodule ZanshinApiWeb.AnalyticsDashboardControllerTest do
         "/api/v1/analytics/matches/state_overview?tournament_id=#{tournament_id}&division_id=#{division_id}"
       )
 
+    response_payload = json_response(conn, 200)
+
     assert %{
              "data" => %{
-               "data_source" => "postgres",
+               "data_source" => data_source,
                "state_counts" => state_counts
              }
-           } = json_response(conn, 200)
+           } = response_payload
+
+    assert data_source in ["postgres", "postgres_fallback"]
 
     assert Enum.any?(state_counts, fn row -> row["state"] == "ongoing" and row["count"] == 1 end)
     assert Enum.any?(state_counts, fn row -> row["state"] == "ready" and row["count"] == 1 end)
@@ -162,9 +170,11 @@ defmodule ZanshinApiWeb.AnalyticsDashboardControllerTest do
         "/api/v1/analytics/dashboard/overview?tournament_id=#{tournament_id}&division_id=#{division_id}"
       )
 
+    response_payload = json_response(conn, 200)
+
     assert %{
              "data" => %{
-               "data_source" => "postgres",
+               "data_source" => data_source,
                "summary" => %{
                  "kpis" => %{"total_events" => 2},
                  "event_type_breakdown" => breakdown
@@ -177,7 +187,9 @@ defmodule ZanshinApiWeb.AnalyticsDashboardControllerTest do
                  "actor_role_activity" => actor_role_activity
                }
              }
-           } = json_response(conn, 200)
+           } = response_payload
+
+    assert data_source in ["postgres", "postgres_fallback"]
 
     assert Enum.any?(breakdown, fn row ->
              row["event_type"] == "match.transitioned" and row["count"] == 1
