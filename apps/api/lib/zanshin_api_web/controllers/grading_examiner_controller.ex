@@ -22,7 +22,10 @@ defmodule ZanshinApiWeb.GradingExaminerController do
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> json(%{error: "invalid_grading_examiner_payload", details: changeset_errors(changeset)})
+        |> json(%{
+          error: "invalid_grading_examiner_payload",
+          details: changeset_errors(changeset)
+        })
     end
   end
 

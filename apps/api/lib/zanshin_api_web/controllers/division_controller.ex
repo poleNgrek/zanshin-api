@@ -4,9 +4,17 @@ defmodule ZanshinApiWeb.DivisionController do
   alias ZanshinApi.Competitions
   alias ZanshinApi.Competitions.Division
 
-  def index(conn, %{"tournament_id" => tournament_id}) do
-    data = Competitions.list_divisions_by_tournament(tournament_id) |> Enum.map(&serialize/1)
-    json(conn, %{data: data})
+  def index(conn, params) do
+    case Map.get(params, "tournament_id") do
+      nil ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{error: "tournament_id_required"})
+
+      tournament_id ->
+        data = Competitions.list_divisions_by_tournament(tournament_id) |> Enum.map(&serialize/1)
+        json(conn, %{data: data})
+    end
   end
 
   def create(conn, params) do

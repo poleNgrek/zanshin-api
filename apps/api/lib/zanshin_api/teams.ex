@@ -32,11 +32,13 @@ defmodule ZanshinApi.Teams do
   end
 
   def create_team_match(attrs) do
-    attrs = with_team_match_outcome(attrs)
+    with :ok <- ensure_team_match_invariants(attrs) do
+      attrs = with_team_match_outcome(attrs)
 
-    %TeamMatch{}
-    |> TeamMatch.changeset(attrs)
-    |> Repo.insert()
+      %TeamMatch{}
+      |> TeamMatch.changeset(attrs)
+      |> Repo.insert()
+    end
   end
 
   def list_team_matches_by_division(division_id) do
@@ -76,6 +78,52 @@ defmodule ZanshinApi.Teams do
       |> Map.put("loser_team_id", loser_id)
     else
       attrs
+    end
+  end
+
+  defp ensure_team_match_invariants(attrs) do
+    division_id = Map.get(attrs, "division_id") || Map.get(attrs, :division_id)
+    team_a_id = Map.get(attrs, "team_a_id") || Map.get(attrs, :team_a_id)
+    team_b_id = Map.get(attrs, "team_b_id") || Map.get(attrs, :team_b_id)
+
+    representative_winner_team_id =
+      Map.get(attrs, "representative_winner_team_id") ||
+        Map.get(attrs, :representative_winner_team_id)
+
+    with :ok <- ensure_team_in_division(team_a_id, division_id, :team_a_not_in_division),
+         :ok <- ensure_team_in_division(team_b_id, division_id, :team_b_not_in_division),
+         :ok <-
+           ensure_representative_winner_participates(
+             representative_winner_team_id,
+             team_a_id,
+             team_b_id
+           ) do
+      :ok
+    end
+  end
+
+  defp ensure_team_in_division(nil, _division_id, _error), do: :ok
+  defp ensure_team_in_division(_team_id, nil, _error), do: :ok
+
+  defp ensure_team_in_division(team_id, division_id, error) do
+    case Repo.get(Team, team_id) do
+      nil -> :ok
+      %Team{division_id: ^division_id} -> :ok
+      _ -> {:error, error}
+    end
+  end
+
+  defp ensure_representative_winner_participates(nil, _team_a_id, _team_b_id), do: :ok
+
+  defp ensure_representative_winner_participates(
+         representative_winner_team_id,
+         team_a_id,
+         team_b_id
+       ) do
+    if representative_winner_team_id in [team_a_id, team_b_id] do
+      :ok
+    else
+      {:error, :representative_winner_not_in_match}
     end
   end
 end

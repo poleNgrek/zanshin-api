@@ -5,7 +5,9 @@ defmodule ZanshinApi.Matches do
 
   import Ecto.Query, warn: false
   alias Ecto.Multi
+  alias ZanshinApi.Competitions.Division
   alias ZanshinApi.Competitions
+  alias ZanshinApi.Events
   alias ZanshinApi.Matches.{Match, MatchEvent, ScoreEvent, StateMachine}
   alias ZanshinApi.Repo
 
@@ -16,9 +18,11 @@ defmodule ZanshinApi.Matches do
 
   @spec create_match(map()) :: {:ok, Match.t()} | {:error, Ecto.Changeset.t()}
   def create_match(attrs) do
-    %Match{}
-    |> Match.create_changeset(attrs)
-    |> Repo.insert()
+    with :ok <- ensure_division_belongs_to_tournament(attrs) do
+      %Match{}
+      |> Match.create_changeset(attrs)
+      |> Repo.insert()
+    end
   end
 
   @spec get_match(Ecto.UUID.t()) :: Match.t() | nil
@@ -49,6 +53,24 @@ defmodule ZanshinApi.Matches do
           actor_role: role
         })
       end)
+      |> Multi.insert(:domain_event, fn %{match_event: match_event} ->
+        Events.new_domain_event_changeset(%{
+          event_type: "match.transitioned",
+          event_version: 1,
+          aggregate_type: "match",
+          aggregate_id: match.id,
+          occurred_at: DateTime.utc_now(),
+          actor_role: Atom.to_string(role),
+          source: "matches.transition_match",
+          causation_id: match_event.id,
+          payload: %{
+            event: Atom.to_string(event),
+            from_state: Atom.to_string(match.state),
+            to_state: Atom.to_string(new_state),
+            match_id: match.id
+          }
+        })
+      end)
       |> Repo.transaction()
       |> case do
         {:ok, %{match: updated_match}} -> {:ok, updated_match}
@@ -61,6 +83,28 @@ defmodule ZanshinApi.Matches do
     case Repo.get(Match, id) do
       nil -> {:error, :match_not_found}
       match -> {:ok, match}
+    end
+  end
+
+  defp ensure_division_belongs_to_tournament(attrs) do
+    division_id = Map.get(attrs, "division_id") || Map.get(attrs, :division_id)
+    tournament_id = Map.get(attrs, "tournament_id") || Map.get(attrs, :tournament_id)
+
+    cond do
+      is_nil(division_id) or is_nil(tournament_id) ->
+        :ok
+
+      true ->
+        case Repo.get(Division, division_id) do
+          nil ->
+            :ok
+
+          %Division{tournament_id: ^tournament_id} ->
+            :ok
+
+          _ ->
+            {:error, :division_not_in_tournament}
+        end
     end
   end
 
@@ -90,15 +134,40 @@ defmodule ZanshinApi.Matches do
          {:ok, match} <- fetch_match(match_id),
          :ok <- require_ongoing_match(match),
          :ok <- validate_target_rules(match, normalized_score_type, normalized_target) do
-      %ScoreEvent{}
-      |> ScoreEvent.changeset(%{
-        match_id: match.id,
-        score_type: normalized_score_type,
-        side: normalized_side,
-        target: normalized_target,
-        actor_role: role
-      })
-      |> Repo.insert()
+      Multi.new()
+      |> Multi.insert(:score_event, fn _ ->
+        ScoreEvent.changeset(%ScoreEvent{}, %{
+          match_id: match.id,
+          score_type: normalized_score_type,
+          side: normalized_side,
+          target: normalized_target,
+          actor_role: role
+        })
+      end)
+      |> Multi.insert(:domain_event, fn %{score_event: score_event} ->
+        Events.new_domain_event_changeset(%{
+          event_type: "match.score_recorded",
+          event_version: 1,
+          aggregate_type: "match",
+          aggregate_id: match.id,
+          occurred_at: DateTime.utc_now(),
+          actor_role: Atom.to_string(role),
+          source: "matches.record_score_event",
+          causation_id: score_event.id,
+          payload: %{
+            match_id: match.id,
+            score_event_id: score_event.id,
+            score_type: Atom.to_string(normalized_score_type),
+            side: Atom.to_string(normalized_side),
+            target: if(normalized_target, do: Atom.to_string(normalized_target), else: nil)
+          }
+        })
+      end)
+      |> Repo.transaction()
+      |> case do
+        {:ok, %{score_event: score_event}} -> {:ok, score_event}
+        {:error, _step, reason, _changes} -> {:error, reason}
+      end
     end
   end
 

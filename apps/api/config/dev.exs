@@ -10,8 +10,7 @@ config :zanshin_api, ZanshinApi.Repo,
 
 config :zanshin_api, ZanshinApiWeb.Endpoint,
   http: [
-    ip:
-      if(System.get_env("PHX_DOCKER") == "1", do: {0, 0, 0, 0}, else: {127, 0, 0, 1}),
+    ip: if(System.get_env("PHX_DOCKER") == "1", do: {0, 0, 0, 0}, else: {127, 0, 0, 1}),
     port: String.to_integer(System.get_env("PORT") || "4000")
   ],
   check_origin: false,

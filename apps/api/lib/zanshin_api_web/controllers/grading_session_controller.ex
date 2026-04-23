@@ -4,9 +4,17 @@ defmodule ZanshinApiWeb.GradingSessionController do
   alias ZanshinApi.Grading.GradingSession
   alias ZanshinApi.Gradings
 
-  def index(conn, %{"tournament_id" => tournament_id}) do
-    data = Gradings.list_sessions_by_tournament(tournament_id) |> Enum.map(&serialize/1)
-    json(conn, %{data: data})
+  def index(conn, params) do
+    case Map.get(params, "tournament_id") do
+      nil ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{error: "tournament_id_required"})
+
+      tournament_id ->
+        data = Gradings.list_sessions_by_tournament(tournament_id) |> Enum.map(&serialize/1)
+        json(conn, %{data: data})
+    end
   end
 
   def create(conn, params) do

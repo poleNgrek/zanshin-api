@@ -39,6 +39,9 @@ defmodule ZanshinApiWeb.GradingResultController do
       {:error, :grading_result_locked} ->
         conn |> put_status(:unprocessable_entity) |> json(%{error: "grading_result_locked"})
 
+      {:error, reason} when is_atom(reason) ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: Atom.to_string(reason)})
+
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
@@ -63,6 +66,9 @@ defmodule ZanshinApiWeb.GradingResultController do
 
       {:error, :grading_result_locked} ->
         conn |> put_status(:unprocessable_entity) |> json(%{error: "grading_result_locked"})
+
+      {:error, reason} when is_atom(reason) ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: Atom.to_string(reason)})
 
       {:error, changeset} ->
         conn
@@ -108,7 +114,10 @@ defmodule ZanshinApiWeb.GradingResultController do
       {:error, changeset} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> json(%{error: "invalid_grading_finalize_payload", details: changeset_errors(changeset)})
+        |> json(%{
+          error: "invalid_grading_finalize_payload",
+          details: changeset_errors(changeset)
+        })
     end
   end
 

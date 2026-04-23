@@ -2,6 +2,7 @@ defmodule ZanshinApiWeb.MatchControllerTest do
   use ZanshinApiWeb.ConnCase, async: true
 
   import ZanshinApi.AuthHelpers
+  import ZanshinApi.CompetitionsFixtures
   import ZanshinApi.MatchesFixtures
 
   test "POST /api/v1/matches creates a match for admin role", %{conn: conn} do
@@ -34,5 +35,25 @@ defmodule ZanshinApiWeb.MatchControllerTest do
 
     assert %{"data" => %{"id" => id, "state" => "scheduled"}} = json_response(conn, 200)
     assert id == match.id
+  end
+
+  test "POST /api/v1/matches rejects mismatched tournament and division", %{conn: conn} do
+    tournament = tournament_fixture(%{"name" => "Scoped Tournament"})
+    other_tournament = tournament_fixture(%{"name" => "Other Tournament"})
+    division = division_fixture(other_tournament)
+    aka = competitor_fixture()
+    shiro = competitor_fixture()
+
+    conn =
+      conn
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/matches", %{
+        "tournament_id" => tournament.id,
+        "division_id" => division.id,
+        "aka_competitor_id" => aka.id,
+        "shiro_competitor_id" => shiro.id
+      })
+
+    assert %{"error" => "division_not_in_tournament"} = json_response(conn, 422)
   end
 end

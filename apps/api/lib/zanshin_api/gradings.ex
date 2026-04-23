@@ -73,7 +73,8 @@ defmodule ZanshinApi.Gradings do
 
   def create_vote(result_id, attrs) do
     with {:ok, result} <- fetch_result(result_id),
-         :ok <- ensure_unlocked(result) do
+         :ok <- ensure_unlocked(result),
+         :ok <- ensure_examiner_assigned_to_result_session(result, attrs) do
       attrs = Map.put(attrs, "grading_result_id", result_id)
 
       %GradingVote{}
@@ -91,7 +92,8 @@ defmodule ZanshinApi.Gradings do
 
   def create_note(result_id, attrs) do
     with {:ok, result} <- fetch_result(result_id),
-         :ok <- ensure_unlocked(result) do
+         :ok <- ensure_unlocked(result),
+         :ok <- ensure_examiner_assigned_to_result_session(result, attrs) do
       attrs = Map.put(attrs, "grading_result_id", result_id)
 
       %GradingNote{}
@@ -262,6 +264,29 @@ defmodule ZanshinApi.Gradings do
     case Repo.get(GradingResult, result_id) do
       nil -> {:error, :grading_result_not_found}
       result -> {:ok, result}
+    end
+  end
+
+  defp ensure_examiner_assigned_to_result_session(%GradingResult{} = result, attrs) do
+    examiner_id = Map.get(attrs, "examiner_id") || Map.get(attrs, :examiner_id)
+
+    if is_nil(examiner_id) do
+      :ok
+    else
+      query =
+        GradingPanelAssignment
+        |> where(
+          [assignment],
+          assignment.grading_session_id == ^result.grading_session_id and
+            assignment.examiner_id == ^examiner_id
+        )
+        |> select([assignment], assignment.id)
+        |> limit(1)
+
+      case Repo.one(query) do
+        nil -> {:error, :examiner_not_assigned_to_session}
+        _ -> :ok
+      end
     end
   end
 

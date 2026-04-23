@@ -66,9 +66,18 @@ paths:
     get:
       tags: [Divisions]
       summary: List divisions
+      parameters:
+        - in: query
+          name: tournament_id
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
+        "400":
+          $ref: "#/components/responses/BadRequest"
     post:
       tags: [Divisions]
       summary: Create division
@@ -115,12 +124,15 @@ paths:
       parameters:
         - in: query
           name: division_id
+          required: true
           schema:
             type: string
             format: uuid
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
+        "400":
+          $ref: "#/components/responses/BadRequest"
     post:
       tags: [Divisions]
       summary: Create division stage
@@ -402,9 +414,18 @@ paths:
     get:
       tags: [Gradings]
       summary: List grading sessions
+      parameters:
+        - in: query
+          name: tournament_id
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
+        "400":
+          $ref: "#/components/responses/BadRequest"
     post:
       tags: [Gradings]
       summary: Create grading session
@@ -589,6 +610,12 @@ components:
             $ref: "#/components/schemas/ErrorEnvelope"
     NotFound:
       description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    BadRequest:
+      description: Missing or invalid request parameter
       content:
         application/json:
           schema:

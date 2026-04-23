@@ -2,6 +2,7 @@ defmodule ZanshinApi.MatchesTest do
   use ZanshinApi.DataCase, async: true
 
   alias ZanshinApi.Competitions
+  alias ZanshinApi.Events.DomainEvent
   alias ZanshinApi.Matches
   alias ZanshinApi.Matches.MatchEvent
   alias ZanshinApi.Repo
@@ -21,6 +22,22 @@ defmodule ZanshinApi.MatchesTest do
       assert {:error, changeset} = Matches.create_match(attrs)
       assert "must be different from aka competitor" in errors_on(changeset).shiro_competitor_id
     end
+
+    test "rejects when division does not belong to tournament" do
+      tournament_a = tournament_fixture(%{"name" => "Tournament A"})
+      tournament_b = tournament_fixture(%{"name" => "Tournament B"})
+      division_b = division_fixture(tournament_b, %{"name" => "Division B"})
+      aka = competitor_fixture()
+      shiro = competitor_fixture()
+
+      assert {:error, :division_not_in_tournament} =
+               Matches.create_match(%{
+                 "tournament_id" => tournament_a.id,
+                 "division_id" => division_b.id,
+                 "aka_competitor_id" => aka.id,
+                 "shiro_competitor_id" => shiro.id
+               })
+    end
   end
 
   describe "transition_match/3" do
@@ -38,6 +55,20 @@ defmodule ZanshinApi.MatchesTest do
                to_state: :ready,
                actor_role: :admin
              } = event
+
+      domain_event =
+        Repo.one!(
+          from e in DomainEvent,
+            where: e.aggregate_type == "match" and e.aggregate_id == ^updated.id,
+            order_by: [asc: e.inserted_at],
+            limit: 1
+        )
+
+      assert domain_event.event_type == "match.transitioned"
+      assert domain_event.payload["event"] == "prepare"
+      assert domain_event.payload["from_state"] == "scheduled"
+      assert domain_event.payload["to_state"] == "ready"
+      assert domain_event.causation_id == event.id
     end
 
     test "rejects unauthorized role action" do
@@ -59,6 +90,22 @@ defmodule ZanshinApi.MatchesTest do
       assert score_event.side == :aka
       assert score_event.actor_role == :shinpan
       assert score_event.target == :men
+
+      domain_event =
+        Repo.one!(
+          from e in DomainEvent,
+            where:
+              e.aggregate_type == "match" and e.aggregate_id == ^match.id and
+                e.event_type == "match.score_recorded",
+            order_by: [desc: e.inserted_at],
+            limit: 1
+        )
+
+      assert domain_event.payload["score_event_id"] == score_event.id
+      assert domain_event.payload["score_type"] == "ippon"
+      assert domain_event.payload["side"] == "aka"
+      assert domain_event.payload["target"] == "men"
+      assert domain_event.causation_id == score_event.id
     end
 
     test "rejects scoring when match is not ongoing" do

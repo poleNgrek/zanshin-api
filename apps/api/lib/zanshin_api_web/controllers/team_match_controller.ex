@@ -19,10 +19,15 @@ defmodule ZanshinApiWeb.TeamMatchController do
       {:error, :forbidden} ->
         conn |> put_status(:forbidden) |> json(%{error: "forbidden"})
 
-      {:error, changeset} ->
+      {:error, %Ecto.Changeset{} = changeset} ->
         conn
         |> put_status(:unprocessable_entity)
         |> json(%{error: "invalid_team_match_payload", details: changeset_errors(changeset)})
+
+      {:error, reason} when is_atom(reason) ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: Atom.to_string(reason)})
     end
   end
 

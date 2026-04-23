@@ -102,4 +102,68 @@ defmodule ZanshinApiWeb.GradingControllerTest do
 
     assert %{"error" => "grading_result_locked"} = json_response(conn, 422)
   end
+
+  test "grading vote rejects examiner not assigned to result session", %{conn: conn} do
+    tournament = tournament_fixture()
+    competitor = competitor_fixture()
+
+    conn =
+      conn
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/sessions", %{
+        "tournament_id" => tournament.id,
+        "name" => "Session One"
+      })
+
+    assert %{"data" => %{"id" => session_id}} = json_response(conn, 201)
+
+    conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/sessions", %{
+        "tournament_id" => tournament.id,
+        "name" => "Session Two"
+      })
+
+    assert %{"data" => %{"id" => other_session_id}} = json_response(conn, 201)
+
+    conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/examiners", %{
+        "display_name" => "Detached Examiner",
+        "grade" => "6dan"
+      })
+
+    assert %{"data" => %{"id" => examiner_id}} = json_response(conn, 201)
+
+    _assignment_conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/sessions/#{other_session_id}/panel_assignments", %{
+        "examiner_id" => examiner_id,
+        "role" => "member"
+      })
+
+    conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/sessions/#{session_id}/results", %{
+        "competitor_id" => competitor.id,
+        "target_grade" => "4dan"
+      })
+
+    assert %{"data" => %{"id" => result_id}} = json_response(conn, 201)
+
+    conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/results/#{result_id}/votes", %{
+        "examiner_id" => examiner_id,
+        "part" => "jitsugi",
+        "decision" => "pass"
+      })
+
+    assert %{"error" => "examiner_not_assigned_to_session"} = json_response(conn, 422)
+  end
 end

@@ -33,4 +33,9 @@ defmodule ZanshinApiWeb.DivisionStageControllerTest do
     assert first["stage_type"] == "round_robin"
     assert second["stage_type"] == "knockout"
   end
+
+  test "GET /api/v1/division_stages requires division_id query param", %{conn: conn} do
+    conn = get(conn, "/api/v1/division_stages")
+    assert %{"error" => "division_id_required"} = json_response(conn, 400)
+  end
 end

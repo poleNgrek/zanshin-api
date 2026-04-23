@@ -143,4 +143,42 @@ defmodule ZanshinApi.GradingsTest do
     fresh = Repo.get!(GradingResult, finalized.id)
     assert fresh.final_result == :pass
   end
+
+  test "create_vote/2 rejects examiner not assigned to the result session" do
+    tournament = tournament_fixture()
+    competitor = competitor_fixture()
+
+    {:ok, session} =
+      Gradings.create_session(%{
+        "tournament_id" => tournament.id,
+        "name" => "Session One"
+      })
+
+    {:ok, other_session} =
+      Gradings.create_session(%{
+        "tournament_id" => tournament.id,
+        "name" => "Session Two"
+      })
+
+    {:ok, examiner} = Gradings.create_examiner(%{"display_name" => "Detached Examiner"})
+
+    {:ok, _assignment} =
+      Gradings.assign_examiner_to_session(other_session.id, %{
+        "examiner_id" => examiner.id,
+        "role" => "member"
+      })
+
+    {:ok, result} =
+      Gradings.create_result(session.id, %{
+        "competitor_id" => competitor.id,
+        "target_grade" => "3dan"
+      })
+
+    assert {:error, :examiner_not_assigned_to_session} =
+             Gradings.create_vote(result.id, %{
+               "examiner_id" => examiner.id,
+               "part" => "jitsugi",
+               "decision" => "pass"
+             })
+  end
 end
