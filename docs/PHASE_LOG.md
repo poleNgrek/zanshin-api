@@ -713,7 +713,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ### Increment 2 Execution - Wave 1.1 Idempotency Keys on Command Endpoints
 
-- **Status:** `in_progress`
+- **Status:** `completed`
 - **Goal:** start Wave 1 reliability work by making core command retries safe and deterministic.
 - **Done in workspace:**
   - Added persisted idempotency storage:
@@ -740,11 +740,10 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
   - `cd api && mix test` (89 tests, 0 failures)
 - **Next pickup (same increment):**
   - Continue Wave 1 with standardized pagination contracts for list endpoints.
-  - Add projection replay/drift tests for analytics worker flows.
 
 ### Increment 2 Execution - Wave 1.2 Standardized Pagination Contracts
 
-- **Status:** `in_progress`
+- **Status:** `completed`
 - **Goal:** normalize list endpoint contracts around explicit `limit`/`offset` handling and response metadata.
 - **Done in workspace:**
   - Added shared pagination helper:
@@ -772,6 +771,29 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
   - `cd api && mix test` (96 tests, 0 failures)
 - **Next pickup (same increment):**
   - Complete Wave 1 with projection replay/drift tests for analytics worker flows.
+
+### Increment 2 Execution - Wave 1.3 Projection Replay/Drift Coverage
+
+- **Status:** `completed`
+- **Goal:** lock down analytics projection reliability with explicit replay/idempotency and checkpoint-drift safeguards.
+- **Done in workspace:**
+  - Added replay/drift coverage in worker tests:
+    - `api/test/zanshin_api/analytics/workers/neo4j_projection_worker_test.exs`
+    - verifies second replay pass is idempotent when no unprocessed events remain
+    - verifies stale replay candidates do not regress checkpoint position after newer events are projected
+  - Hardened worker checkpoint advancement:
+    - `api/lib/zanshin_api/analytics/workers/neo4j_projection_worker.ex`
+    - checkpoint update now skips stale events older than the current checkpoint watermark
+  - Stabilized analytics fallback BDD scenario execution:
+    - `api/test/features/analytics_fallback_test.exs` runs non-async to avoid global analytics source race conditions
+  - Updated domain regression Gherkin matrix:
+    - `api/test/features/domain_regression_coverage.feature`
+- **Verification:**
+  - `cd api && mix test test/zanshin_api/analytics/workers/neo4j_projection_worker_test.exs test/features/analytics_fallback_test.exs`
+  - `cd api && mix test` (9 scenarios, 97 tests, 0 failures)
+- **Wave 1 completion:**
+  - Wave 1 reliability foundations are now complete (`idempotency`, `pagination`, `projection replay/drift`).
+  - Next increment focus can move to Wave 2 core domain architecture.
 
 ### Increment 2 Execution - Post-Wave Follow-up (Planned) Cabbage BDD Migration
 

@@ -220,6 +220,110 @@ defmodule ZanshinApi.Analytics.Workers.Neo4jProjectionWorkerTest do
       checkpoint = Analytics.get_projection_checkpoint(projection_name)
       assert checkpoint.last_event_id == second_event.id
     end
+
+    test "second replay pass is idempotent when no events remain" do
+      projection_name = "neo4j_projection_replay_idempotent_test"
+      match_id = Ecto.UUID.generate()
+
+      assert {:ok, event} =
+               create_domain_event(%{
+                 event_type: "match.transitioned",
+                 aggregate_id: match_id,
+                 payload: %{
+                   "event" => "prepare",
+                   "from_state" => "scheduled",
+                   "to_state" => "ready",
+                   "match_id" => match_id
+                 }
+               })
+
+      event_id = event.id
+
+      assert {:ok, 1} =
+               Neo4jProjectionWorker.run_once(
+                 projection_name: projection_name,
+                 projector: OrderedProjector,
+                 projector_options: [notify_pid: self()]
+               )
+
+      assert_receive {:ordered_projection_call, ^event_id, "match.transitioned"}
+
+      assert {:ok, 0} =
+               Neo4jProjectionWorker.run_once(
+                 projection_name: projection_name,
+                 projector: OrderedProjector,
+                 projector_options: [notify_pid: self()]
+               )
+
+      refute_receive {:ordered_projection_call, _, _}
+    end
+
+    test "replayed stale event does not regress checkpoint after newer projection" do
+      projection_name = "neo4j_projection_drift_guard_test"
+      match_id = Ecto.UUID.generate()
+
+      assert {:ok, first_event} =
+               create_domain_event(%{
+                 event_type: "match.transitioned",
+                 aggregate_id: match_id,
+                 payload: %{
+                   "event" => "prepare",
+                   "from_state" => "scheduled",
+                   "to_state" => "ready",
+                   "match_id" => match_id
+                 }
+               })
+
+      Process.sleep(1_100)
+
+      assert {:ok, second_event} =
+               create_domain_event(%{
+                 event_type: "match.score_recorded",
+                 aggregate_id: match_id,
+                 payload: %{
+                   "match_id" => match_id,
+                   "score_event_id" => Ecto.UUID.generate(),
+                   "score_type" => "ippon",
+                   "side" => "aka",
+                   "target" => "men"
+                 }
+               })
+
+      first_event_id = first_event.id
+      second_event_id = second_event.id
+
+      assert {:ok, 2} =
+               Neo4jProjectionWorker.run_once(
+                 projection_name: projection_name,
+                 projector: OrderedProjector,
+                 projector_options: [notify_pid: self()]
+               )
+
+      assert_receive {:ordered_projection_call, ^first_event_id, "match.transitioned"}
+      assert_receive {:ordered_projection_call, ^second_event_id, "match.score_recorded"}
+
+      checkpoint_after_full_pass = Analytics.get_projection_checkpoint(projection_name)
+      assert checkpoint_after_full_pass.last_event_id == second_event.id
+
+      # Simulate a stale replay candidate by unmarking the older event as processed.
+      first_event
+      |> then(&Repo.get!(DomainEvent, &1.id))
+      |> Ecto.Changeset.change(processed_at: nil)
+      |> Repo.update!()
+
+      assert {:ok, 1} =
+               Neo4jProjectionWorker.run_once(
+                 projection_name: projection_name,
+                 projector: OrderedProjector,
+                 projector_options: [notify_pid: self()]
+               )
+
+      assert_receive {:ordered_projection_call, ^first_event_id, "match.transitioned"}
+
+      checkpoint_after_stale_replay = Analytics.get_projection_checkpoint(projection_name)
+      assert checkpoint_after_stale_replay.last_event_id == second_event.id
+      assert checkpoint_after_stale_replay.last_event_inserted_at == second_event.inserted_at
+    end
   end
 
   defp create_domain_event(attrs) do

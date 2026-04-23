@@ -46,3 +46,5 @@ Feature: API domain regression coverage
       | projection failure leaves event unprocessed and without checkpoint |
       | retry succeeds after transient projection failure |
       | projects events in insertion order and checkpoints last projected event |
+      | second replay pass is idempotent when no events remain |
+      | replayed stale event does not regress checkpoint after newer projection |

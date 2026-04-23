@@ -58,7 +58,7 @@ defmodule ZanshinApi.Analytics.Workers.Neo4jProjectionWorker do
         :ok ->
           with {:ok, _updated_event} <- state.events_module.mark_processed(event.id),
                {:ok, _checkpoint} <-
-                 state.analytics_module.upsert_checkpoint(state.projection_name, event) do
+                 maybe_advance_checkpoint(state.analytics_module, state.projection_name, event) do
             {:cont, {:ok, count + 1}}
           else
             {:error, reason} ->
@@ -69,6 +69,21 @@ defmodule ZanshinApi.Analytics.Workers.Neo4jProjectionWorker do
           {:halt, {:error, {:projection_failed, event.id, reason}}}
       end
     end)
+  end
+
+  defp maybe_advance_checkpoint(analytics_module, projection_name, event) do
+    case analytics_module.get_projection_checkpoint(projection_name) do
+      nil ->
+        analytics_module.upsert_checkpoint(projection_name, event)
+
+      checkpoint ->
+        last_inserted_at = checkpoint.last_event_inserted_at || ~U[1970-01-01 00:00:00Z]
+
+        case DateTime.compare(event.inserted_at, last_inserted_at) do
+          :lt -> {:ok, checkpoint}
+          _ -> analytics_module.upsert_checkpoint(projection_name, event)
+        end
+    end
   end
 
   defp schedule_next_run(interval_ms) do

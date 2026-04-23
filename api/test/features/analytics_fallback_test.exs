@@ -2,7 +2,7 @@ defmodule ZanshinApi.Features.AnalyticsFallbackTest do
   use ZanshinApi.TestSupport.Cabbage.Feature,
     file: "analytics_fallback.feature",
     template: ZanshinApiWeb.ConnCase,
-    async: true
+    async: false
 
   alias ZanshinApi.TestSupport.Cabbage.Helpers
   import_feature(ZanshinApi.TestSupport.Cabbage.AnalyticsSteps)
