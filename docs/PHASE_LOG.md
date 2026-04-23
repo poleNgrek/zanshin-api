@@ -837,6 +837,38 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
   - Implement explicit bracket graph model (`round/slot/link`) with traversal/ordering tests.
   - Implement shiaijo/shinpan scheduling assignment model with conflict checks.
 
+### Increment 2 Execution - Wave 2.2 Explicit Bracket Graph Model
+
+- **Status:** `in_progress`
+- **Goal:** replace insertion-order assumptions with explicit bracket graph nodes and links.
+- **Done in workspace:**
+  - Added explicit bracket graph persistence:
+    - migration `api/priv/repo/migrations/20260423143000_create_bracket_graph_models.exs`
+    - schemas:
+      - `api/lib/zanshin_api/competitions/bracket_round.ex`
+      - `api/lib/zanshin_api/competitions/bracket_slot.ex`
+      - `api/lib/zanshin_api/competitions/bracket_link.ex`
+  - Wired division association to bracket rounds:
+    - `api/lib/zanshin_api/competitions/division.ex`
+  - Added bracket graph context operations:
+    - `create_bracket_round/1`
+    - `list_bracket_rounds/1`
+    - `create_bracket_slot/1`
+    - `list_bracket_slots/1`
+    - `create_bracket_link/1`
+    - `list_bracket_links_from/1`
+    - `bracket_traversal/1`
+  - Added domain coverage:
+    - `bracket graph model stores ordered rounds slots and links`
+    - `bracket_traversal/1 returns graph envelope for division`
+  - Updated domain Gherkin parity matrix:
+    - `api/test/features/domain_regression_coverage.feature`
+- **Verification:**
+  - `cd api && mix test test/zanshin_api/competitions_test.exs`
+  - `cd api && mix test` (9 scenarios, 101 tests, 0 failures)
+- **Next pickup (same wave):**
+  - Implement shiaijo/shinpan scheduling assignment model with conflict checks.
+
 ---
 
 ## Phase 5 - WordPress Plugin

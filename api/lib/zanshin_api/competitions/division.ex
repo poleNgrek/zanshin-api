@@ -15,6 +15,7 @@ defmodule ZanshinApi.Competitions.Division do
     belongs_to :tournament, ZanshinApi.Competitions.Tournament
     has_one :rules, ZanshinApi.Competitions.DivisionRule
     has_many :stages, ZanshinApi.Competitions.DivisionStage
+    has_many :bracket_rounds, ZanshinApi.Competitions.BracketRound
 
     timestamps(type: :utc_datetime)
   end

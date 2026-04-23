@@ -6,6 +6,9 @@ defmodule ZanshinApi.Competitions do
   import Ecto.Query, warn: false
 
   alias ZanshinApi.Competitions.{
+    BracketLink,
+    BracketRound,
+    BracketSlot,
     Competitor,
     Division,
     DivisionMedalResult,
@@ -196,6 +199,71 @@ defmodule ZanshinApi.Competitions do
     |> where([s], s.division_id == ^division_id)
     |> order_by([s], asc: s.sequence)
     |> Repo.all()
+  end
+
+  def create_bracket_round(attrs) do
+    %BracketRound{}
+    |> BracketRound.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def list_bracket_rounds(division_id) do
+    BracketRound
+    |> where([round], round.division_id == ^division_id)
+    |> order_by([round], asc: round.round_number)
+    |> Repo.all()
+  end
+
+  def create_bracket_slot(attrs) do
+    %BracketSlot{}
+    |> BracketSlot.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def list_bracket_slots(round_id) do
+    BracketSlot
+    |> where([slot], slot.round_id == ^round_id)
+    |> order_by([slot], asc: slot.slot_number)
+    |> Repo.all()
+  end
+
+  def create_bracket_link(attrs) do
+    %BracketLink{}
+    |> BracketLink.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def list_bracket_links_from(slot_id) do
+    BracketLink
+    |> where([link], link.from_slot_id == ^slot_id)
+    |> order_by([link], asc: link.inserted_at)
+    |> Repo.all()
+  end
+
+  def bracket_traversal(division_id) do
+    rounds = list_bracket_rounds(division_id)
+    round_ids = Enum.map(rounds, & &1.id)
+
+    slots =
+      BracketSlot
+      |> where([slot], slot.round_id in ^round_ids)
+      |> order_by([slot], asc: slot.round_id, asc: slot.slot_number)
+      |> Repo.all()
+
+    slot_ids = Enum.map(slots, & &1.id)
+
+    links =
+      BracketLink
+      |> where([link], link.from_slot_id in ^slot_ids or link.to_slot_id in ^slot_ids)
+      |> order_by([link], asc: link.inserted_at)
+      |> Repo.all()
+
+    {:ok,
+     %{
+       rounds: rounds,
+       slots: slots,
+       links: links
+     }}
   end
 
   def create_division_medal_result(attrs) do

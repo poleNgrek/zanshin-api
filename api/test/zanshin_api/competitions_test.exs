@@ -53,6 +53,101 @@ defmodule ZanshinApi.CompetitionsTest do
     assert Enum.map(result, & &1.id) == [s1.id, s2.id]
   end
 
+  test "bracket graph model stores ordered rounds slots and links" do
+    tournament = tournament_fixture()
+    division = division_fixture(tournament, %{"format" => "bracket"})
+
+    assert {:ok, round_1} =
+             Competitions.create_bracket_round(%{
+               "division_id" => division.id,
+               "round_number" => 1,
+               "label" => "Semifinals"
+             })
+
+    assert {:ok, round_2} =
+             Competitions.create_bracket_round(%{
+               "division_id" => division.id,
+               "round_number" => 2,
+               "label" => "Final"
+             })
+
+    assert {:ok, slot_1} =
+             Competitions.create_bracket_slot(%{"round_id" => round_1.id, "slot_number" => 1})
+
+    assert {:ok, slot_2} =
+             Competitions.create_bracket_slot(%{"round_id" => round_1.id, "slot_number" => 2})
+
+    assert {:ok, final_slot} =
+             Competitions.create_bracket_slot(%{"round_id" => round_2.id, "slot_number" => 1})
+
+    assert {:ok, _l1} =
+             Competitions.create_bracket_link(%{
+               "from_slot_id" => slot_1.id,
+               "to_slot_id" => final_slot.id,
+               "outcome" => "winner"
+             })
+
+    assert {:ok, _l2} =
+             Competitions.create_bracket_link(%{
+               "from_slot_id" => slot_2.id,
+               "to_slot_id" => final_slot.id,
+               "outcome" => "winner"
+             })
+
+    rounds = Competitions.list_bracket_rounds(division.id)
+    assert Enum.map(rounds, & &1.id) == [round_1.id, round_2.id]
+
+    round_1_slots = Competitions.list_bracket_slots(round_1.id)
+    assert Enum.map(round_1_slots, & &1.id) == [slot_1.id, slot_2.id]
+  end
+
+  test "bracket_traversal/1 returns graph envelope for division" do
+    tournament = tournament_fixture()
+    division = division_fixture(tournament, %{"format" => "bracket"})
+
+    {:ok, round_1} =
+      Competitions.create_bracket_round(%{
+        "division_id" => division.id,
+        "round_number" => 1,
+        "label" => "Semifinals"
+      })
+
+    {:ok, round_2} =
+      Competitions.create_bracket_round(%{
+        "division_id" => division.id,
+        "round_number" => 2,
+        "label" => "Final"
+      })
+
+    {:ok, slot_1} =
+      Competitions.create_bracket_slot(%{"round_id" => round_1.id, "slot_number" => 1})
+
+    {:ok, slot_2} =
+      Competitions.create_bracket_slot(%{"round_id" => round_1.id, "slot_number" => 2})
+
+    {:ok, final_slot} =
+      Competitions.create_bracket_slot(%{"round_id" => round_2.id, "slot_number" => 1})
+
+    {:ok, _link} =
+      Competitions.create_bracket_link(%{
+        "from_slot_id" => slot_1.id,
+        "to_slot_id" => final_slot.id,
+        "outcome" => "winner"
+      })
+
+    {:ok, _link2} =
+      Competitions.create_bracket_link(%{
+        "from_slot_id" => slot_2.id,
+        "to_slot_id" => final_slot.id,
+        "outcome" => "winner"
+      })
+
+    assert {:ok, graph} = Competitions.bracket_traversal(division.id)
+    assert Enum.map(graph.rounds, & &1.round_number) == [1, 2]
+    assert length(graph.slots) == 3
+    assert length(graph.links) == 2
+  end
+
   test "creates podium medals with two bronze entries and no fourth place" do
     tournament = tournament_fixture()
     division = division_fixture(tournament, %{"format" => "bracket"})
