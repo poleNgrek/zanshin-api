@@ -63,3 +63,6 @@ Feature: API controller regression coverage
       | POST /api/v1/division_medal_results enforces two bronze winners only |
       | POST /api/v1/division_special_awards creates fighting spirit award |
       | POST /api/v1/divisions/:id/compute_results computes podium from bracket results |
+      | joins tournament and match topics and receives transition realtime event |
+      | receives score realtime event on tournament topic |
+      | receives timer realtime event on match topic |

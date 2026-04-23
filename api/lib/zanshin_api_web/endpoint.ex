@@ -3,6 +3,10 @@ defmodule ZanshinApiWeb.Endpoint do
 
   @session_options [store: :cookie, key: "_zanshin_api_key", signing_salt: "zanshin-cookie-salt"]
 
+  socket "/socket", ZanshinApiWeb.UserSocket,
+    websocket: true,
+    longpoll: false
+
   plug Plug.Static,
     at: "/",
     from: :zanshin_api,

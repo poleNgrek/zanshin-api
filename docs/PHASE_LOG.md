@@ -900,6 +900,37 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
   - Wave 2 core domain architecture is now complete (`timer model`, `explicit bracket graph`, `scheduling assignments`).
   - Next increment focus can move to Wave 3 realtime + admin operations.
 
+### Increment 2 Execution - Wave 3.1 Realtime Match Event Broadcasts (Channels)
+
+- **Status:** `in_progress`
+- **Goal:** start Wave 3 by enabling realtime match/timer/score updates over Phoenix Channels.
+- **Done in workspace:**
+  - Added websocket/channel wiring:
+    - `api/lib/zanshin_api_web/user_socket.ex`
+    - `api/lib/zanshin_api_web/channels/match_channel.ex`
+    - `api/lib/zanshin_api_web/endpoint.ex` (`/socket`)
+  - Added realtime broadcasting from domain operations:
+    - `api/lib/zanshin_api/matches.ex`
+    - emits:
+      - `match_transitioned`
+      - `score_recorded`
+      - `timer_updated`
+    - fanout topics:
+      - `matches:all`
+      - `matches:tournament:<tournament_id>`
+      - `matches:match:<match_id>`
+  - Added channel test support:
+    - `api/test/support/channel_case.ex`
+    - `api/test/zanshin_api_web/channels/match_channel_test.exs`
+  - Updated Gherkin controller regression matrix:
+    - `api/test/features/controller_regression_coverage.feature`
+- **Verification:**
+  - `cd api && mix test test/zanshin_api_web/channels/match_channel_test.exs`
+  - `cd api && mix test` (9 scenarios, 106 tests, 0 failures)
+- **Next pickup (same wave):**
+  - Add SSE fallback endpoint for non-websocket clients.
+  - Extend realtime coverage for admin operations and frontend live-state flows.
+
 ---
 
 ## Phase 5 - WordPress Plugin

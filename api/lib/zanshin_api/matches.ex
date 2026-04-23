@@ -76,8 +76,26 @@ defmodule ZanshinApi.Matches do
       end)
       |> Repo.transaction()
       |> case do
-        {:ok, %{match: updated_match}} -> {:ok, updated_match}
-        {:error, _step, reason, _changes} -> {:error, reason}
+        {:ok, %{match: updated_match}} ->
+          broadcast_match_event(
+            "match_transitioned",
+            updated_match.id,
+            updated_match.tournament_id,
+            %{
+              match_id: updated_match.id,
+              tournament_id: updated_match.tournament_id,
+              division_id: updated_match.division_id,
+              event: Atom.to_string(event),
+              from_state: Atom.to_string(match.state),
+              to_state: Atom.to_string(updated_match.state),
+              actor_role: Atom.to_string(role)
+            }
+          )
+
+          {:ok, updated_match}
+
+        {:error, _step, reason, _changes} ->
+          {:error, reason}
       end
     end
   end
@@ -170,8 +188,27 @@ defmodule ZanshinApi.Matches do
       end)
       |> Repo.transaction()
       |> case do
-        {:ok, %{score_event: score_event}} -> {:ok, score_event}
-        {:error, _step, reason, _changes} -> {:error, reason}
+        {:ok, %{score_event: score_event}} ->
+          broadcast_match_event(
+            "score_recorded",
+            match.id,
+            match.tournament_id,
+            %{
+              match_id: match.id,
+              tournament_id: match.tournament_id,
+              division_id: match.division_id,
+              score_event_id: score_event.id,
+              score_type: Atom.to_string(score_event.score_type),
+              side: Atom.to_string(score_event.side),
+              target: if(score_event.target, do: Atom.to_string(score_event.target), else: nil),
+              actor_role: Atom.to_string(role)
+            }
+          )
+
+          {:ok, score_event}
+
+        {:error, _step, reason, _changes} ->
+          {:error, reason}
       end
     end
   end
@@ -301,8 +338,33 @@ defmodule ZanshinApi.Matches do
       end)
       |> Repo.transaction()
       |> case do
-        {:ok, %{timer: updated_timer}} -> {:ok, updated_timer}
-        {:error, _step, reason, _changes} -> {:error, reason}
+        {:ok, %{timer: updated_timer}} ->
+          case get_match(match_id) do
+            %Match{} = match ->
+              broadcast_match_event(
+                "timer_updated",
+                match.id,
+                match.tournament_id,
+                %{
+                  match_id: match.id,
+                  tournament_id: match.tournament_id,
+                  division_id: match.division_id,
+                  command: Atom.to_string(command),
+                  from_status: Atom.to_string(timer.status),
+                  to_status: Atom.to_string(updated_timer.status),
+                  elapsed_ms: updated_timer.elapsed_ms,
+                  actor_role: Atom.to_string(role)
+                }
+              )
+
+            _ ->
+              :ok
+          end
+
+          {:ok, updated_timer}
+
+        {:error, _step, reason, _changes} ->
+          {:error, reason}
       end
     end
   end
@@ -393,6 +455,14 @@ defmodule ZanshinApi.Matches do
     else
       {:ok, elapsed_ms + elapsed_delta_ms}
     end
+  end
+
+  defp broadcast_match_event(event_name, match_id, tournament_id, payload) do
+    payload = Map.put(payload, :occurred_at, DateTime.utc_now() |> DateTime.truncate(:second))
+
+    ZanshinApiWeb.Endpoint.broadcast("matches:all", event_name, payload)
+    ZanshinApiWeb.Endpoint.broadcast("matches:tournament:#{tournament_id}", event_name, payload)
+    ZanshinApiWeb.Endpoint.broadcast("matches:match:#{match_id}", event_name, payload)
   end
 
   defp require_ongoing_match(%Match{state: :ongoing}), do: :ok
