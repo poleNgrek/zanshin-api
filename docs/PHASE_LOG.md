@@ -458,7 +458,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ## Phase 4 - Analytics Foundation
 
-- **Status:** `in_progress`
+- **Status:** `done`
 - **Goal:** event projection pipeline and Neo4j integration for first analytics outputs.
 
 ### Increment 4.0 - Projection Pipeline Bootstrap
@@ -491,7 +491,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ### Increment 4.1 - Bolt Adapter + Analytics View Contract
 
-- **Status:** `in_progress`
+- **Status:** `done`
 - **Goal:** replace projection noop transport with Bolt runtime wiring and expose first analytics dashboard contract.
 - **Done in workspace:**
   - Implemented Bolt adapter:
@@ -545,25 +545,46 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ### Increment 4.3 - Dashboard-Focused Analytics Endpoints
 
-- **Status:** `in_progress`
+- **Status:** `done`
 - **Goal:** expose richer dashboard-oriented analytics reads beyond summary while keeping Neo4j-first behavior.
 - **Done in workspace:**
   - Added new authenticated analytics endpoints:
     - `GET /api/v1/analytics/events/feed`
     - `GET /api/v1/analytics/matches/state_overview`
+    - `GET /api/v1/analytics/dashboard/overview`
   - Added analytics read functions:
     - `dashboard_event_feed/1`
     - `match_state_overview/1`
+    - `dashboard_overview/1`
   - Implemented Neo4j-first read path with automatic Postgres fallback for the new contracts.
   - Added controller test coverage for both endpoints:
     - scoped feed results
     - grouped match-state overview
+    - consolidated dashboard overview payload
     - unauthorized access checks
-  - Updated OpenAPI and README docs to include the new dashboard routes.
+  - Updated OpenAPI docs to include the new dashboard routes.
+  - Added frontend admin analytics view (`/admin/analytics`) with:
+    - scope filters (tournament/division/from/to)
+    - KPI cards
+    - state overview table
+    - recent event feed table
+    - insights tables/widgets:
+      - throughput trend (hourly buckets)
+      - top active matches
+      - actor-role activity leaderboard
+  - Added frontend schema + E2E/validation coverage for the consolidated overview payload.
+- **Verification:**
+  - `cd apps/api && MIX_ENV=test mix test test/zanshin_api_web/controllers/analytics_dashboard_controller_test.exs`
+  - `cd apps/frontend && bun test tests/schemas.test.ts`
+  - `cd apps/frontend && bun run test:e2e -- --grep "admin analytics route|admin tournaments route supports create flow"`
+  - Final verification pass:
+    - `cd apps/api && MIX_ENV=test mix test` (84 tests, 0 failures)
+    - `cd apps/frontend && bun run test` (8 tests, 0 failures)
+    - `cd apps/frontend && bun run test:e2e` (9 passed, 1 skipped, 0 failures)
 
 ### Pre-Phase 4 Hardening Sweep (Moderate) - API/Frontend Readiness
 
-- **Status:** `in_progress`
+- **Status:** `done`
 - **Goal:** reduce analytics and integration risk by hardening contracts, invariants, fixtures, and CI before projection work begins.
 - **Done in workspace:**
   - Added deterministic fixture foundations:
