@@ -295,7 +295,7 @@ export default function TournamentsRoute() {
   }, [liveEnabled, selectedTournamentId]);
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2.5}>
       <PageTitle title="Tournaments" />
       {error ? <Alert severity="error">{error}</Alert> : null}
       <SectionCard title="Tournament Setup">
@@ -306,7 +306,7 @@ export default function TournamentsRoute() {
             {liveError ? ` - ${liveError}` : ""}
           </Alert>
 
-          <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
             <TextField label="Tournament name" value={name} onChange={(e) => setName(e.target.value)} fullWidth />
             <TextField
               type="date"
@@ -322,7 +322,7 @@ export default function TournamentsRoute() {
               label="Live Refresh"
               value={liveEnabled ? "on" : "off"}
               onChange={(e) => setLiveEnabled(e.target.value === "on")}
-              sx={{ minWidth: 160 }}
+              sx={{ minWidth: { md: 160 } }}
             >
               <MenuItem value="on">Enabled</MenuItem>
               <MenuItem value="off">Disabled</MenuItem>
@@ -340,11 +340,11 @@ export default function TournamentsRoute() {
         <InfoAlertList items={items.map((item) => ({ id: item.id, text: `${item.name} (${item.id})` }))} />
       </SectionCard>
 
-      <Typography variant="h5" sx={{ pt: 2 }}>
+      <Typography variant="h5" sx={{ pt: 1 }}>
         Division Setup
       </Typography>
       <SectionCard title="Division Setup">
-        <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ flexWrap: "wrap" }}>
+        <Stack direction={{ xs: "column", md: "row" }} spacing={1.25} sx={{ flexWrap: "wrap" }}>
           <TextField
             select
             label="Tournament"
@@ -382,11 +382,11 @@ export default function TournamentsRoute() {
         </Stack>
       </SectionCard>
 
-      <Typography variant="h5" sx={{ pt: 1 }}>
+      <Typography variant="h5" sx={{ pt: 0.5 }}>
         Grading Session Setup
       </Typography>
       <SectionCard title="Session Setup">
-        <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
+        <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
           <TextField label="Session name" value={sessionName} onChange={(e) => setSessionName(e.target.value)} fullWidth />
           <Button variant="contained" onClick={createSession} disabled={creatingSession || !selectedTournamentId}>
             {creatingSession ? "Creating..." : "Create Session"}

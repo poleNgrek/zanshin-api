@@ -18,7 +18,7 @@ export function SectionCard({ title, titleVariant = "h6", sx, children }: Sectio
         ...sx
       }}
     >
-      <CardContent>
+      <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
         <Typography variant={titleVariant} sx={{ mb: 1.25, fontWeight: 700 }}>
           {title}
         </Typography>

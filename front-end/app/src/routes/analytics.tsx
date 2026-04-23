@@ -1,4 +1,18 @@
-import { Alert, Button, Grid, MenuItem, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import {
+  Alert,
+  Button,
+  Grid,
+  MenuItem,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography
+} from "@mui/material";
 import { useLoaderData } from "@remix-run/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -196,8 +210,11 @@ export default function AnalyticsRoute() {
     setSelectedDivisionId(firstDivisionId);
   }
 
+  const headerCellSx = { fontWeight: 700, fontSize: 12, whiteSpace: "nowrap" } as const;
+  const bodyCellSx = { whiteSpace: "nowrap", fontSize: 13 } as const;
+
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2.5}>
       <PageTitle
         title="Analytics Dashboard"
         description="Consolidated view of event volume, lifecycle state mix, and recent match activity from projection-backed analytics."
@@ -213,7 +230,7 @@ export default function AnalyticsRoute() {
           </Alert>
           {tournaments.length === 0 ? <Alert severity="warning">No tournaments available yet.</Alert> : null}
 
-          <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
+          <Stack direction={{ xs: "column", lg: "row" }} spacing={1.25}>
             <TextField
               select
               label="Tournament"
@@ -255,7 +272,12 @@ export default function AnalyticsRoute() {
               onChange={(event) => setTo(event.target.value)}
               slotProps={{ inputLabel: { shrink: true } }}
             />
-            <Button variant="contained" onClick={() => void loadOverview()} disabled={!selectedTournamentId || loading}>
+            <Button
+              variant="contained"
+              onClick={() => void loadOverview()}
+              disabled={!selectedTournamentId || loading}
+              sx={{ minWidth: { lg: 112 } }}
+            >
               {loading ? "Loading..." : "Refresh"}
             </Button>
             <TextField
@@ -263,7 +285,7 @@ export default function AnalyticsRoute() {
               label="Live Refresh"
               value={liveEnabled ? "on" : "off"}
               onChange={(event) => setLiveEnabled(event.target.value === "on")}
-              sx={{ minWidth: 180 }}
+              sx={{ minWidth: { lg: 180 } }}
             >
               <MenuItem value="on">Enabled</MenuItem>
               <MenuItem value="off">Disabled</MenuItem>
@@ -321,26 +343,28 @@ export default function AnalyticsRoute() {
               {overview.insights.throughput_trend.length === 0 ? (
                 <Alert severity="info">No throughput trend data available in this scope.</Alert>
               ) : (
-                <Table size="small">
+                <TableContainer sx={{ overflowX: "auto" }}>
+                  <Table size="small" sx={{ minWidth: 560 }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Bucket Start</TableCell>
-                      <TableCell align="right">Total</TableCell>
-                      <TableCell align="right">Transitions</TableCell>
-                      <TableCell align="right">Scores</TableCell>
+                        <TableCell sx={headerCellSx}>Bucket Start</TableCell>
+                        <TableCell align="right" sx={headerCellSx}>Total</TableCell>
+                        <TableCell align="right" sx={headerCellSx}>Transitions</TableCell>
+                        <TableCell align="right" sx={headerCellSx}>Scores</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {overview.insights.throughput_trend.map((item) => (
                       <TableRow key={item.bucket_start}>
-                        <TableCell>{new Date(item.bucket_start).toLocaleString()}</TableCell>
-                        <TableCell align="right">{item.total_events}</TableCell>
-                        <TableCell align="right">{item.transition_events}</TableCell>
-                        <TableCell align="right">{item.score_events}</TableCell>
+                        <TableCell sx={bodyCellSx}>{new Date(item.bucket_start).toLocaleString()}</TableCell>
+                        <TableCell align="right" sx={bodyCellSx}>{item.total_events}</TableCell>
+                        <TableCell align="right" sx={bodyCellSx}>{item.transition_events}</TableCell>
+                        <TableCell align="right" sx={bodyCellSx}>{item.score_events}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+                </TableContainer>
               )}
           </SectionCard>
 
@@ -348,22 +372,24 @@ export default function AnalyticsRoute() {
               {overview.insights.top_active_matches.length === 0 ? (
                 <Alert severity="info">No match activity found in this scope.</Alert>
               ) : (
-                <Table size="small">
+                <TableContainer sx={{ overflowX: "auto" }}>
+                  <Table size="small" sx={{ minWidth: 420 }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Match ID</TableCell>
-                      <TableCell align="right">Event Count</TableCell>
+                      <TableCell sx={headerCellSx}>Match ID</TableCell>
+                      <TableCell align="right" sx={headerCellSx}>Event Count</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {overview.insights.top_active_matches.map((item) => (
                       <TableRow key={item.match_id}>
-                        <TableCell>{item.match_id}</TableCell>
-                        <TableCell align="right">{item.event_count}</TableCell>
+                        <TableCell sx={bodyCellSx}>{item.match_id}</TableCell>
+                        <TableCell align="right" sx={bodyCellSx}>{item.event_count}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+                </TableContainer>
               )}
           </SectionCard>
 
@@ -371,22 +397,24 @@ export default function AnalyticsRoute() {
               {overview.insights.actor_role_activity.length === 0 ? (
                 <Alert severity="info">No actor-role activity found in this scope.</Alert>
               ) : (
-                <Table size="small">
+                <TableContainer sx={{ overflowX: "auto" }}>
+                  <Table size="small" sx={{ minWidth: 360 }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Role</TableCell>
-                      <TableCell align="right">Event Count</TableCell>
+                      <TableCell sx={headerCellSx}>Role</TableCell>
+                      <TableCell align="right" sx={headerCellSx}>Event Count</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {overview.insights.actor_role_activity.map((item) => (
                       <TableRow key={item.actor_role}>
-                        <TableCell>{item.actor_role}</TableCell>
-                        <TableCell align="right">{item.event_count}</TableCell>
+                        <TableCell sx={bodyCellSx}>{item.actor_role}</TableCell>
+                        <TableCell align="right" sx={bodyCellSx}>{item.event_count}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+                </TableContainer>
               )}
           </SectionCard>
 
@@ -394,22 +422,24 @@ export default function AnalyticsRoute() {
               {overview.state_overview.state_counts.length === 0 ? (
                 <Alert severity="info">No state transitions in current scope.</Alert>
               ) : (
-                <Table size="small">
+                <TableContainer sx={{ overflowX: "auto" }}>
+                  <Table size="small" sx={{ minWidth: 320 }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell>State</TableCell>
-                      <TableCell align="right">Count</TableCell>
+                      <TableCell sx={headerCellSx}>State</TableCell>
+                      <TableCell align="right" sx={headerCellSx}>Count</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {overview.state_overview.state_counts.map((item) => (
                       <TableRow key={item.state}>
-                        <TableCell>{item.state}</TableCell>
-                        <TableCell align="right">{item.count}</TableCell>
+                        <TableCell sx={bodyCellSx}>{item.state}</TableCell>
+                        <TableCell align="right" sx={bodyCellSx}>{item.count}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+                </TableContainer>
               )}
           </SectionCard>
 
@@ -417,24 +447,26 @@ export default function AnalyticsRoute() {
               {overview.recent_events.length === 0 ? (
                 <Alert severity="info">No recent events in this filter range.</Alert>
               ) : (
-                <Table size="small">
+                <TableContainer sx={{ overflowX: "auto" }}>
+                  <Table size="small" sx={{ minWidth: 560 }}>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Occurred At</TableCell>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Aggregate</TableCell>
+                      <TableCell sx={headerCellSx}>Occurred At</TableCell>
+                      <TableCell sx={headerCellSx}>Type</TableCell>
+                      <TableCell sx={headerCellSx}>Aggregate</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {overview.recent_events.map((event) => (
                       <TableRow key={event.event_id}>
-                        <TableCell>{new Date(event.occurred_at).toLocaleString()}</TableCell>
-                        <TableCell>{event.event_type}</TableCell>
-                        <TableCell>{event.aggregate_id}</TableCell>
+                        <TableCell sx={bodyCellSx}>{new Date(event.occurred_at).toLocaleString()}</TableCell>
+                        <TableCell sx={bodyCellSx}>{event.event_type}</TableCell>
+                        <TableCell sx={bodyCellSx}>{event.aggregate_id}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+                </TableContainer>
               )}
           </SectionCard>
         </>

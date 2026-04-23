@@ -20,6 +20,8 @@ export function AppShell({ children }: PropsWithChildren) {
     textTransform: "none",
     borderRadius: 1.5,
     px: 1.25,
+    minHeight: 32,
+    fontSize: 13,
     "&[aria-current='page']": {
       backgroundColor: "rgba(255,255,255,0.18)"
     }
@@ -51,7 +53,7 @@ export function AppShell({ children }: PropsWithChildren) {
             <Typography variant="h6" sx={{ fontWeight: 700 }}>
               Zanshin
             </Typography>
-            <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", alignItems: "center" }}>
+            <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", alignItems: "center" }}>
               <Chip size="small" label="Consumer" color="secondary" />
               <Button component={NavLink} to="/" color="inherit" sx={navButtonSx}>
                 Dashboard
@@ -81,7 +83,7 @@ export function AppShell({ children }: PropsWithChildren) {
             <Typography variant="caption" sx={{ opacity: 0.9 }}>
               Admin auth token (stored only in this browser)
             </Typography>
-            <Stack direction="row" spacing={1}>
+            <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
               <TextField
                 size="small"
                 placeholder="Paste Bearer token"
@@ -91,13 +93,24 @@ export function AppShell({ children }: PropsWithChildren) {
                 sx={{
                   bgcolor: "white",
                   borderRadius: 1,
+                  minWidth: { md: 320 },
                   "& .MuiInputBase-input": { py: 0.75 }
                 }}
               />
-              <Button variant="contained" color="secondary" onClick={save_token} sx={{ textTransform: "none" }}>
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={save_token}
+                sx={{ textTransform: "none", minWidth: 84 }}
+              >
                 Save
               </Button>
-              <Button variant="outlined" color="inherit" onClick={clear_token} sx={{ textTransform: "none" }}>
+              <Button
+                variant="outlined"
+                color="inherit"
+                onClick={clear_token}
+                sx={{ textTransform: "none", minWidth: 84 }}
+              >
                 Clear
               </Button>
             </Stack>

@@ -145,7 +145,7 @@ export default function MatchesRoute() {
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={2.5}>
       <PageTitle title="Match List" description="Public consumer view of currently recorded matches." />
       <SectionCard title="Filters and Live Status">
         <Stack spacing={1.5}>
@@ -156,7 +156,7 @@ export default function MatchesRoute() {
             {liveError ? ` - ${liveError}` : ""}
           </Alert>
 
-          <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={1.25}>
             <TextField
               select
               label="Tournament"
@@ -190,7 +190,7 @@ export default function MatchesRoute() {
               label="Live Refresh"
               value={liveEnabled ? "on" : "off"}
               onChange={(event) => setLiveEnabled(event.target.value === "on")}
-              sx={{ minWidth: 220 }}
+              sx={{ minWidth: { md: 220 } }}
             >
               <MenuItem value="on">Enabled</MenuItem>
               <MenuItem value="off">Disabled</MenuItem>
