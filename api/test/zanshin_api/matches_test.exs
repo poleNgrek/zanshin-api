@@ -13,6 +13,19 @@ defmodule ZanshinApi.MatchesTest do
     test "creates a match with scheduled initial state" do
       assert {:ok, match} = Matches.create_match(valid_match_attrs())
       assert match.state == :scheduled
+
+      domain_event =
+        Repo.one!(
+          from e in DomainEvent,
+            where:
+              e.aggregate_type == "match" and e.aggregate_id == ^match.id and
+                e.event_type == "match.created",
+            order_by: [desc: e.inserted_at],
+            limit: 1
+        )
+
+      assert domain_event.payload["match_id"] == match.id
+      assert domain_event.payload["state"] == "scheduled"
     end
 
     test "rejects duplicate competitor assignment" do
@@ -59,7 +72,9 @@ defmodule ZanshinApi.MatchesTest do
       domain_event =
         Repo.one!(
           from e in DomainEvent,
-            where: e.aggregate_type == "match" and e.aggregate_id == ^updated.id,
+            where:
+              e.aggregate_type == "match" and e.aggregate_id == ^updated.id and
+                e.event_type == "match.transitioned",
             order_by: [asc: e.inserted_at],
             limit: 1
         )

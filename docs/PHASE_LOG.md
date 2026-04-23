@@ -1010,6 +1010,33 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 - **Next pickup (same wave family):**
   - Replace polling-triggered refresh with selective event-application in UI state for high-volume admin screens.
 
+### Increment 2 Execution - Wave 3.4 Selective Realtime Event Application
+
+- **Status:** `completed`
+- **Goal:** reduce refresh churn by applying realtime events directly to frontend state instead of reloading full datasets.
+- **Done in workspace:**
+  - Added `match.created` domain events on match creation:
+    - `api/lib/zanshin_api/matches.ex`
+    - payload now includes tournament/division/competitor IDs and state for UI reconstruction
+  - Added create-match domain event coverage:
+    - `api/test/zanshin_api/matches_test.exs`
+  - Added reusable frontend realtime reducers:
+    - `front-end/app/src/utils/realtime_updates.ts`
+    - `applyMatchRealtimeEvents` updates local match state from event payloads
+    - `applyEventsToAnalyticsOverview` incrementally updates KPIs, breakdowns, throughput, role activity, state counts, and recent events
+  - Switched live routes from full refetch to selective event application:
+    - `front-end/app/src/routes/matches.tsx`
+    - `front-end/app/src/routes/analytics.tsx`
+  - Added focused unit coverage for realtime reducer behavior:
+    - `front-end/tests/realtime-updates.test.ts`
+    - included in `front-end/package.json` `test:unit`
+- **Verification:**
+  - `cd api && mix test test/zanshin_api/matches_test.exs`
+  - `cd api && mix test` (9 scenarios, 112 tests, 0 failures)
+  - `cd front-end && bun run verify` (typecheck/lint/tests/depcheck all passing)
+- **Next pickup (same wave family):**
+  - Apply the same reducer-driven event model to admin pages currently using interval polling (`tournaments`, `gradings/results`, `competitors`).
+
 ---
 
 ## Phase 5 - WordPress Plugin

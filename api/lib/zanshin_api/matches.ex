@@ -20,22 +20,43 @@ defmodule ZanshinApi.Matches do
   @spec create_match(map()) :: {:ok, Match.t()} | {:error, Ecto.Changeset.t()}
   def create_match(attrs) do
     with :ok <- ensure_division_belongs_to_tournament(attrs) do
-      %Match{}
-      |> Match.create_changeset(attrs)
-      |> Repo.insert()
+      Multi.new()
+      |> Multi.insert(:match, Match.create_changeset(%Match{}, attrs))
+      |> Multi.insert(:domain_event, fn %{match: match} ->
+        Events.new_domain_event_changeset(%{
+          event_type: "match.created",
+          event_version: 1,
+          aggregate_type: "match",
+          aggregate_id: match.id,
+          occurred_at: DateTime.utc_now(),
+          actor_role: nil,
+          source: "matches.create_match",
+          payload: %{
+            match_id: match.id,
+            tournament_id: match.tournament_id,
+            division_id: match.division_id,
+            aka_competitor_id: match.aka_competitor_id,
+            shiro_competitor_id: match.shiro_competitor_id,
+            state: Atom.to_string(match.state)
+          }
+        })
+      end)
+      |> Repo.transaction()
       |> case do
-        {:ok, match} ->
+        {:ok, %{match: match}} ->
           broadcast_match_event("match_created", match.id, match.tournament_id, %{
             match_id: match.id,
             tournament_id: match.tournament_id,
             division_id: match.division_id,
+            aka_competitor_id: match.aka_competitor_id,
+            shiro_competitor_id: match.shiro_competitor_id,
             state: Atom.to_string(match.state)
           })
 
           {:ok, match}
 
-        error ->
-          error
+        {:error, _step, reason, _changes} ->
+          {:error, reason}
       end
     end
   end

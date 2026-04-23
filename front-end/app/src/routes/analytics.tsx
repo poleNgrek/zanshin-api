@@ -10,6 +10,7 @@ import {
     TournamentListResponseSchema
 } from "@zanshin/schemas";
 import { type AnalyticsOverview, type Division, type Tournament } from "@zanshin/types";
+import { applyEventsToAnalyticsOverview } from "@zanshin/utils/realtime_updates";
 
 type AnalyticsLoaderData = {
   tournaments: Tournament[];
@@ -87,6 +88,19 @@ export default function AnalyticsRoute() {
     return [...overview.insights.throughput_trend].sort((left, right) => right.total_events - left.total_events)[0];
   }, [overview]);
 
+  const toOptionalIso = useCallback((value: string): string => {
+    if (!value) {
+      return "";
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return "";
+    }
+
+    return parsed.toISOString();
+  }, []);
+
   const loadOverview = useCallback(async () => {
     if (!selectedTournamentId) {
       return;
@@ -141,7 +155,19 @@ export default function AnalyticsRoute() {
 
         if (snapshot.events.length > 0) {
           sinceIdRef.current = snapshot.events[snapshot.events.length - 1]?.id;
-          await loadOverview();
+          setOverview((currentOverview) => {
+            if (!currentOverview) {
+              return currentOverview;
+            }
+
+            return applyEventsToAnalyticsOverview(currentOverview, snapshot.events, {
+              divisionId: selectedDivisionId,
+              fromIso: toOptionalIso(from),
+              toIso: toOptionalIso(to)
+            });
+          });
+
+          setLastUpdatedAt(new Date());
         }
 
         setLiveError(null);
@@ -162,7 +188,7 @@ export default function AnalyticsRoute() {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [liveEnabled, loadOverview, selectedTournamentId]);
+  }, [from, liveEnabled, selectedDivisionId, selectedTournamentId, to, toOptionalIso]);
 
   function handleTournamentChange(nextTournamentId: string) {
     setSelectedTournamentId(nextTournamentId);

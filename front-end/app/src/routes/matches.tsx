@@ -11,6 +11,7 @@ import {
     TournamentListResponseSchema
 } from "@zanshin/schemas";
 import { type Competitor, type Division, type Match, type Tournament } from "@zanshin/types";
+import { applyMatchRealtimeEvents } from "@zanshin/utils/realtime_updates";
 
 type MatchLoaderData = {
   matches: Match[];
@@ -106,12 +107,8 @@ export default function MatchesRoute() {
 
         if (snapshot.events.length > 0) {
           sinceIdRef.current = snapshot.events[snapshot.events.length - 1]?.id;
-          const response = await fetchWithSchema("/api/v1/matches", MatchListResponseSchema);
-
-          if (!cancelled) {
-            setLiveMatches(response.data);
-            setLastUpdatedAt(new Date());
-          }
+          setLiveMatches((currentMatches) => applyMatchRealtimeEvents(currentMatches, snapshot.events));
+          setLastUpdatedAt(new Date());
         }
 
         setLiveError(null);

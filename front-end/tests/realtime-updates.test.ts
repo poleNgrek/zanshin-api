@@ -1,0 +1,108 @@
+import { describe, expect, test } from "bun:test";
+
+import { applyEventsToAnalyticsOverview, applyMatchRealtimeEvents } from "@zanshin/utils/realtime_updates";
+import type { AnalyticsOverview, Match, MatchRealtimeEvent } from "@zanshin/types";
+
+describe("applyMatchRealtimeEvents", () => {
+  test("updates match state from transition event", () => {
+    const matches: Match[] = [
+      {
+        id: "b06e1842-c8ef-49f6-bbd5-d22f0dd96078",
+        tournament_id: "d4499989-6f77-4466-9c47-5205156f0ed6",
+        division_id: "9583d485-a8f6-4918-b8ca-a89b5838c7ac",
+        aka_competitor_id: "22f36686-cc3a-478c-a5a1-7a58faec1e9f",
+        shiro_competitor_id: "cad9d450-e970-48f7-abcc-b494a9532474",
+        state: "ready",
+        inserted_at: "2026-04-21T09:44:00Z"
+      }
+    ];
+
+    const events: MatchRealtimeEvent[] = [
+      {
+        id: "4726f343-f254-4efa-8130-f9856c699d0f",
+        event_type: "match.transitioned",
+        aggregate_id: "b06e1842-c8ef-49f6-bbd5-d22f0dd96078",
+        occurred_at: "2026-04-21T10:01:00Z",
+        actor_role: "admin",
+        payload: {
+          match_id: "b06e1842-c8ef-49f6-bbd5-d22f0dd96078",
+          to_state: "ongoing"
+        }
+      }
+    ];
+
+    const next = applyMatchRealtimeEvents(matches, events);
+    expect(next[0]?.state).toBe("ongoing");
+  });
+});
+
+describe("applyEventsToAnalyticsOverview", () => {
+  test("increments KPIs and state overview for in-scope events", () => {
+    const overview: AnalyticsOverview = {
+      scope: {
+        tournament_id: "d4499989-6f77-4466-9c47-5205156f0ed6",
+        division_id: null,
+        from: null,
+        to: null
+      },
+      data_source: "neo4j",
+      summary: {
+        kpis: {
+          total_events: 3,
+          transition_events: 2,
+          score_events: 1
+        },
+        event_type_breakdown: [
+          { event_type: "match.transitioned", count: 2 },
+          { event_type: "match.score_recorded", count: 1 }
+        ]
+      },
+      state_overview: {
+        state_counts: [{ state: "ongoing", count: 1 }]
+      },
+      insights: {
+        throughput_trend: [
+          {
+            bucket_start: "2026-04-21T10:00:00.000Z",
+            total_events: 3,
+            transition_events: 2,
+            score_events: 1
+          }
+        ],
+        top_active_matches: [
+          {
+            match_id: "b06e1842-c8ef-49f6-bbd5-d22f0dd96078",
+            event_count: 3
+          }
+        ],
+        actor_role_activity: [{ actor_role: "admin", event_count: 3 }]
+      },
+      recent_events: []
+    };
+
+    const events: MatchRealtimeEvent[] = [
+      {
+        id: "3726f343-f254-4efa-8130-f9856c699d0f",
+        event_type: "match.transitioned",
+        aggregate_id: "b06e1842-c8ef-49f6-bbd5-d22f0dd96078",
+        occurred_at: "2026-04-21T10:15:00Z",
+        actor_role: "admin",
+        payload: {
+          division_id: "9583d485-a8f6-4918-b8ca-a89b5838c7ac",
+          to_state: "completed"
+        }
+      }
+    ];
+
+    const next = applyEventsToAnalyticsOverview(overview, events, {
+      divisionId: "",
+      fromIso: "",
+      toIso: ""
+    });
+
+    expect(next.summary.kpis.total_events).toBe(4);
+    expect(next.summary.kpis.transition_events).toBe(3);
+    expect(next.state_overview.state_counts.find((item) => item.state === "completed")?.count).toBe(1);
+    expect(next.recent_events.length).toBe(1);
+  });
+});
