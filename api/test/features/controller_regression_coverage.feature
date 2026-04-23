@@ -71,3 +71,4 @@ Feature: API controller regression coverage
       | GET /api/v1/realtime/matches/stream forbids non-admin |
       | joins admin tournament topic and receives tournament created event |
       | receives grading result finalized event on tournament topic |
+      | receives competitor created event on admin all topic |

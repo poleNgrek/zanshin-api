@@ -198,6 +198,18 @@ defmodule ZanshinApi.Competitions do
     %Competitor{}
     |> Competitor.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, competitor} ->
+        AdminBroadcaster.broadcast("admin_competitor_created", %{
+          competitor_id: competitor.id,
+          display_name: competitor.display_name
+        })
+
+        {:ok, competitor}
+
+      error ->
+        error
+    end
   end
 
   def list_competitors do

@@ -1,6 +1,6 @@
 import { Alert, Button, MenuItem, Stack, TextField } from "@mui/material";
 import { useLoaderData } from "@remix-run/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 
 import { ApiError, fetchWithSchema } from "@zanshin/api";
@@ -74,6 +74,9 @@ export default function GradingResultsRoute() {
   const [loadingResults, setLoadingResults] = useState(false);
   const [creatingResult, setCreatingResult] = useState(false);
   const [processingResultId, setProcessingResultId] = useState<string | null>(null);
+  const [liveEnabled, setLiveEnabled] = useState(true);
+  const [liveError, setLiveError] = useState<string | null>(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
   const CreateResultSchema = z.object({
     competitor_id: z.string().uuid("Please select a valid competitor"),
@@ -190,10 +193,69 @@ export default function GradingResultsRoute() {
     setResults([]);
   }
 
+  useEffect(() => {
+    if (!liveEnabled || !selectedTournamentId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function refreshLiveState() {
+      try {
+        const sessionsResponse = await fetchWithSchema(
+          `/api/v1/gradings/sessions?tournament_id=${encodeURIComponent(selectedTournamentId)}`,
+          GradingSessionListResponseSchema
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        setSessions(sessionsResponse.data);
+
+        if (selectedSessionId) {
+          const resultsResponse = await fetchWithSchema(
+            `/api/v1/gradings/sessions/${selectedSessionId}/results`,
+            GradingResultListResponseSchema
+          );
+
+          if (!cancelled) {
+            setResults(resultsResponse.data);
+          }
+        }
+
+        if (!cancelled) {
+          setLiveError(null);
+          setLastUpdatedAt(new Date());
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message = err instanceof ApiError ? err.message : "live_grading_results_refresh_failed";
+          setLiveError(message);
+        }
+      }
+    }
+
+    void refreshLiveState();
+    const interval = window.setInterval(() => {
+      void refreshLiveState();
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [liveEnabled, selectedSessionId, selectedTournamentId]);
+
   return (
     <Stack spacing={2}>
       <PageTitle title="Grading Results" />
       {error ? <Alert severity="error">{error}</Alert> : null}
+      <Alert severity={liveError ? "warning" : "info"}>
+        Live updates: {liveEnabled ? "on" : "off"}
+        {lastUpdatedAt ? ` - last sync ${lastUpdatedAt.toLocaleTimeString()}` : ""}
+        {liveError ? ` - ${liveError}` : ""}
+      </Alert>
 
       <Stack direction="row" spacing={1}>
         <TextField
@@ -225,6 +287,16 @@ export default function GradingResultsRoute() {
         <Button variant="contained" onClick={loadResults} disabled={!selectedSessionId}>
           Load Results
         </Button>
+        <TextField
+          select
+          label="Live Refresh"
+          value={liveEnabled ? "on" : "off"}
+          onChange={(e) => setLiveEnabled(e.target.value === "on")}
+          sx={{ minWidth: 160 }}
+        >
+          <MenuItem value="on">Enabled</MenuItem>
+          <MenuItem value="off">Disabled</MenuItem>
+        </TextField>
       </Stack>
 
       <Stack direction="row" spacing={1}>

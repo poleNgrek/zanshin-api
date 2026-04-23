@@ -57,4 +57,22 @@ defmodule ZanshinApiWeb.AdminChannelTest do
     assert grading_result_id == result.id
     assert socket.topic == "admin:tournament:#{tournament.id}"
   end
+
+  test "receives competitor created event on admin all topic" do
+    {:ok, _, socket} =
+      UserSocket
+      |> socket("admin-user-3", %{})
+      |> subscribe_and_join(AdminChannel, "admin:all")
+
+    assert {:ok, competitor} =
+             Competitions.create_competitor(%{"display_name" => "Realtime Competitor"})
+
+    assert_push "admin_competitor_created", %{
+      competitor_id: competitor_id,
+      display_name: "Realtime Competitor"
+    }
+
+    assert competitor_id == competitor.id
+    assert socket.topic == "admin:all"
+  end
 end

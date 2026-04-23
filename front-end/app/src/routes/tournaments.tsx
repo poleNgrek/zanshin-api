@@ -1,6 +1,6 @@
 import { Alert, Button, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useLoaderData } from "@remix-run/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 
 import { ApiError, fetchWithSchema } from "@zanshin/api";
@@ -66,6 +66,9 @@ export default function TournamentsRoute() {
   const [creatingTournament, setCreatingTournament] = useState(false);
   const [creatingDivision, setCreatingDivision] = useState(false);
   const [creatingSession, setCreatingSession] = useState(false);
+  const [liveEnabled, setLiveEnabled] = useState(true);
+  const [liveError, setLiveError] = useState<string | null>(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
 
   const CreateTournamentSchema = z.object({
     name: z.string().trim().min(3, "Tournament name must be at least 3 characters"),
@@ -233,10 +236,73 @@ export default function TournamentsRoute() {
     await Promise.all([loadDivisions(tournamentId), loadSessions(tournamentId)]);
   }
 
+  useEffect(() => {
+    if (!liveEnabled) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function refreshLiveState() {
+      try {
+        const tournamentsResponse = await fetchWithSchema("/api/v1/tournaments", TournamentListResponseSchema);
+
+        if (cancelled) {
+          return;
+        }
+
+        setItems(tournamentsResponse.data);
+
+        if (selectedTournamentId) {
+          const [divisionResponse, sessionResponse] = await Promise.all([
+            fetchWithSchema(
+              `/api/v1/divisions?tournament_id=${encodeURIComponent(selectedTournamentId)}`,
+              DivisionListResponseSchema
+            ),
+            fetchWithSchema(
+              `/api/v1/gradings/sessions?tournament_id=${encodeURIComponent(selectedTournamentId)}`,
+              GradingSessionListResponseSchema
+            )
+          ]);
+
+          if (!cancelled) {
+            setDivisions(divisionResponse.data);
+            setSessions(sessionResponse.data);
+          }
+        }
+
+        if (!cancelled) {
+          setLiveError(null);
+          setLastUpdatedAt(new Date());
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message = err instanceof ApiError ? err.message : "live_tournaments_refresh_failed";
+          setLiveError(message);
+        }
+      }
+    }
+
+    void refreshLiveState();
+    const interval = window.setInterval(() => {
+      void refreshLiveState();
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [liveEnabled, selectedTournamentId]);
+
   return (
     <Stack spacing={2}>
       <PageTitle title="Tournaments" />
       {error ? <Alert severity="error">{error}</Alert> : null}
+      <Alert severity={liveError ? "warning" : "info"}>
+        Live updates: {liveEnabled ? "on" : "off"}
+        {lastUpdatedAt ? ` - last sync ${lastUpdatedAt.toLocaleTimeString()}` : ""}
+        {liveError ? ` - ${liveError}` : ""}
+      </Alert>
 
       <Stack direction="row" spacing={1}>
         <TextField label="Tournament name" value={name} onChange={(e) => setName(e.target.value)} fullWidth />
@@ -249,6 +315,16 @@ export default function TournamentsRoute() {
         <Button variant="contained" onClick={createTournament} disabled={creatingTournament}>
           {creatingTournament ? "Creating..." : "Create"}
         </Button>
+        <TextField
+          select
+          label="Live Refresh"
+          value={liveEnabled ? "on" : "off"}
+          onChange={(e) => setLiveEnabled(e.target.value === "on")}
+          sx={{ minWidth: 160 }}
+        >
+          <MenuItem value="on">Enabled</MenuItem>
+          <MenuItem value="off">Disabled</MenuItem>
+        </TextField>
       </Stack>
 
       {loadingTournaments ? <Alert severity="info">Loading tournaments...</Alert> : null}

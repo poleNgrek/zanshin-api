@@ -979,6 +979,37 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 - **Next pickup (same wave family):**
   - Expand frontend admin realtime handling to gradings/tournaments list UIs with direct event-level UI mutations (beyond polling-triggered refresh).
 
+### Increment 2 Execution - Wave 3.3 Admin Live Refresh Expansion
+
+- **Status:** `completed`
+- **Goal:** remove remaining manual-refresh friction across admin tournament, grading-result, and competitor flows.
+- **Done in workspace:**
+  - Expanded backend admin event coverage:
+    - `Competitions.create_competitor/1` now emits `admin_competitor_created`
+    - `Gradings.create_examiner/1` emits `admin_grading_examiner_created`
+    - `Gradings.assign_examiner_to_session/2` emits `admin_grading_panel_assignment_created`
+    - `Gradings.create_vote/2` emits `admin_grading_vote_created`
+    - `Gradings.create_note/2` emits `admin_grading_note_created`
+  - Expanded admin channel test coverage:
+    - `api/test/zanshin_api_web/channels/admin_channel_test.exs`
+    - added assertion for competitor creation broadcast on `admin:all`
+  - Extended frontend live-state flows with periodic auto-refresh + operator controls:
+    - `front-end/app/src/routes/tournaments.tsx`
+    - `front-end/app/src/routes/gradings/results.tsx`
+    - `front-end/app/src/routes/competitors.tsx`
+    - each route now includes:
+      - `Live Refresh` enable/disable toggle
+      - last-sync timestamp indicator
+      - non-blocking live-refresh error status
+  - Updated controller regression matrix:
+    - `api/test/features/controller_regression_coverage.feature`
+- **Verification:**
+  - `cd api && mix test test/zanshin_api_web/channels/admin_channel_test.exs`
+  - `cd api && mix test` (9 scenarios, 112 tests, 0 failures)
+  - `cd front-end && bun run verify` (typecheck/lint/tests/depcheck all passing)
+- **Next pickup (same wave family):**
+  - Replace polling-triggered refresh with selective event-application in UI state for high-volume admin screens.
+
 ---
 
 ## Phase 5 - WordPress Plugin

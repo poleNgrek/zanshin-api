@@ -77,6 +77,18 @@ defmodule ZanshinApi.Gradings do
     %GradingExaminer{}
     |> GradingExaminer.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, examiner} ->
+        AdminBroadcaster.broadcast("admin_grading_examiner_created", %{
+          examiner_id: examiner.id,
+          display_name: examiner.display_name
+        })
+
+        {:ok, examiner}
+
+      error ->
+        error
+    end
   end
 
   def list_examiners do
@@ -91,6 +103,21 @@ defmodule ZanshinApi.Gradings do
     %GradingPanelAssignment{}
     |> GradingPanelAssignment.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, assignment} ->
+        with {:ok, session} <- fetch_session(assignment.grading_session_id) do
+          AdminBroadcaster.broadcast("admin_grading_panel_assignment_created", %{
+            tournament_id: session.tournament_id,
+            grading_session_id: session.id,
+            examiner_id: assignment.examiner_id
+          })
+        end
+
+        {:ok, assignment}
+
+      error ->
+        error
+    end
   end
 
   def list_panel_assignments(session_id) do
@@ -109,6 +136,22 @@ defmodule ZanshinApi.Gradings do
       %GradingVote{}
       |> GradingVote.changeset(attrs)
       |> Repo.insert()
+      |> case do
+        {:ok, vote} ->
+          with {:ok, session} <- fetch_session(result.grading_session_id) do
+            AdminBroadcaster.broadcast("admin_grading_vote_created", %{
+              tournament_id: session.tournament_id,
+              grading_session_id: session.id,
+              grading_result_id: vote.grading_result_id,
+              examiner_id: vote.examiner_id
+            })
+          end
+
+          {:ok, vote}
+
+        error ->
+          error
+      end
     end
   end
 
@@ -128,6 +171,22 @@ defmodule ZanshinApi.Gradings do
       %GradingNote{}
       |> GradingNote.changeset(attrs)
       |> Repo.insert()
+      |> case do
+        {:ok, note} ->
+          with {:ok, session} <- fetch_session(result.grading_session_id) do
+            AdminBroadcaster.broadcast("admin_grading_note_created", %{
+              tournament_id: session.tournament_id,
+              grading_session_id: session.id,
+              grading_result_id: note.grading_result_id,
+              examiner_id: note.examiner_id
+            })
+          end
+
+          {:ok, note}
+
+        error ->
+          error
+      end
     end
   end
 
