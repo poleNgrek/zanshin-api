@@ -188,6 +188,13 @@ Auth modes:
 - Default: OAuth/JWKS validation (`AUTH_MODE=oauth_jwks`)
 - Optional local fallback for development: `AUTH_MODE=legacy_hs256`
 
+CORS:
+
+- Local frontend origins are allowed by default:
+  - `http://localhost:3000`
+  - `http://127.0.0.1:3000`
+- Override with `CORS_ALLOWED_ORIGINS` (comma-separated).
+
 ## Next steps
 
 - Start Phase 3 frontend foundation in `apps/frontend` with Bun + Remix + TypeScript + MUI.
