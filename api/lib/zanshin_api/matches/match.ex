@@ -18,6 +18,7 @@ defmodule ZanshinApi.Matches.Match do
     field :state, Ecto.Enum, values: @states, default: :scheduled
     has_many :match_events, ZanshinApi.Matches.MatchEvent
     has_many :score_events, ZanshinApi.Matches.ScoreEvent
+    has_one :timer, ZanshinApi.Matches.Timer
 
     timestamps(type: :utc_datetime)
   end

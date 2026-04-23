@@ -48,3 +48,5 @@ Feature: API domain regression coverage
       | projects events in insertion order and checkpoints last projected event |
       | second replay pass is idempotent when no events remain |
       | replayed stale event does not regress checkpoint after newer projection |
+      | start pause resume and overtime commands produce auditable timer events |
+      | rejects invalid timer transitions and forbidden roles |

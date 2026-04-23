@@ -8,13 +8,14 @@ defmodule ZanshinApi.Matches do
   alias ZanshinApi.Competitions.Division
   alias ZanshinApi.Competitions
   alias ZanshinApi.Events
-  alias ZanshinApi.Matches.{Match, MatchEvent, ScoreEvent, StateMachine}
+  alias ZanshinApi.Matches.{Match, MatchEvent, ScoreEvent, StateMachine, Timer, TimerEvent}
   alias ZanshinApi.Repo
 
   @type actor_role :: :admin | :timekeeper | :shinpan
   @type score_type :: :ippon | :hansoku
   @type side :: :aka | :shiro
   @type target :: :men | :kote | :do | :tsuki
+  @type timer_command :: :start | :pause | :resume | :overtime
 
   @spec create_match(map()) :: {:ok, Match.t()} | {:error, Ecto.Changeset.t()}
   def create_match(attrs) do
@@ -183,8 +184,216 @@ defmodule ZanshinApi.Matches do
     |> Repo.all()
   end
 
+  @spec start_timer(Ecto.UUID.t(), actor_role(), DateTime.t()) ::
+          {:ok, Timer.t()} | {:error, atom() | Ecto.Changeset.t()}
+  def start_timer(match_id, actor_role, occurred_at \\ DateTime.utc_now()) do
+    apply_timer_command(match_id, :start, actor_role, occurred_at)
+  end
+
+  @spec pause_timer(Ecto.UUID.t(), actor_role(), DateTime.t()) ::
+          {:ok, Timer.t()} | {:error, atom() | Ecto.Changeset.t()}
+  def pause_timer(match_id, actor_role, occurred_at \\ DateTime.utc_now()) do
+    apply_timer_command(match_id, :pause, actor_role, occurred_at)
+  end
+
+  @spec resume_timer(Ecto.UUID.t(), actor_role(), DateTime.t()) ::
+          {:ok, Timer.t()} | {:error, atom() | Ecto.Changeset.t()}
+  def resume_timer(match_id, actor_role, occurred_at \\ DateTime.utc_now()) do
+    apply_timer_command(match_id, :resume, actor_role, occurred_at)
+  end
+
+  @spec enter_overtime(Ecto.UUID.t(), actor_role(), DateTime.t()) ::
+          {:ok, Timer.t()} | {:error, atom() | Ecto.Changeset.t()}
+  def enter_overtime(match_id, actor_role, occurred_at \\ DateTime.utc_now()) do
+    apply_timer_command(match_id, :overtime, actor_role, occurred_at)
+  end
+
+  @spec get_timer(Ecto.UUID.t()) :: Timer.t() | nil
+  def get_timer(match_id), do: Repo.get_by(Timer, match_id: match_id)
+
+  @spec list_timer_events(Ecto.UUID.t()) :: [TimerEvent.t()]
+  def list_timer_events(match_id) do
+    case Repo.get_by(Timer, match_id: match_id) do
+      nil ->
+        []
+
+      timer ->
+        TimerEvent
+        |> where([event], event.timer_id == ^timer.id)
+        |> order_by([event], asc: event.inserted_at)
+        |> Repo.all()
+    end
+  end
+
+  @spec reconstruct_timer(Ecto.UUID.t()) ::
+          {:ok, %{status: atom(), elapsed_ms: integer(), run_started_at: DateTime.t() | nil}}
+          | {:error, :timer_not_found}
+  def reconstruct_timer(match_id) do
+    case Repo.get_by(Timer, match_id: match_id) do
+      nil ->
+        {:error, :timer_not_found}
+
+      timer ->
+        events =
+          TimerEvent
+          |> where([event], event.timer_id == ^timer.id)
+          |> order_by([event], asc: event.inserted_at)
+          |> Repo.all()
+
+        reconstructed =
+          Enum.reduce(events, %{status: :idle, elapsed_ms: 0, run_started_at: nil}, fn event,
+                                                                                       acc ->
+            %{
+              status: event.to_status,
+              elapsed_ms: event.elapsed_after_ms,
+              run_started_at:
+                case event.to_status do
+                  status when status in [:running, :overtime] -> event.occurred_at
+                  _ -> nil
+                end,
+              previous: acc
+            }
+          end)
+
+        {:ok, Map.take(reconstructed, [:status, :elapsed_ms, :run_started_at])}
+    end
+  end
+
   defp authorize_score_role(role) when role in [:admin, :shinpan], do: :ok
   defp authorize_score_role(_), do: {:error, :forbidden_score_for_role}
+
+  defp authorize_timer_command(command, role) do
+    case {role, command} do
+      {:admin, _} -> :ok
+      {:timekeeper, _} -> :ok
+      {:shinpan, command} when command in [:pause, :resume] -> :ok
+      _ -> {:error, :forbidden_timer_command_for_role}
+    end
+  end
+
+  defp apply_timer_command(match_id, command, actor_role, occurred_at) do
+    with {:ok, role} <- normalize_actor_role(actor_role),
+         :ok <- authorize_timer_command(command, role),
+         {:ok, _match} <- fetch_match(match_id),
+         {:ok, timer} <- fetch_or_create_timer(match_id),
+         {:ok, transition} <- timer_transition(timer, command, occurred_at) do
+      Multi.new()
+      |> Multi.update(
+        :timer,
+        Timer.changeset(timer, %{
+          status: transition.to_status,
+          elapsed_ms: transition.elapsed_after_ms,
+          run_started_at: transition.run_started_at
+        })
+      )
+      |> Multi.insert(:timer_event, fn %{timer: updated_timer} ->
+        TimerEvent.changeset(%TimerEvent{}, %{
+          timer_id: updated_timer.id,
+          command: command,
+          from_status: timer.status,
+          to_status: transition.to_status,
+          elapsed_before_ms: timer.elapsed_ms,
+          elapsed_after_ms: transition.elapsed_after_ms,
+          occurred_at: occurred_at,
+          actor_role: role,
+          metadata: transition.metadata
+        })
+      end)
+      |> Repo.transaction()
+      |> case do
+        {:ok, %{timer: updated_timer}} -> {:ok, updated_timer}
+        {:error, _step, reason, _changes} -> {:error, reason}
+      end
+    end
+  end
+
+  defp fetch_or_create_timer(match_id) do
+    case Repo.get_by(Timer, match_id: match_id) do
+      nil ->
+        %Timer{}
+        |> Timer.changeset(%{match_id: match_id, status: :idle, elapsed_ms: 0})
+        |> Repo.insert()
+
+      timer ->
+        {:ok, timer}
+    end
+  end
+
+  defp timer_transition(%Timer{status: :idle}, :start, occurred_at) do
+    {:ok, %{to_status: :running, elapsed_after_ms: 0, run_started_at: occurred_at, metadata: %{}}}
+  end
+
+  defp timer_transition(%Timer{status: :running} = timer, :pause, occurred_at) do
+    with {:ok, elapsed_after_ms} <- elapsed_after_pause(timer, occurred_at) do
+      {:ok,
+       %{
+         to_status: :paused,
+         elapsed_after_ms: elapsed_after_ms,
+         run_started_at: nil,
+         metadata: %{}
+       }}
+    end
+  end
+
+  defp timer_transition(%Timer{status: :overtime} = timer, :pause, occurred_at) do
+    with {:ok, elapsed_after_ms} <- elapsed_after_pause(timer, occurred_at) do
+      {:ok,
+       %{
+         to_status: :paused,
+         elapsed_after_ms: elapsed_after_ms,
+         run_started_at: nil,
+         metadata: %{overtime_paused: true}
+       }}
+    end
+  end
+
+  defp timer_transition(%Timer{status: :paused} = timer, :resume, occurred_at) do
+    {:ok,
+     %{
+       to_status: :running,
+       elapsed_after_ms: timer.elapsed_ms,
+       run_started_at: occurred_at,
+       metadata: %{}
+     }}
+  end
+
+  defp timer_transition(%Timer{status: :running} = timer, :overtime, occurred_at) do
+    {:ok,
+     %{
+       to_status: :overtime,
+       elapsed_after_ms: timer.elapsed_ms,
+       run_started_at: timer.run_started_at || occurred_at,
+       metadata: %{overtime_started: true}
+     }}
+  end
+
+  defp timer_transition(%Timer{status: :paused} = timer, :overtime, occurred_at) do
+    {:ok,
+     %{
+       to_status: :overtime,
+       elapsed_after_ms: timer.elapsed_ms,
+       run_started_at: occurred_at,
+       metadata: %{overtime_started: true}
+     }}
+  end
+
+  defp timer_transition(_timer, _command, _occurred_at), do: {:error, :invalid_timer_transition}
+
+  defp elapsed_after_pause(%Timer{run_started_at: nil}, _occurred_at),
+    do: {:error, :timer_not_running}
+
+  defp elapsed_after_pause(
+         %Timer{elapsed_ms: elapsed_ms, run_started_at: started_at},
+         occurred_at
+       ) do
+    elapsed_delta_ms = DateTime.diff(occurred_at, started_at, :millisecond)
+
+    if elapsed_delta_ms < 0 do
+      {:error, :invalid_timer_clock}
+    else
+      {:ok, elapsed_ms + elapsed_delta_ms}
+    end
+  end
 
   defp require_ongoing_match(%Match{state: :ongoing}), do: :ok
   defp require_ongoing_match(_), do: {:error, :match_not_ongoing}

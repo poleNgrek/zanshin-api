@@ -133,4 +133,55 @@ defmodule ZanshinApi.MatchesTest do
                Matches.record_score_event(match.id, :ippon, :aka, :tsuki, :shinpan)
     end
   end
+
+  describe "timer command/event model" do
+    test "start pause resume and overtime commands produce auditable timer events" do
+      match = match_fixture(%{"state" => "ongoing"})
+
+      t0 = ~U[2026-04-23 12:00:00Z]
+      t1 = ~U[2026-04-23 12:00:30Z]
+      t2 = ~U[2026-04-23 12:00:45Z]
+      t3 = ~U[2026-04-23 12:01:15Z]
+      t4 = ~U[2026-04-23 12:01:45Z]
+
+      assert {:ok, timer_running} = Matches.start_timer(match.id, :timekeeper, t0)
+      assert timer_running.status == :running
+      assert timer_running.elapsed_ms == 0
+
+      assert {:ok, timer_paused} = Matches.pause_timer(match.id, :timekeeper, t1)
+      assert timer_paused.status == :paused
+      assert timer_paused.elapsed_ms == 30_000
+
+      assert {:ok, timer_resumed} = Matches.resume_timer(match.id, :timekeeper, t2)
+      assert timer_resumed.status == :running
+      assert timer_resumed.elapsed_ms == 30_000
+
+      assert {:ok, timer_overtime} = Matches.enter_overtime(match.id, :admin, t3)
+      assert timer_overtime.status == :overtime
+
+      assert {:ok, final_timer} = Matches.pause_timer(match.id, :timekeeper, t4)
+      assert final_timer.status == :paused
+      assert final_timer.elapsed_ms == 90_000
+
+      events = Matches.list_timer_events(match.id)
+      assert Enum.map(events, & &1.command) == [:start, :pause, :resume, :overtime, :pause]
+      assert Enum.map(events, & &1.to_status) == [:running, :paused, :running, :overtime, :paused]
+      assert List.last(events).elapsed_after_ms == 90_000
+
+      assert {:ok, reconstructed} = Matches.reconstruct_timer(match.id)
+      assert reconstructed.status == :paused
+      assert reconstructed.elapsed_ms == 90_000
+      assert is_nil(reconstructed.run_started_at)
+    end
+
+    test "rejects invalid timer transitions and forbidden roles" do
+      match = match_fixture(%{"state" => "ongoing"})
+      now = ~U[2026-04-23 13:00:00Z]
+
+      assert {:error, :invalid_timer_transition} = Matches.pause_timer(match.id, :timekeeper, now)
+
+      assert {:error, :forbidden_timer_command_for_role} =
+               Matches.start_timer(match.id, :shinpan, now)
+    end
+  end
 end

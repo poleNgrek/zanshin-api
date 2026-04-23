@@ -806,6 +806,37 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
   - add dedicated BDD CI lane and docs/rule alignment
   - retire custom parser/harness after parity + CI stability checks
 
+### Increment 2 Execution - Wave 2.1 Timer Command/Event Model
+
+- **Status:** `in_progress`
+- **Goal:** begin Wave 2 core architecture with an auditable timer command/event stream.
+- **Done in workspace:**
+  - Added timer runtime/event persistence:
+    - migration `api/priv/repo/migrations/20260423140000_add_timer_events_and_runtime_fields.exs`
+    - schema `api/lib/zanshin_api/matches/timer_event.ex`
+    - timer runtime field `run_started_at` + association wiring in timer/match schemas
+  - Added timer command handlers to `ZanshinApi.Matches`:
+    - `start_timer/3`
+    - `pause_timer/3`
+    - `resume_timer/3`
+    - `enter_overtime/3`
+    - `list_timer_events/1`
+    - `reconstruct_timer/1`
+  - Added transition and role guards for timer commands:
+    - supported commands: `start`, `pause`, `resume`, `overtime`
+    - role policy aligned with match operations (`admin/timekeeper` full control, `shinpan` limited)
+  - Added domain test coverage:
+    - `start pause resume and overtime commands produce auditable timer events`
+    - `rejects invalid timer transitions and forbidden roles`
+  - Updated Gherkin parity matrix:
+    - `api/test/features/domain_regression_coverage.feature`
+- **Verification:**
+  - `cd api && mix test test/zanshin_api/matches_test.exs`
+  - `cd api && mix test` (9 scenarios, 99 tests, 0 failures)
+- **Next pickup (same wave):**
+  - Implement explicit bracket graph model (`round/slot/link`) with traversal/ordering tests.
+  - Implement shiaijo/shinpan scheduling assignment model with conflict checks.
+
 ---
 
 ## Phase 5 - WordPress Plugin
