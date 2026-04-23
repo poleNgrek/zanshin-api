@@ -44,6 +44,36 @@ defmodule ZanshinApi.Analytics do
     end
   end
 
+  def dashboard_event_feed(params) when is_map(params) do
+    with {:ok, filters} <- normalize_filters(params) do
+      case analytics_summary_source() do
+        :neo4j ->
+          case dashboard_event_feed_from_neo4j(filters) do
+            {:ok, payload} -> {:ok, payload}
+            {:error, _} -> {:ok, dashboard_event_feed_from_postgres(filters, "postgres_fallback")}
+          end
+
+        _ ->
+          {:ok, dashboard_event_feed_from_postgres(filters, "postgres")}
+      end
+    end
+  end
+
+  def match_state_overview(params) when is_map(params) do
+    with {:ok, filters} <- normalize_filters(params) do
+      case analytics_summary_source() do
+        :neo4j ->
+          case match_state_overview_from_neo4j(filters) do
+            {:ok, payload} -> {:ok, payload}
+            {:error, _} -> {:ok, match_state_overview_from_postgres(filters, "postgres_fallback")}
+          end
+
+        _ ->
+          {:ok, match_state_overview_from_postgres(filters, "postgres")}
+      end
+    end
+  end
+
   defp match_summary_from_source(filters) do
     case analytics_summary_source() do
       :neo4j ->
@@ -181,6 +211,38 @@ defmodule ZanshinApi.Analytics do
     """
   end
 
+  defp dashboard_event_feed_query do
+    """
+    MATCH (e:DomainEvent)-[:APPLIES_TO]->(m:Match)
+    WHERE m.tournament_id = $tournament_id
+      AND ($division_id IS NULL OR m.division_id = $division_id)
+      AND ($from IS NULL OR e.occurred_at >= datetime($from))
+      AND ($to IS NULL OR e.occurred_at <= datetime($to))
+    RETURN
+      e.id AS event_id,
+      e.type AS event_type,
+      e.occurred_at AS occurred_at,
+      e.actor_role AS actor_role,
+      m.id AS match_id,
+      m.state AS match_state,
+      m.last_score_type AS last_score_type,
+      m.last_score_side AS last_score_side
+    ORDER BY e.occurred_at DESC
+    SKIP $offset
+    LIMIT $limit
+    """
+  end
+
+  defp match_state_overview_query do
+    """
+    MATCH (m:Match)
+    WHERE m.tournament_id = $tournament_id
+      AND ($division_id IS NULL OR m.division_id = $division_id)
+    RETURN coalesce(m.state, 'unknown') AS state, count(m) AS count
+    ORDER BY state ASC
+    """
+  end
+
   defp breakdown_query do
     """
     MATCH (e:DomainEvent)-[:APPLIES_TO]->(m:Match)
@@ -205,6 +267,137 @@ defmodule ZanshinApi.Analytics do
       to: if(filters.to, do: DateTime.to_iso8601(filters.to), else: nil),
       limit: filters.limit,
       offset: filters.offset
+    }
+  end
+
+  defp dashboard_event_feed_from_neo4j(filters) do
+    neo4j_client = default_neo4j_client()
+    params = cypher_params(filters)
+
+    with {:ok, rows} <-
+           neo4j_client.query(dashboard_event_feed_query(), params, query_timeout_ms: 10_000) do
+      events =
+        rows
+        |> Enum.map(fn row ->
+          %{
+            event_id: row["event_id"],
+            event_type: row["event_type"],
+            occurred_at: row["occurred_at"],
+            actor_role: row["actor_role"],
+            match_id: row["match_id"],
+            match_state: row["match_state"],
+            last_score_type: row["last_score_type"],
+            last_score_side: row["last_score_side"]
+          }
+        end)
+
+      {:ok,
+       %{
+         scope: %{
+           tournament_id: filters.tournament_id,
+           division_id: filters.division_id,
+           from: filters.from,
+           to: filters.to
+         },
+         pagination: %{limit: filters.limit, offset: filters.offset},
+         data_source: "neo4j",
+         events: events
+       }}
+    end
+  end
+
+  defp dashboard_event_feed_from_postgres(filters, source) do
+    events =
+      DomainEvent
+      |> where([event], event.aggregate_type == "match")
+      |> where(
+        [event],
+        fragment("?->>'tournament_id' = ?", event.payload, ^filters.tournament_id)
+      )
+      |> maybe_filter_division(filters.division_id)
+      |> maybe_filter_from(filters.from)
+      |> maybe_filter_to(filters.to)
+      |> order_by([event], desc: event.occurred_at, desc: event.inserted_at)
+      |> limit(^filters.limit)
+      |> offset(^filters.offset)
+      |> Repo.all()
+      |> Enum.map(fn event ->
+        %{
+          event_id: event.id,
+          event_type: event.event_type,
+          occurred_at: event.occurred_at,
+          actor_role: event.actor_role,
+          match_id: event.aggregate_id,
+          match_state: event.payload["to_state"],
+          last_score_type: event.payload["score_type"],
+          last_score_side: event.payload["side"]
+        }
+      end)
+
+    %{
+      scope: %{
+        tournament_id: filters.tournament_id,
+        division_id: filters.division_id,
+        from: filters.from,
+        to: filters.to
+      },
+      pagination: %{limit: filters.limit, offset: filters.offset},
+      data_source: source,
+      events: events
+    }
+  end
+
+  defp match_state_overview_from_neo4j(filters) do
+    neo4j_client = default_neo4j_client()
+    params = cypher_params(filters)
+
+    with {:ok, rows} <-
+           neo4j_client.query(match_state_overview_query(), params, query_timeout_ms: 10_000) do
+      state_counts =
+        rows
+        |> Enum.map(fn row ->
+          %{state: row["state"] || "unknown", count: to_int(row["count"])}
+        end)
+
+      {:ok,
+       %{
+         scope: %{tournament_id: filters.tournament_id, division_id: filters.division_id},
+         data_source: "neo4j",
+         state_counts: state_counts
+       }}
+    end
+  end
+
+  defp match_state_overview_from_postgres(filters, source) do
+    latest_transition_states =
+      DomainEvent
+      |> where([event], event.aggregate_type == "match")
+      |> where([event], event.event_type == "match.transitioned")
+      |> where(
+        [event],
+        fragment("?->>'tournament_id' = ?", event.payload, ^filters.tournament_id)
+      )
+      |> maybe_filter_division(filters.division_id)
+      |> order_by([event],
+        asc: event.aggregate_id,
+        desc: event.occurred_at,
+        desc: event.inserted_at
+      )
+      |> distinct([event], event.aggregate_id)
+      |> select([event], fragment("?->>'to_state'", event.payload))
+      |> Repo.all()
+
+    state_counts =
+      latest_transition_states
+      |> Enum.map(&(&1 || "unknown"))
+      |> Enum.frequencies()
+      |> Enum.map(fn {state, count} -> %{state: state, count: count} end)
+      |> Enum.sort_by(& &1.state)
+
+    %{
+      scope: %{tournament_id: filters.tournament_id, division_id: filters.division_id},
+      data_source: source,
+      state_counts: state_counts
     }
   end
 

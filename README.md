@@ -68,6 +68,8 @@ bash scripts/dev_frontend.sh
 - `dev_frontend_docker.sh` runs frontend inside Docker on `http://localhost:3000`.
 - `dev_all_docker.sh` opens two Terminal tabs and starts full Docker mode.
 - `check_cors.sh` verifies API CORS headers for a given URL/origin pair.
+- `verify_api.sh` runs API format + full test suite in one command.
+- `clean_dev_cache.sh` removes local script/test cache directories.
 - If Bun is missing on host, `dev_frontend.sh` prints Bun install instructions.
 
 ### Common Run Variations
@@ -87,6 +89,12 @@ bash scripts/dev_frontend_docker.sh
 
 # Optional: populate API with a full-domain sample dataset
 cd apps/api && mix run priv/repo/seeds.exs
+
+# API verification in one command (format + tests)
+bash scripts/verify_api.sh
+
+# Cleanup local script/test caches
+bash scripts/clean_dev_cache.sh
 ```
 
 ## Environment Defaults
@@ -216,6 +224,8 @@ Planned commands:
 - Neo4j transport now uses Bolt via `ZanshinApi.Analytics.Neo4jClient.Bolt`.
 - First analytics contract endpoint is available:
   - `GET /api/v1/analytics/matches/summary`
+  - `GET /api/v1/analytics/events/feed`
+  - `GET /api/v1/analytics/matches/state_overview`
   - default summary source: Neo4j (`ANALYTICS_SUMMARY_SOURCE=neo4j`)
 - Architecture visuals are documented in:
   - `docs/analytics-architecture.md`

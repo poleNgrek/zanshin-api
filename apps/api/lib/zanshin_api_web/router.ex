@@ -63,6 +63,8 @@ defmodule ZanshinApiWeb.Router do
     post "/gradings/results/:id/compute", GradingResultController, :compute
     post "/gradings/results/:id/finalize", GradingResultController, :finalize
     get "/analytics/matches/summary", AnalyticsMatchSummaryController, :index
+    get "/analytics/events/feed", AnalyticsDashboardController, :event_feed
+    get "/analytics/matches/state_overview", AnalyticsDashboardController, :match_state_overview
     post "/matches", MatchController, :create
     post "/matches/:id/transition", MatchStateController, :transition
     post "/matches/:id/score", MatchScoreController, :create

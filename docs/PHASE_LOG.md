@@ -543,6 +543,24 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 - **Verification:**
   - `cd apps/api && MIX_ENV=test mix test` (80 tests, 0 failures)
 
+### Increment 4.3 - Dashboard-Focused Analytics Endpoints
+
+- **Status:** `in_progress`
+- **Goal:** expose richer dashboard-oriented analytics reads beyond summary while keeping Neo4j-first behavior.
+- **Done in workspace:**
+  - Added new authenticated analytics endpoints:
+    - `GET /api/v1/analytics/events/feed`
+    - `GET /api/v1/analytics/matches/state_overview`
+  - Added analytics read functions:
+    - `dashboard_event_feed/1`
+    - `match_state_overview/1`
+  - Implemented Neo4j-first read path with automatic Postgres fallback for the new contracts.
+  - Added controller test coverage for both endpoints:
+    - scoped feed results
+    - grouped match-state overview
+    - unauthorized access checks
+  - Updated OpenAPI and README docs to include the new dashboard routes.
+
 ### Pre-Phase 4 Hardening Sweep (Moderate) - API/Frontend Readiness
 
 - **Status:** `in_progress`

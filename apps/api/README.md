@@ -134,6 +134,12 @@ mix test
 mix phx.server
 ```
 
+From repo root, quick verification helper:
+
+```bash
+bash scripts/verify_api.sh
+```
+
 Seed behavior:
 
 - `mix run priv/repo/seeds.exs` creates a full-domain sample dataset (tournaments/divisions/rules/stages, competitors, teams/matches, grading, medals/awards).
@@ -190,6 +196,8 @@ First analytics slices now exist in API:
   - Bolt transport endpoint is `NEO4J_BOLT_URL` (default `bolt://localhost:7687`)
 - First analytics read contract:
   - `GET /api/v1/analytics/matches/summary`
+  - `GET /api/v1/analytics/events/feed`
+  - `GET /api/v1/analytics/matches/state_overview`
   - required query param: `tournament_id`
   - optional filters: `division_id`, `from`, `to`, `limit`, `offset`
   - response includes `data_source` (`postgres`, `neo4j`, `postgres_fallback`)
