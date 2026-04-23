@@ -7,10 +7,10 @@ This document explains how implementation decisions are made in each phase, with
 ## How to Read the Codebase
 
 - `docs/PRD.md` describes the product and architecture requirements.
-- `apps/api` will hold Phoenix code organized by domain contexts.
-- `apps/frontend` will hold React UI and Playwright tests.
-- `apps/analytics` will consume domain events and build analytics projections.
-- `apps/wordpress-plugin` will consume public API endpoints.
+- `api` will hold Phoenix code organized by domain contexts.
+- `front-end` will hold React UI and Playwright tests.
+- `analytics` will consume domain events and build analytics projections.
+- `wordpress-plugin` will consume public API endpoints.
 
 ## Elixir and Phoenix Basics (for this project)
 

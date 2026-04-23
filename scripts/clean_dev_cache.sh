@@ -9,14 +9,14 @@ set -euo pipefail
 #   bash scripts/clean_dev_cache.sh
 #
 # What it removes:
-# - apps/api/.cursor-tmp
-# - apps/frontend/.cursor-tmp
+# - api/.cursor-tmp
+# - front-end/.cursor-tmp
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 TARGETS=(
-  "$ROOT_DIR/apps/api/.cursor-tmp"
-  "$ROOT_DIR/apps/frontend/.cursor-tmp"
+  "$ROOT_DIR/api/.cursor-tmp"
+  "$ROOT_DIR/front-end/.cursor-tmp"
 )
 
 for target in "${TARGETS[@]}"; do

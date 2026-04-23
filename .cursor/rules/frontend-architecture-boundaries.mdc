@@ -1,11 +1,11 @@
 ---
 description: Enforce frontend pseudo-package boundaries and import direction.
-globs: apps/frontend/**/*.{ts,tsx}
+globs: front-end/**/*.{ts,tsx}
 alwaysApply: false
 ---
 # Frontend Architecture Boundaries
 
-- Treat `apps/frontend/app/src` as pseudo-packages:
+- Treat `front-end/app/src` as pseudo-packages:
   - `api`
   - `components`
   - `providers`

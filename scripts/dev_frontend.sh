@@ -16,7 +16,7 @@ set -euo pipefail
 # - Starts Remix dev server at http://localhost:3000
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FRONTEND_DIR="$ROOT_DIR/apps/frontend"
+FRONTEND_DIR="$ROOT_DIR/front-end"
 API_BASE_URL="${API_BASE_URL:-http://localhost:4000}"
 
 if ! command -v bun >/dev/null 2>&1; then

@@ -9,7 +9,7 @@ set -euo pipefail
 #   bash scripts/verify_api.sh
 #
 # Optional env:
-# - USE_LOCAL_MIX_CACHE=1 (default) keeps Mix/Hex cache inside apps/api/.cursor-tmp
+# - USE_LOCAL_MIX_CACHE=1 (default) keeps Mix/Hex cache inside api/.cursor-tmp
 #
 # What it does:
 # - Ensures Hex exists non-interactively
@@ -17,7 +17,7 @@ set -euo pipefail
 # - Runs `MIX_ENV=test mix test`
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-API_DIR="$ROOT_DIR/apps/api"
+API_DIR="$ROOT_DIR/api"
 USE_LOCAL_MIX_CACHE="${USE_LOCAL_MIX_CACHE:-1}"
 
 if [[ "$USE_LOCAL_MIX_CACHE" == "1" ]]; then

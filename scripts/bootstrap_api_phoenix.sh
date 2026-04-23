@@ -2,14 +2,14 @@
 set -euo pipefail
 
 # This script is intentionally simple so a beginner can follow each step.
-# It scaffolds Phoenix in apps/api if you prefer generator output over the
+# It scaffolds Phoenix in api if you prefer generator output over the
 # hand-written starter files currently committed.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-API_DIR="${ROOT_DIR}/apps/api"
+API_DIR="${ROOT_DIR}/api"
 
 if [[ ! -d "${API_DIR}" ]]; then
-  echo "apps/api directory does not exist."
+  echo "api directory does not exist."
   exit 1
 fi
 
@@ -24,6 +24,6 @@ echo "Scaffolding Phoenix project in ${API_DIR} ..."
 mix phx.new . --app zanshin_api --module ZanshinApi --no-html --no-assets --database postgres
 
 echo "Done. Next:"
-echo "  cd apps/api"
+echo "  cd api"
 echo "  mix setup"
 echo "  mix phx.server"

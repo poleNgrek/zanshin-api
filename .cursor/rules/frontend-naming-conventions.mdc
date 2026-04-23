@@ -1,6 +1,6 @@
 ---
 description: Enforce reusable snake_case naming conventions for frontend files and directories.
-globs: apps/frontend/**/*.{ts,tsx,css,md}
+globs: front-end/**/*.{ts,tsx,css,md}
 alwaysApply: false
 ---
 # Frontend Naming Conventions

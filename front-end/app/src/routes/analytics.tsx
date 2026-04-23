@@ -5,9 +5,9 @@ import { useMemo, useState } from "react";
 import { ApiError, fetchWithSchema } from "@zanshin/api";
 import { PageTitle, SectionCard } from "@zanshin/components";
 import {
-  AnalyticsOverviewResponseSchema,
-  DivisionListResponseSchema,
-  TournamentListResponseSchema
+    AnalyticsOverviewResponseSchema,
+    DivisionListResponseSchema,
+    TournamentListResponseSchema
 } from "@zanshin/schemas";
 import { type AnalyticsOverview, type Division, type Tournament } from "@zanshin/types";
 

@@ -5,10 +5,10 @@ import { useMemo, useState } from "react";
 import { fetchWithSchema } from "@zanshin/api";
 import { InfoAlertList, PageTitle } from "@zanshin/components";
 import {
-  CompetitorListResponseSchema,
-  DivisionListResponseSchema,
-  MatchListResponseSchema,
-  TournamentListResponseSchema
+    CompetitorListResponseSchema,
+    DivisionListResponseSchema,
+    MatchListResponseSchema,
+    TournamentListResponseSchema
 } from "@zanshin/schemas";
 import { type Competitor, type Division, type Match, type Tournament } from "@zanshin/types";
 

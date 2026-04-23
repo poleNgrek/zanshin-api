@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import {
-  AnalyticsOverviewResponseSchema,
-  GradingResultListResponseSchema,
-  MatchListResponseSchema,
-  TournamentListResponseSchema
+    AnalyticsOverviewResponseSchema,
+    GradingResultListResponseSchema,
+    MatchListResponseSchema,
+    TournamentListResponseSchema
 } from "@zanshin/schemas";
 
 describe("schema parsing", () => {

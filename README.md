@@ -22,10 +22,10 @@ For browser cross-origin integration notes, see `docs/CORS.md`.
 ## Repository Structure
 
 - `docs/` - product and system documentation
-- `apps/api/` - Phoenix API service (phase 2 scaffold target)
-- `apps/frontend/` - React app (phase 3 scaffold target)
-- `apps/analytics/` - analytics workers/projections (phase 4)
-- `apps/wordpress-plugin/` - WordPress plugin package (phase 5)
+- `api/` - Phoenix API service (phase 2 scaffold target)
+- `front-end/` - React app (phase 3 scaffold target)
+- `analytics/` - analytics workers/projections (phase 4)
+- `wordpress-plugin/` - WordPress plugin package (phase 5)
 - `infra/docker/` - containerization assets
 - `scripts/` - local helper scripts
 
@@ -88,7 +88,7 @@ bash scripts/dev_api_docker.sh
 bash scripts/dev_frontend_docker.sh
 
 # Optional: populate API with a full-domain sample dataset
-cd apps/api && mix run priv/repo/seeds.exs
+cd api && mix run priv/repo/seeds.exs
 
 # API verification in one command (format + tests)
 bash scripts/verify_api.sh
@@ -171,16 +171,16 @@ Current status: Phase 4 analytics foundation and Pre-Phase-5 Increment 1 fronten
 Planned commands:
 
 - API tests (Phase 2+):
-  - `cd apps/api && mix test`
+  - `cd api && mix test`
 - Frontend unit tests (Phase 3+):
-  - `cd apps/frontend && bun run test`
+  - `cd front-end && bun run test`
 - Frontend E2E tests with Playwright (Phase 3+):
-  - first run once: `cd apps/frontend && bunx playwright install chromium`
-  - `cd apps/frontend && bun run test:e2e`
+  - first run once: `cd front-end && bunx playwright install chromium`
+  - `cd front-end && bun run test:e2e`
 - Analytics tests (Phase 4+):
-  - `cd apps/api && MIX_ENV=test mix test test/zanshin_api/analytics/`
+  - `cd api && MIX_ENV=test mix test test/zanshin_api/analytics/`
 - WordPress plugin tests (Phase 5+):
-  - `cd apps/wordpress-plugin && <test-command-to-be-defined>`
+  - `cd wordpress-plugin && <test-command-to-be-defined>`
 
 ## CI/CD Status
 
@@ -194,7 +194,7 @@ Planned commands:
 
 ## Phase 2 Status
 
-- Phoenix-oriented API skeleton added in `apps/api`.
+- Phoenix-oriented API skeleton added in `api`.
 - JWT auth baseline added for protected mutating API endpoints.
 - OAuth/JWKS token validation added for protected mutating API endpoints.
 - Competition entities added (`Tournament`, `Division`, `Competitor`) with FK-backed `Match` relations.
@@ -211,8 +211,8 @@ Planned commands:
   - `POST /api/v1/matches/:id/transition`
   - `POST /api/v1/matches/:id/score`
   - `GET /api/v1/matches/:id/score`
-- First automated tests are included in `apps/api/test`.
-- See `apps/api/README.md` for detailed setup and learning notes.
+- First automated tests are included in `api/test`.
+- See `api/README.md` for detailed setup and learning notes.
 - API docs are available at:
   - Swagger UI: `GET /api/docs`
   - OpenAPI source: `docs/api/openapi.yaml`

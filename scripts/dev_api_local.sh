@@ -14,7 +14,7 @@ set -euo pipefail
 # - Starts Phoenix server at http://localhost:4000
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-API_DIR="$ROOT_DIR/apps/api"
+API_DIR="$ROOT_DIR/api"
 
 if ! command -v mix >/dev/null 2>&1; then
   echo "mix command not found."

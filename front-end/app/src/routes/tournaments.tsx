@@ -6,12 +6,12 @@ import { z } from "zod";
 import { ApiError, fetchWithSchema } from "@zanshin/api";
 import { InfoAlertList, PageTitle } from "@zanshin/components";
 import {
-  DivisionListResponseSchema,
-  DivisionResponseSchema,
-  GradingSessionListResponseSchema,
-  GradingSessionResponseSchema,
-  TournamentListResponseSchema,
-  TournamentResponseSchema
+    DivisionListResponseSchema,
+    DivisionResponseSchema,
+    GradingSessionListResponseSchema,
+    GradingSessionResponseSchema,
+    TournamentListResponseSchema,
+    TournamentResponseSchema
 } from "@zanshin/schemas";
 import { type Division, type GradingSession, type Tournament } from "@zanshin/types";
 

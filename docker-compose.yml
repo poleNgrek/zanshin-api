@@ -41,7 +41,7 @@ services:
     ports:
       - "4000:4000"
     volumes:
-      - ./apps/api:/workspace
+      - ./api:/workspace
     depends_on:
       postgres:
         condition: service_healthy
@@ -57,7 +57,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./apps/frontend:/workspace
+      - ./front-end:/workspace
 
 volumes:
   postgres_data:

@@ -15,8 +15,8 @@ Because these origins differ (different port), browser requests from frontend to
 
 API CORS handling is implemented in:
 
-- `apps/api/lib/zanshin_api_web/plugs/cors.ex`
-- plugged in `apps/api/lib/zanshin_api_web/endpoint.ex`
+- `api/lib/zanshin_api_web/plugs/cors.ex`
+- plugged in `api/lib/zanshin_api_web/endpoint.ex`
 
 Default allowed origins:
 

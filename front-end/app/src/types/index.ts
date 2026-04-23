@@ -1,13 +1,13 @@
 import type { z } from "zod";
 
-import {
-  AnalyticsOverviewSchema,
-  CompetitorSchema,
-  DivisionSchema,
-  GradingResultSchema,
-  GradingSessionSchema,
-  MatchSchema,
-  TournamentSchema
+import type {
+    AnalyticsOverviewSchema,
+    CompetitorSchema,
+    DivisionSchema,
+    GradingResultSchema,
+    GradingSessionSchema,
+    MatchSchema,
+    TournamentSchema
 } from "@zanshin/schemas";
 
 export type AnalyticsOverview = z.infer<typeof AnalyticsOverviewSchema>;

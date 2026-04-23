@@ -127,7 +127,7 @@ From repo root:
 
 ```bash
 docker compose up -d postgres
-cd apps/api
+cd api
 mix setup
 mix run priv/repo/seeds.exs
 mix test
@@ -240,7 +240,7 @@ First analytics slices now exist in API:
 docker compose up -d postgres neo4j
 
 # 2) Prepare API DB state
-cd apps/api
+cd api
 mix setup
 mix run priv/repo/seeds.exs
 

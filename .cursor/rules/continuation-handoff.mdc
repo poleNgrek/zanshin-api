@@ -4,7 +4,7 @@ alwaysApply: true
 ---
 # Continuation and Handoff Rule
 
-- Start every new session by reading `docs/PHASE_LOG.md`, `README.md`, `apps/api/README.md`, and `apps/frontend/README.md`.
+- Start every new session by reading `docs/PHASE_LOG.md`, `README.md`, `api/README.md`, and `front-end/README.md`.
 - Identify the latest pushed commit before making changes and continue from the next planned increment.
 - Keep phase scope strict: do not jump ahead unless explicitly requested.
 - Update `docs/PHASE_LOG.md` for each increment with status, done scope, and verification results.
