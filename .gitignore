@@ -19,6 +19,12 @@ node_modules/
 # Elixir build artifacts
 _build/
 deps/
+api/.cursor-tmp/
+front-end/.cursor-tmp/
+
+# Frontend local artifacts
+front-end/.cache/
+front-end/test-results/
 
 # Docker local overrides
 docker-compose.override.yml
