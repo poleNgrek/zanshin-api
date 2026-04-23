@@ -4,10 +4,15 @@ defmodule ZanshinApiWeb.GradingResultController do
   alias ZanshinApi.Grading.{GradingNote, GradingResult, GradingVote}
   alias ZanshinApi.Gradings
   alias ZanshinApiWeb.Idempotency
+  alias ZanshinApiWeb.Pagination
 
-  def index(conn, %{"id" => session_id}) do
-    data = Gradings.list_results_by_session(session_id) |> Enum.map(&serialize_result/1)
-    json(conn, %{data: data})
+  def index(conn, %{"id" => session_id} = params) do
+    Pagination.json_paginated(
+      conn,
+      params,
+      Gradings.list_results_by_session(session_id),
+      &serialize_result/1
+    )
   end
 
   def create(conn, %{"id" => session_id} = params) do
@@ -50,9 +55,8 @@ defmodule ZanshinApiWeb.GradingResultController do
     end
   end
 
-  def votes(conn, %{"id" => result_id}) do
-    data = Gradings.list_votes(result_id) |> Enum.map(&serialize_vote/1)
-    json(conn, %{data: data})
+  def votes(conn, %{"id" => result_id} = params) do
+    Pagination.json_paginated(conn, params, Gradings.list_votes(result_id), &serialize_vote/1)
   end
 
   def create_note(conn, %{"id" => result_id} = params) do
@@ -78,9 +82,8 @@ defmodule ZanshinApiWeb.GradingResultController do
     end
   end
 
-  def notes(conn, %{"id" => result_id}) do
-    data = Gradings.list_notes(result_id) |> Enum.map(&serialize_note/1)
-    json(conn, %{data: data})
+  def notes(conn, %{"id" => result_id} = params) do
+    Pagination.json_paginated(conn, params, Gradings.list_notes(result_id), &serialize_note/1)
   end
 
   def compute(conn, %{"id" => result_id} = params) do

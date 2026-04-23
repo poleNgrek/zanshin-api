@@ -3,10 +3,15 @@ defmodule ZanshinApiWeb.TeamController do
 
   alias ZanshinApi.Teams
   alias ZanshinApi.Teams.{Team, TeamMember}
+  alias ZanshinApiWeb.Pagination
 
-  def index(conn, %{"division_id" => division_id}) do
-    teams = Teams.list_teams_by_division(division_id)
-    json(conn, %{data: Enum.map(teams, &serialize_team/1)})
+  def index(conn, %{"division_id" => division_id} = params) do
+    Pagination.json_paginated(
+      conn,
+      params,
+      Teams.list_teams_by_division(division_id),
+      &serialize_team/1
+    )
   end
 
   def create(conn, params) do
@@ -52,9 +57,8 @@ defmodule ZanshinApiWeb.TeamController do
     end
   end
 
-  def members(conn, %{"id" => team_id}) do
-    members = Teams.list_team_members(team_id)
-    json(conn, %{data: Enum.map(members, &serialize_member/1)})
+  def members(conn, %{"id" => team_id} = params) do
+    Pagination.json_paginated(conn, params, Teams.list_team_members(team_id), &serialize_member/1)
   end
 
   defp authorize_write(conn) do

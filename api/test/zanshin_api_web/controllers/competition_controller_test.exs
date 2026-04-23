@@ -8,8 +8,30 @@ defmodule ZanshinApiWeb.CompetitionControllerTest do
     t = tournament_fixture(%{"name" => "Public Cup"})
     conn = get(conn, "/api/v1/tournaments")
 
-    assert %{"data" => tournaments} = json_response(conn, 200)
+    assert %{"data" => tournaments, "pagination" => pagination} = json_response(conn, 200)
     assert Enum.any?(tournaments, fn row -> row["id"] == t.id end)
+    assert pagination["offset"] == 0
+    assert pagination["limit"] == 50
+  end
+
+  test "GET /api/v1/tournaments applies limit and offset", %{conn: conn} do
+    _t1 = tournament_fixture(%{"name" => "Cup 1"})
+    t2 = tournament_fixture(%{"name" => "Cup 2"})
+    _t3 = tournament_fixture(%{"name" => "Cup 3"})
+
+    conn = get(conn, "/api/v1/tournaments?limit=1&offset=1")
+
+    assert %{"data" => [row], "pagination" => pagination} = json_response(conn, 200)
+    assert row["id"] == t2.id
+    assert pagination["limit"] == 1
+    assert pagination["offset"] == 1
+    assert pagination["count"] == 1
+    assert pagination["total"] >= 3
+  end
+
+  test "GET /api/v1/tournaments rejects invalid pagination params", %{conn: conn} do
+    conn = get(conn, "/api/v1/tournaments?limit=0")
+    assert %{"error" => "invalid_pagination"} = json_response(conn, 400)
   end
 
   test "POST /api/v1/tournaments requires auth", %{conn: conn} do

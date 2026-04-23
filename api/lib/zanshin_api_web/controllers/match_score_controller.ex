@@ -4,6 +4,7 @@ defmodule ZanshinApiWeb.MatchScoreController do
   alias ZanshinApi.Matches
   alias ZanshinApi.Matches.ScoreEvent
   alias ZanshinApiWeb.Idempotency
+  alias ZanshinApiWeb.Pagination
 
   def create(conn, %{"id" => match_id, "score_type" => score_type, "side" => side} = params) do
     Idempotency.run(conn, params, fn ->
@@ -58,9 +59,8 @@ defmodule ZanshinApiWeb.MatchScoreController do
     |> json(%{error: "match_id_score_type_and_side_are_required"})
   end
 
-  def index(conn, %{"id" => match_id}) do
-    data = Matches.list_score_events(match_id) |> Enum.map(&serialize/1)
-    json(conn, %{data: data})
+  def index(conn, %{"id" => match_id} = params) do
+    Pagination.json_paginated(conn, params, Matches.list_score_events(match_id), &serialize/1)
   end
 
   defp current_actor_role(conn) do

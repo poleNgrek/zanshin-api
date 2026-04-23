@@ -3,13 +3,10 @@ defmodule ZanshinApiWeb.MatchController do
 
   alias ZanshinApi.Matches
   alias ZanshinApi.Matches.Match
+  alias ZanshinApiWeb.Pagination
 
-  def index(conn, _params) do
-    payload =
-      Matches.list_matches()
-      |> Enum.map(&serialize_match/1)
-
-    json(conn, %{data: payload})
+  def index(conn, params) do
+    Pagination.json_paginated(conn, params, Matches.list_matches(), &serialize_match/1)
   end
 
   def create(conn, params) do

@@ -103,4 +103,36 @@ defmodule ZanshinApiWeb.MatchScoreControllerTest do
     assert replay_score_id == first_score_id
     assert length(Matches.list_score_events(match.id)) == 1
   end
+
+  test "GET /api/v1/matches/:id/score supports pagination metadata", %{conn: conn} do
+    match = match_fixture(%{"state" => "ongoing"})
+
+    _first_conn =
+      conn
+      |> put_req_header("authorization", bearer_token_for("shinpan"))
+      |> put_req_header("idempotency-key", "match-score-list-1")
+      |> post("/api/v1/matches/#{match.id}/score", %{
+        "score_type" => "ippon",
+        "side" => "aka",
+        "target" => "men"
+      })
+
+    _second_conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("shinpan"))
+      |> put_req_header("idempotency-key", "match-score-list-2")
+      |> post("/api/v1/matches/#{match.id}/score", %{
+        "score_type" => "ippon",
+        "side" => "shiro",
+        "target" => "do"
+      })
+
+    list_conn = get(build_conn(), "/api/v1/matches/#{match.id}/score?limit=1&offset=1")
+
+    assert %{"data" => [row], "pagination" => pagination} = json_response(list_conn, 200)
+    assert row["side"] == "shiro"
+    assert pagination["limit"] == 1
+    assert pagination["offset"] == 1
+    assert pagination["count"] == 1
+  end
 end

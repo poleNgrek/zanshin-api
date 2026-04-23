@@ -3,6 +3,7 @@ defmodule ZanshinApiWeb.DivisionStageController do
 
   alias ZanshinApi.Competitions
   alias ZanshinApi.Competitions.DivisionStage
+  alias ZanshinApiWeb.Pagination
 
   def index(conn, params) do
     case Map.get(params, "division_id") do
@@ -12,8 +13,12 @@ defmodule ZanshinApiWeb.DivisionStageController do
         |> json(%{error: "division_id_required"})
 
       division_id ->
-        data = Competitions.list_division_stages(division_id) |> Enum.map(&serialize/1)
-        json(conn, %{data: data})
+        Pagination.json_paginated(
+          conn,
+          params,
+          Competitions.list_division_stages(division_id),
+          &serialize/1
+        )
     end
   end
 

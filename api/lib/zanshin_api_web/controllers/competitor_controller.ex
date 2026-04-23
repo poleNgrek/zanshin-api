@@ -3,10 +3,10 @@ defmodule ZanshinApiWeb.CompetitorController do
 
   alias ZanshinApi.Competitions
   alias ZanshinApi.Competitions.Competitor
+  alias ZanshinApiWeb.Pagination
 
-  def index(conn, _params) do
-    data = Competitions.list_competitors() |> Enum.map(&serialize/1)
-    json(conn, %{data: data})
+  def index(conn, params) do
+    Pagination.json_paginated(conn, params, Competitions.list_competitors(), &serialize/1)
   end
 
   def create(conn, params) do

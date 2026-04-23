@@ -742,6 +742,37 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
   - Continue Wave 1 with standardized pagination contracts for list endpoints.
   - Add projection replay/drift tests for analytics worker flows.
 
+### Increment 2 Execution - Wave 1.2 Standardized Pagination Contracts
+
+- **Status:** `in_progress`
+- **Goal:** normalize list endpoint contracts around explicit `limit`/`offset` handling and response metadata.
+- **Done in workspace:**
+  - Added shared pagination helper:
+    - `api/lib/zanshin_api_web/pagination.ex`
+    - validation rules:
+      - `limit` default `50`, range `1..200`
+      - `offset` default `0`, minimum `0`
+      - invalid values return `400` with `invalid_pagination`
+  - Applied standardized paginated envelope (`data` + `pagination`) to list endpoints:
+    - tournaments, divisions, division stages/results/awards
+    - competitors, teams, team members, team matches
+    - matches, match score events
+    - grading examiners/sessions/results/panel assignments/votes/notes
+  - Updated OpenAPI pagination query parameters for list routes:
+    - `docs/api/openapi.yaml`
+    - `api/priv/static/openapi.yaml`
+  - Added/updated controller coverage for pagination behavior:
+    - metadata presence
+    - `limit`/`offset` slicing
+    - invalid pagination rejection
+  - Updated API docs:
+    - `api/README.md`
+- **Verification:**
+  - `cd api && mix test test/zanshin_api_web/controllers/competition_controller_test.exs test/zanshin_api_web/controllers/division_controller_test.exs test/zanshin_api_web/controllers/division_stage_controller_test.exs test/zanshin_api_web/controllers/grading_session_controller_test.exs test/zanshin_api_web/controllers/match_controller_test.exs test/zanshin_api_web/controllers/match_score_controller_test.exs`
+  - `cd api && mix test` (96 tests, 0 failures)
+- **Next pickup (same increment):**
+  - Complete Wave 1 with projection replay/drift tests for analytics worker flows.
+
 ---
 
 ## Phase 5 - WordPress Plugin

@@ -20,8 +20,9 @@ defmodule ZanshinApiWeb.GradingSessionControllerTest do
       })
 
     conn = get(conn, "/api/v1/gradings/sessions?tournament_id=#{tournament.id}")
-    assert %{"data" => [row]} = json_response(conn, 200)
+    assert %{"data" => [row], "pagination" => pagination} = json_response(conn, 200)
     assert row["tournament_id"] == tournament.id
     assert row["name"] == "Spring Shinsa"
+    assert pagination["count"] == 1
   end
 end

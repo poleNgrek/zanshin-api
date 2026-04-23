@@ -3,10 +3,15 @@ defmodule ZanshinApiWeb.TeamMatchController do
 
   alias ZanshinApi.Teams
   alias ZanshinApi.Teams.TeamMatch
+  alias ZanshinApiWeb.Pagination
 
-  def index(conn, %{"division_id" => division_id}) do
-    data = Teams.list_team_matches_by_division(division_id) |> Enum.map(&serialize/1)
-    json(conn, %{data: data})
+  def index(conn, %{"division_id" => division_id} = params) do
+    Pagination.json_paginated(
+      conn,
+      params,
+      Teams.list_team_matches_by_division(division_id),
+      &serialize/1
+    )
   end
 
   def create(conn, params) do

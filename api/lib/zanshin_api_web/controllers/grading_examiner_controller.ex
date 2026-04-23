@@ -3,10 +3,10 @@ defmodule ZanshinApiWeb.GradingExaminerController do
 
   alias ZanshinApi.Grading.{GradingExaminer, GradingPanelAssignment}
   alias ZanshinApi.Gradings
+  alias ZanshinApiWeb.Pagination
 
-  def index(conn, _params) do
-    data = Gradings.list_examiners() |> Enum.map(&serialize_examiner/1)
-    json(conn, %{data: data})
+  def index(conn, params) do
+    Pagination.json_paginated(conn, params, Gradings.list_examiners(), &serialize_examiner/1)
   end
 
   def create(conn, params) do
@@ -49,9 +49,13 @@ defmodule ZanshinApiWeb.GradingExaminerController do
     end
   end
 
-  def panel(conn, %{"id" => session_id}) do
-    data = Gradings.list_panel_assignments(session_id) |> Enum.map(&serialize_assignment/1)
-    json(conn, %{data: data})
+  def panel(conn, %{"id" => session_id} = params) do
+    Pagination.json_paginated(
+      conn,
+      params,
+      Gradings.list_panel_assignments(session_id),
+      &serialize_assignment/1
+    )
   end
 
   defp serialize_examiner(%GradingExaminer{} = examiner) do

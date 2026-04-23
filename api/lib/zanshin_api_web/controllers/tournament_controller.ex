@@ -3,10 +3,10 @@ defmodule ZanshinApiWeb.TournamentController do
 
   alias ZanshinApi.Competitions
   alias ZanshinApi.Competitions.Tournament
+  alias ZanshinApiWeb.Pagination
 
-  def index(conn, _params) do
-    data = Competitions.list_tournaments() |> Enum.map(&serialize/1)
-    json(conn, %{data: data})
+  def index(conn, params) do
+    Pagination.json_paginated(conn, params, Competitions.list_tournaments(), &serialize/1)
   end
 
   def create(conn, params) do

@@ -29,9 +29,10 @@ defmodule ZanshinApiWeb.DivisionStageControllerTest do
     _s2 = division_stage_fixture(division, %{"stage_type" => "knockout", "sequence" => 2})
 
     conn = get(conn, "/api/v1/division_stages?division_id=#{division.id}")
-    assert %{"data" => [first, second]} = json_response(conn, 200)
+    assert %{"data" => [first, second], "pagination" => pagination} = json_response(conn, 200)
     assert first["stage_type"] == "round_robin"
     assert second["stage_type"] == "knockout"
+    assert pagination["count"] == 2
   end
 
   test "GET /api/v1/division_stages requires division_id query param", %{conn: conn} do

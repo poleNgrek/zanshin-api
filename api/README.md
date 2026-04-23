@@ -106,6 +106,14 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
     - `POST /api/v1/gradings/results/:id/compute`
     - `POST /api/v1/gradings/results/:id/finalize`
   - replayed responses include `x-idempotent-replayed: true`
+- Standardized pagination baseline:
+  - list endpoints accept optional `limit` and `offset` query params
+  - list responses include `pagination` metadata:
+    - `total`
+    - `limit`
+    - `offset`
+    - `count`
+    - `has_more`
 - Real tournament/division/competitor entities with DB-level FK constraints on matches
 - Persistent audit trail in `match_events` table
 - Initial tests for:

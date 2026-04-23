@@ -4,10 +4,15 @@ defmodule ZanshinApiWeb.DivisionMedalResultController do
   alias ZanshinApi.Competitions
   alias ZanshinApi.Competitions.DivisionMedalResult
   alias ZanshinApiWeb.Idempotency
+  alias ZanshinApiWeb.Pagination
 
-  def index(conn, %{"division_id" => division_id}) do
-    data = Competitions.list_division_medal_results(division_id) |> Enum.map(&serialize/1)
-    json(conn, %{data: data})
+  def index(conn, %{"division_id" => division_id} = params) do
+    Pagination.json_paginated(
+      conn,
+      params,
+      Competitions.list_division_medal_results(division_id),
+      &serialize/1
+    )
   end
 
   def create(conn, params) do

@@ -254,6 +254,9 @@ paths:
     get:
       tags: [Tournaments]
       summary: List tournaments
+      parameters:
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
@@ -287,9 +290,20 @@ paths:
     get:
       tags: [Divisions]
       summary: List divisions
+      parameters:
+        - in: query
+          name: tournament_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
+        "400":
+          $ref: "#/components/responses/BadRequest"
     post:
       tags: [Divisions]
       summary: Create division
@@ -336,12 +350,17 @@ paths:
       parameters:
         - in: query
           name: division_id
+          required: true
           schema:
             type: string
             format: uuid
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
+        "400":
+          $ref: "#/components/responses/BadRequest"
     post:
       tags: [Divisions]
       summary: Create division stage
@@ -367,6 +386,8 @@ paths:
           schema:
             type: string
             format: uuid
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
@@ -395,6 +416,8 @@ paths:
           schema:
             type: string
             format: uuid
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
@@ -431,6 +454,9 @@ paths:
     get:
       tags: [Competitors]
       summary: List competitors
+      parameters:
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
@@ -459,6 +485,8 @@ paths:
           schema:
             type: string
             format: uuid
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
@@ -482,6 +510,8 @@ paths:
       summary: List team members
       parameters:
         - $ref: "#/components/parameters/IdPath"
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
@@ -512,6 +542,8 @@ paths:
           schema:
             type: string
             format: uuid
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
@@ -533,6 +565,9 @@ paths:
     get:
       tags: [Matches]
       summary: List matches
+      parameters:
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
@@ -589,6 +624,8 @@ paths:
       summary: List score events for match
       parameters:
         - $ref: "#/components/parameters/IdPath"
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
@@ -617,6 +654,9 @@ paths:
     get:
       tags: [Gradings]
       summary: List grading examiners
+      parameters:
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
@@ -638,9 +678,20 @@ paths:
     get:
       tags: [Gradings]
       summary: List grading sessions
+      parameters:
+        - in: query
+          name: tournament_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
+        "400":
+          $ref: "#/components/responses/BadRequest"
     post:
       tags: [Gradings]
       summary: Create grading session
@@ -661,6 +712,8 @@ paths:
       summary: List grading results for session
       parameters:
         - $ref: "#/components/parameters/IdPath"
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
@@ -686,6 +739,8 @@ paths:
       summary: List session panel assignments
       parameters:
         - $ref: "#/components/parameters/IdPath"
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
@@ -711,6 +766,8 @@ paths:
       summary: List votes for grading result
       parameters:
         - $ref: "#/components/parameters/IdPath"
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
@@ -736,6 +793,8 @@ paths:
       summary: List notes for grading result
       parameters:
         - $ref: "#/components/parameters/IdPath"
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
       responses:
         "200":
           $ref: "#/components/responses/OkArray"
@@ -808,6 +867,23 @@ components:
       schema:
         type: string
         format: uuid
+    LimitQuery:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+      description: Maximum number of items to return.
+    OffsetQuery:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+      description: Number of items to skip before collecting result set.
     IdempotencyKeyHeader:
       name: idempotency-key
       in: header

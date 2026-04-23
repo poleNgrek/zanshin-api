@@ -3,6 +3,7 @@ defmodule ZanshinApiWeb.GradingSessionController do
 
   alias ZanshinApi.Grading.GradingSession
   alias ZanshinApi.Gradings
+  alias ZanshinApiWeb.Pagination
 
   def index(conn, params) do
     case Map.get(params, "tournament_id") do
@@ -12,8 +13,12 @@ defmodule ZanshinApiWeb.GradingSessionController do
         |> json(%{error: "tournament_id_required"})
 
       tournament_id ->
-        data = Gradings.list_sessions_by_tournament(tournament_id) |> Enum.map(&serialize/1)
-        json(conn, %{data: data})
+        Pagination.json_paginated(
+          conn,
+          params,
+          Gradings.list_sessions_by_tournament(tournament_id),
+          &serialize/1
+        )
     end
   end
 

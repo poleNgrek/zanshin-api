@@ -13,8 +13,18 @@ defmodule ZanshinApiWeb.DivisionControllerTest do
     _division = division_fixture(tournament, %{"name" => "Adults"})
 
     conn = get(conn, "/api/v1/divisions?tournament_id=#{tournament.id}")
-    assert %{"data" => [row]} = json_response(conn, 200)
+    assert %{"data" => [row], "pagination" => pagination} = json_response(conn, 200)
     assert row["tournament_id"] == tournament.id
     assert row["name"] == "Adults"
+    assert pagination["offset"] == 0
+    assert pagination["limit"] == 50
+  end
+
+  test "GET /api/v1/divisions rejects invalid pagination params", %{conn: conn} do
+    tournament = tournament_fixture()
+    _division = division_fixture(tournament, %{"name" => "Adults"})
+
+    conn = get(conn, "/api/v1/divisions?tournament_id=#{tournament.id}&offset=-1")
+    assert %{"error" => "invalid_pagination"} = json_response(conn, 400)
   end
 end

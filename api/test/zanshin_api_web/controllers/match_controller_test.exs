@@ -37,6 +37,20 @@ defmodule ZanshinApiWeb.MatchControllerTest do
     assert id == match.id
   end
 
+  test "GET /api/v1/matches supports standardized pagination", %{conn: conn} do
+    _m1 = match_fixture()
+    m2 = match_fixture()
+    _m3 = match_fixture()
+
+    conn = get(conn, "/api/v1/matches?limit=1&offset=1")
+
+    assert %{"data" => [row], "pagination" => pagination} = json_response(conn, 200)
+    assert row["id"] == m2.id
+    assert pagination["limit"] == 1
+    assert pagination["offset"] == 1
+    assert pagination["count"] == 1
+  end
+
   test "POST /api/v1/matches rejects mismatched tournament and division", %{conn: conn} do
     tournament = tournament_fixture(%{"name" => "Scoped Tournament"})
     other_tournament = tournament_fixture(%{"name" => "Other Tournament"})
