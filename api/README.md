@@ -307,9 +307,7 @@ Auth modes:
 
 CORS:
 
-- Local frontend origins are allowed by default:
-  - `http://localhost:3000`
-  - `http://127.0.0.1:3000`
+- Local frontend origins on `localhost` / `127.0.0.1` are allowed by default (any port, including `8080`).
 - Override with `CORS_ALLOWED_ORIGINS` (comma-separated).
 
 ## Next steps

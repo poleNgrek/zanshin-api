@@ -72,3 +72,4 @@ Feature: API controller regression coverage
       | joins admin tournament topic and receives tournament created event |
       | receives grading result finalized event on tournament topic |
       | receives competitor created event on admin all topic |
+      | accepts localhost origins on arbitrary dev ports |

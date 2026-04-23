@@ -22,4 +22,13 @@ defmodule ZanshinApiWeb.CorsTest do
     assert response(conn, 204)
     assert get_resp_header(conn, "access-control-allow-origin") == ["http://localhost:3000"]
   end
+
+  test "accepts localhost origins on arbitrary dev ports", %{conn: conn} do
+    conn =
+      conn
+      |> put_req_header("origin", "http://localhost:53033")
+      |> get("/api/v1/health")
+
+    assert get_resp_header(conn, "access-control-allow-origin") == ["http://localhost:53033"]
+  end
 end

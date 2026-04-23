@@ -13,7 +13,7 @@ set -euo pipefail
 #
 # What it does:
 # - Installs frontend deps
-# - Starts Remix dev server at http://localhost:3000
+# - Starts Remix dev server at http://localhost:8080
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FRONTEND_DIR="$ROOT_DIR/front-end"
@@ -36,6 +36,6 @@ echo "Installing frontend dependencies..."
 cd "$FRONTEND_DIR"
 bun install
 
-echo "Starting frontend on http://localhost:3000 ..."
+echo "Starting frontend on http://localhost:8080 ..."
 echo "Using API_BASE_URL=$API_BASE_URL"
 exec env API_BASE_URL="$API_BASE_URL" bun run dev

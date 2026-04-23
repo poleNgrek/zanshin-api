@@ -7,7 +7,9 @@ defmodule ZanshinApiWeb.Plugs.Cors do
 
   @default_allowed_origins [
     "http://localhost:3000",
-    "http://127.0.0.1:3000"
+    "http://127.0.0.1:3000",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080"
   ]
 
   @allowed_methods "GET,POST,PUT,PATCH,DELETE,OPTIONS"
@@ -19,7 +21,7 @@ defmodule ZanshinApiWeb.Plugs.Cors do
     origin = get_req_header(conn, "origin") |> List.first()
     allowed_origins = allowed_origins()
 
-    if origin && origin in allowed_origins do
+    if origin && origin_allowed?(origin, allowed_origins) do
       conn =
         conn
         |> put_resp_header("access-control-allow-origin", origin)
@@ -54,6 +56,22 @@ defmodule ZanshinApiWeb.Plugs.Cors do
           [] -> @default_allowed_origins
           parsed -> parsed
         end
+    end
+  end
+
+  defp origin_allowed?(origin, allowed_origins) do
+    origin in allowed_origins or localhost_origin?(origin)
+  end
+
+  defp localhost_origin?(origin) do
+    case URI.parse(origin) do
+      %URI{scheme: scheme, host: host, port: port}
+      when scheme in ["http", "https"] and host in ["localhost", "127.0.0.1"] and
+             is_integer(port) ->
+        true
+
+      _ ->
+        false
     end
   end
 end

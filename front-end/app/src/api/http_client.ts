@@ -35,16 +35,27 @@ export async function fetch_with_schema<TSchema extends z.ZodTypeAny>(
 ): Promise<z.infer<TSchema>> {
   const token = options.token || get_stored_token() || undefined;
 
-  const response = await fetch(`${get_api_base_url()}${path}`, {
-    method: options.method ?? "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {})
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined
-  });
+  let response: Response;
 
-  const json = await response.json();
+  try {
+    response = await fetch(`${get_api_base_url()}${path}`, {
+      method: options.method ?? "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: options.body ? JSON.stringify(options.body) : undefined
+    });
+  } catch (error) {
+    throw new ApiError("api_unreachable", 0, error);
+  }
+
+  let json: unknown;
+  try {
+    json = await response.json();
+  } catch {
+    throw new ApiError("invalid_json_response", response.status);
+  }
 
   if (!response.ok) {
     const parsed_error = ErrorEnvelopeSchema.safeParse(json);

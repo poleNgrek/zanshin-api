@@ -88,7 +88,7 @@ bash scripts/dev_frontend_docker.sh
 
 Open:
 
-- Frontend: `http://localhost:3000`
+- Frontend: `http://localhost:8080`
 - API docs: `http://localhost:4000/api/docs`
 
 ## Consumer vs Admin Views
@@ -108,7 +108,7 @@ Open:
 Write endpoints require authentication.
 
 - Generate or obtain a valid Bearer token for your API environment.
-- In the app header, paste token into `Bearer token` field and click `Save Token`.
+- In the app header, paste token into the admin auth field and click `Save`.
 - Token is stored in `localStorage` and automatically attached to API write requests.
 
 ## Commands
