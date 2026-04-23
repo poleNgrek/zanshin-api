@@ -2,6 +2,7 @@ defmodule ZanshinApiWeb.UserSocket do
   use Phoenix.Socket
 
   channel "matches:*", ZanshinApiWeb.MatchChannel
+  channel "admin:*", ZanshinApiWeb.AdminChannel
 
   @impl true
   def connect(_params, socket, _connect_info), do: {:ok, socket}

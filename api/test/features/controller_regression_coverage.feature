@@ -69,3 +69,5 @@ Feature: API controller regression coverage
       | GET /api/v1/realtime/matches/stream emits SSE snapshot for admin |
       | GET /api/v1/realtime/matches/stream requires tournament_id |
       | GET /api/v1/realtime/matches/stream forbids non-admin |
+      | joins admin tournament topic and receives tournament created event |
+      | receives grading result finalized event on tournament topic |

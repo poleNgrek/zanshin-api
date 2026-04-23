@@ -937,6 +937,48 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 - **Next pickup (next wave):**
   - Extend realtime coverage for admin operations and frontend live-state flows.
 
+### Increment 2 Execution - Wave 3.2 Admin Realtime Coverage + Frontend Live State
+
+- **Status:** `completed`
+- **Goal:** extend realtime beyond match channels so admin operations emit updates and key frontend screens refresh live.
+- **Done in workspace:**
+  - Added admin realtime channel topology:
+    - `api/lib/zanshin_api_web/channels/admin_channel.ex`
+    - `api/lib/zanshin_api_web/user_socket.ex` (`channel "admin:*"`)
+  - Added centralized admin broadcaster:
+    - `api/lib/zanshin_api/realtime/admin_broadcaster.ex`
+    - topic fanout:
+      - `admin:all`
+      - `admin:tournament:<id>`
+      - `admin:division:<id>`
+      - `admin:team:<id>`
+      - `admin:grading_session:<id>`
+      - `admin:grading_result:<id>`
+  - Emitted admin realtime events from core mutation flows:
+    - `Competitions` (`create_tournament`, `create_division`, `create_division_stage`, `compute_division_results`)
+    - `Gradings` (`create_session`, `create_result`, `compute_result_decision`, `finalize_result`)
+    - `Teams` (`create_team`, `add_team_member`, `create_team_match`)
+    - `Matches` (`create_match` now emits `match_created`)
+  - Added backend realtime coverage:
+    - `api/test/zanshin_api_web/channels/admin_channel_test.exs`
+  - Added frontend live-state polling support using authenticated SSE snapshots:
+    - new realtime schemas and parser/client:
+      - `front-end/app/src/schemas/realtime.ts`
+      - `front-end/app/src/api/http_client.ts`
+    - route integration:
+      - `front-end/app/src/routes/matches.tsx` (live match list refresh by tournament)
+      - `front-end/app/src/routes/analytics.tsx` (live analytics refresh when new match events arrive)
+    - unit coverage:
+      - `front-end/tests/realtime-client.test.ts`
+  - Updated controller/parity regression matrix:
+    - `api/test/features/controller_regression_coverage.feature`
+- **Verification:**
+  - `cd api && mix test test/zanshin_api_web/channels/admin_channel_test.exs test/zanshin_api_web/channels/match_channel_test.exs`
+  - `cd api && mix test` (9 scenarios, 111 tests, 0 failures)
+  - `cd front-end && bun run verify` (typecheck + lint + tests + depcheck all passing)
+- **Next pickup (same wave family):**
+  - Expand frontend admin realtime handling to gradings/tournaments list UIs with direct event-level UI mutations (beyond polling-triggered refresh).
+
 ---
 
 ## Phase 5 - WordPress Plugin
@@ -950,4 +992,3 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 - **Status:** `planned`
 - **Goal:** full CI/CD maturity, observability, regression confidence, and release readiness.
-

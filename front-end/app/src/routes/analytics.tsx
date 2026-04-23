@@ -1,8 +1,8 @@
 import { Alert, Button, Grid, MenuItem, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import { useLoaderData } from "@remix-run/react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { ApiError, fetchWithSchema } from "@zanshin/api";
+import { ApiError, fetchMatchEventsSnapshot, fetchWithSchema } from "@zanshin/api";
 import { PageTitle, SectionCard } from "@zanshin/components";
 import {
     AnalyticsOverviewResponseSchema,
@@ -70,6 +70,10 @@ export default function AnalyticsRoute() {
   const [overview, setOverview] = useState<AnalyticsOverview | null>(initialOverview);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [liveEnabled, setLiveEnabled] = useState(true);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const [liveError, setLiveError] = useState<string | null>(null);
+  const sinceIdRef = useRef<string | undefined>(undefined);
 
   const divisionsInScope = useMemo(() => {
     return divisions.filter((division) => division.tournament_id === selectedTournamentId);
@@ -83,7 +87,7 @@ export default function AnalyticsRoute() {
     return [...overview.insights.throughput_trend].sort((left, right) => right.total_events - left.total_events)[0];
   }, [overview]);
 
-  async function loadOverview() {
+  const loadOverview = useCallback(async () => {
     if (!selectedTournamentId) {
       return;
     }
@@ -103,13 +107,62 @@ export default function AnalyticsRoute() {
       );
       setOverview(response.data);
       setError(null);
+      setLastUpdatedAt(new Date());
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "failed_to_load_analytics_overview";
       setError(message);
     } finally {
       setLoading(false);
     }
-  }
+  }, [from, selectedDivisionId, selectedTournamentId, to]);
+
+  useEffect(() => {
+    sinceIdRef.current = undefined;
+  }, [selectedTournamentId]);
+
+  useEffect(() => {
+    if (!liveEnabled || !selectedTournamentId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function pollRealtime() {
+      try {
+        const snapshot = await fetchMatchEventsSnapshot({
+          tournament_id: selectedTournamentId,
+          since_id: sinceIdRef.current,
+          limit: 50
+        });
+
+        if (cancelled) {
+          return;
+        }
+
+        if (snapshot.events.length > 0) {
+          sinceIdRef.current = snapshot.events[snapshot.events.length - 1]?.id;
+          await loadOverview();
+        }
+
+        setLiveError(null);
+      } catch (err) {
+        if (!cancelled) {
+          const message = err instanceof ApiError ? err.message : "live_analytics_refresh_failed";
+          setLiveError(message);
+        }
+      }
+    }
+
+    void pollRealtime();
+    const interval = window.setInterval(() => {
+      void pollRealtime();
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [liveEnabled, loadOverview, selectedTournamentId]);
 
   function handleTournamentChange(nextTournamentId: string) {
     setSelectedTournamentId(nextTournamentId);
@@ -125,6 +178,11 @@ export default function AnalyticsRoute() {
       />
 
       {error ? <Alert severity="error">{error}</Alert> : null}
+      <Alert severity={liveError ? "warning" : "info"}>
+        Live updates: {liveEnabled ? "on" : "off"}
+        {lastUpdatedAt ? ` - last sync ${lastUpdatedAt.toLocaleTimeString()}` : ""}
+        {liveError ? ` - ${liveError}` : ""}
+      </Alert>
       {tournaments.length === 0 ? <Alert severity="warning">No tournaments available yet.</Alert> : null}
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
@@ -172,6 +230,16 @@ export default function AnalyticsRoute() {
         <Button variant="contained" onClick={() => void loadOverview()} disabled={!selectedTournamentId || loading}>
           {loading ? "Loading..." : "Refresh"}
         </Button>
+        <TextField
+          select
+          label="Live Refresh"
+          value={liveEnabled ? "on" : "off"}
+          onChange={(event) => setLiveEnabled(event.target.value === "on")}
+          sx={{ minWidth: 180 }}
+        >
+          <MenuItem value="on">Enabled</MenuItem>
+          <MenuItem value="off">Disabled</MenuItem>
+        </TextField>
       </Stack>
 
       {overview ? (

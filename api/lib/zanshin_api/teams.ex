@@ -2,6 +2,8 @@ defmodule ZanshinApi.Teams do
   @moduledoc "Team context for team competition lineups."
 
   import Ecto.Query, warn: false
+  alias ZanshinApi.Competitions.Division
+  alias ZanshinApi.Realtime.AdminBroadcaster
   alias ZanshinApi.Repo
   alias ZanshinApi.Teams.{Team, TeamMatch, TeamMember}
 
@@ -9,6 +11,22 @@ defmodule ZanshinApi.Teams do
     %Team{}
     |> Team.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, team} ->
+        division = Repo.get(Division, team.division_id)
+
+        AdminBroadcaster.broadcast("admin_team_created", %{
+          tournament_id: division && division.tournament_id,
+          division_id: team.division_id,
+          team_id: team.id,
+          team_name: team.name
+        })
+
+        {:ok, team}
+
+      error ->
+        error
+    end
   end
 
   def list_teams_by_division(division_id) do
@@ -22,6 +40,23 @@ defmodule ZanshinApi.Teams do
     %TeamMember{}
     |> TeamMember.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, member} ->
+        team = Repo.get(Team, member.team_id)
+        division = team && Repo.get(Division, team.division_id)
+
+        AdminBroadcaster.broadcast("admin_team_member_added", %{
+          tournament_id: division && division.tournament_id,
+          division_id: team && team.division_id,
+          team_id: member.team_id,
+          competitor_id: member.competitor_id
+        })
+
+        {:ok, member}
+
+      error ->
+        error
+    end
   end
 
   def list_team_members(team_id) do
@@ -38,6 +73,21 @@ defmodule ZanshinApi.Teams do
       %TeamMatch{}
       |> TeamMatch.changeset(attrs)
       |> Repo.insert()
+      |> case do
+        {:ok, team_match} ->
+          division = Repo.get(Division, team_match.division_id)
+
+          AdminBroadcaster.broadcast("admin_team_match_created", %{
+            tournament_id: division && division.tournament_id,
+            division_id: team_match.division_id,
+            team_match_id: team_match.id
+          })
+
+          {:ok, team_match}
+
+        error ->
+          error
+      end
     end
   end
 

@@ -1,8 +1,8 @@
 import { Alert, MenuItem, Stack, TextField } from "@mui/material";
 import { useLoaderData } from "@remix-run/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import { fetchWithSchema } from "@zanshin/api";
+import { ApiError, fetchMatchEventsSnapshot, fetchWithSchema } from "@zanshin/api";
 import { InfoAlertList, PageTitle } from "@zanshin/components";
 import {
     CompetitorListResponseSchema,
@@ -44,8 +44,17 @@ export async function clientLoader(): Promise<MatchLoaderData> {
 
 export default function MatchesRoute() {
   const { matches, tournaments, divisions, competitors } = useLoaderData<typeof clientLoader>();
+  const [liveMatches, setLiveMatches] = useState(matches);
   const [selectedTournamentId, setSelectedTournamentId] = useState("all");
   const [selectedDivisionId, setSelectedDivisionId] = useState("all");
+  const [liveError, setLiveError] = useState<string | null>(null);
+  const [liveEnabled, setLiveEnabled] = useState(true);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const sinceIdRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    sinceIdRef.current = undefined;
+  }, [selectedTournamentId]);
 
   const competitorById = useMemo(
     () => new Map(competitors.map((competitor) => [competitor.id, competitor.display_name])),
@@ -53,28 +62,77 @@ export default function MatchesRoute() {
   );
 
   const tournamentsInMatches = useMemo(() => {
-    const tournamentIds = new Set(matches.map((match) => match.tournament_id));
+    const tournamentIds = new Set(liveMatches.map((match) => match.tournament_id));
     return tournaments.filter((tournament) => tournamentIds.has(tournament.id));
-  }, [matches, tournaments]);
+  }, [liveMatches, tournaments]);
 
   const divisionsInScope = useMemo(() => {
     const divisionIds = new Set(
-      matches
+      liveMatches
         .filter((match) => selectedTournamentId === "all" || match.tournament_id === selectedTournamentId)
         .map((match) => match.division_id)
     );
     return divisions.filter((division) => divisionIds.has(division.id));
-  }, [divisions, matches, selectedTournamentId]);
+  }, [divisions, liveMatches, selectedTournamentId]);
 
   const filteredMatches = useMemo(
     () =>
-      matches.filter((match) => {
+      liveMatches.filter((match) => {
         if (selectedTournamentId !== "all" && match.tournament_id !== selectedTournamentId) return false;
         if (selectedDivisionId !== "all" && match.division_id !== selectedDivisionId) return false;
         return true;
       }),
-    [matches, selectedDivisionId, selectedTournamentId]
+    [liveMatches, selectedDivisionId, selectedTournamentId]
   );
+
+  useEffect(() => {
+    if (!liveEnabled || selectedTournamentId === "all") {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function pollRealtime() {
+      try {
+        const snapshot = await fetchMatchEventsSnapshot({
+          tournament_id: selectedTournamentId,
+          since_id: sinceIdRef.current,
+          limit: 50
+        });
+
+        if (cancelled) {
+          return;
+        }
+
+        if (snapshot.events.length > 0) {
+          sinceIdRef.current = snapshot.events[snapshot.events.length - 1]?.id;
+          const response = await fetchWithSchema("/api/v1/matches", MatchListResponseSchema);
+
+          if (!cancelled) {
+            setLiveMatches(response.data);
+            setLastUpdatedAt(new Date());
+          }
+        }
+
+        setLiveError(null);
+      } catch (err) {
+        if (!cancelled) {
+          const message = err instanceof ApiError ? err.message : "live_match_refresh_failed";
+          setLiveError(message);
+        }
+      }
+    }
+
+    void pollRealtime();
+    const interval = window.setInterval(() => {
+      void pollRealtime();
+    }, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [liveEnabled, selectedTournamentId]);
 
   function handleTournamentChange(nextTournamentId: string) {
     setSelectedTournamentId(nextTournamentId);
@@ -92,6 +150,12 @@ export default function MatchesRoute() {
   return (
     <Stack spacing={2}>
       <PageTitle title="Match List" description="Public consumer view of currently recorded matches." />
+      <Alert severity={liveError ? "warning" : "info"}>
+        Live updates: {liveEnabled ? "on" : "off"}
+        {selectedTournamentId === "all" ? " (select a tournament to subscribe)" : ""}
+        {lastUpdatedAt ? ` - last sync ${lastUpdatedAt.toLocaleTimeString()}` : ""}
+        {liveError ? ` - ${liveError}` : ""}
+      </Alert>
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
         <TextField
@@ -121,6 +185,16 @@ export default function MatchesRoute() {
               {division.name}
             </MenuItem>
           ))}
+        </TextField>
+        <TextField
+          select
+          label="Live Refresh"
+          value={liveEnabled ? "on" : "off"}
+          onChange={(event) => setLiveEnabled(event.target.value === "on")}
+          sx={{ minWidth: 220 }}
+        >
+          <MenuItem value="on">Enabled</MenuItem>
+          <MenuItem value="off">Disabled</MenuItem>
         </TextField>
       </Stack>
 

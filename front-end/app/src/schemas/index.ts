@@ -36,6 +36,10 @@ export {
     MatchSchema
 } from "./matches";
 export {
+    MatchRealtimeEventSchema,
+    MatchRealtimeSnapshotSchema
+} from "./realtime";
+export {
     TournamentListResponseSchema,
     TournamentResponseSchema,
     TournamentSchema

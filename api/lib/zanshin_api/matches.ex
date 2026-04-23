@@ -23,6 +23,20 @@ defmodule ZanshinApi.Matches do
       %Match{}
       |> Match.create_changeset(attrs)
       |> Repo.insert()
+      |> case do
+        {:ok, match} ->
+          broadcast_match_event("match_created", match.id, match.tournament_id, %{
+            match_id: match.id,
+            tournament_id: match.tournament_id,
+            division_id: match.division_id,
+            state: Atom.to_string(match.state)
+          })
+
+          {:ok, match}
+
+        error ->
+          error
+      end
     end
   end
 

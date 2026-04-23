@@ -22,6 +22,7 @@ defmodule ZanshinApi.Competitions do
 
   alias ZanshinApi.Officials.Shinpan
   alias ZanshinApi.Matches.{Match, MatchEvent, ScoreEvent}
+  alias ZanshinApi.Realtime.AdminBroadcaster
   alias ZanshinApi.Repo
   alias ZanshinApi.Teams.{Team, TeamMatch, TeamMember}
 
@@ -29,6 +30,18 @@ defmodule ZanshinApi.Competitions do
     %Tournament{}
     |> Tournament.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, tournament} ->
+        AdminBroadcaster.broadcast("admin_tournament_created", %{
+          tournament_id: tournament.id,
+          name: tournament.name
+        })
+
+        {:ok, tournament}
+
+      error ->
+        error
+    end
   end
 
   def list_tournaments do
@@ -146,6 +159,11 @@ defmodule ZanshinApi.Competitions do
          :ok <- ensure_computable_division(division),
          {:ok, final_result, bronze_recipients} <- compute_podium(division),
          {:ok, _} <- replace_division_medal_results(division, final_result, bronze_recipients) do
+      AdminBroadcaster.broadcast("admin_division_results_computed", %{
+        tournament_id: division.tournament_id,
+        division_id: division.id
+      })
+
       {:ok, list_division_medal_results(division.id)}
     end
   end
@@ -154,6 +172,19 @@ defmodule ZanshinApi.Competitions do
     %Division{}
     |> Division.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, division} ->
+        AdminBroadcaster.broadcast("admin_division_created", %{
+          tournament_id: division.tournament_id,
+          division_id: division.id,
+          name: division.name
+        })
+
+        {:ok, division}
+
+      error ->
+        error
+    end
   end
 
   def list_divisions_by_tournament(tournament_id) do
@@ -237,6 +268,21 @@ defmodule ZanshinApi.Competitions do
     %DivisionStage{}
     |> DivisionStage.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, stage} ->
+        with {:ok, division} <- fetch_division(stage.division_id) do
+          AdminBroadcaster.broadcast("admin_division_stage_created", %{
+            tournament_id: division.tournament_id,
+            division_id: division.id,
+            stage_id: stage.id
+          })
+        end
+
+        {:ok, stage}
+
+      error ->
+        error
+    end
   end
 
   def list_division_stages(division_id) do

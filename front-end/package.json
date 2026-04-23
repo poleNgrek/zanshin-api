@@ -13,7 +13,7 @@
     "lint": "bunx eslint .",
     "lint:fix": "bunx eslint . --fix",
     "depcheck:circular": "bunx madge --circular --extensions ts,tsx --ts-config ./tsconfig.json ./app/src",
-    "test:unit": "bun test ./tests/api-client.test.ts ./tests/schemas.test.ts ./tests/token-store.test.ts",
+    "test:unit": "bun test ./tests/api-client.test.ts ./tests/schemas.test.ts ./tests/token-store.test.ts ./tests/realtime-client.test.ts",
     "test": "bun run test:unit && bun run depcheck:circular",
     "check-imports": "bun ./scripts/organize_imports.ts check",
     "organize-imports": "bun ./scripts/organize_imports.ts write",

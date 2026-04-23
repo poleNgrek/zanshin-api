@@ -7,6 +7,8 @@ import type {
     GradingResultSchema,
     GradingSessionSchema,
     MatchSchema,
+    MatchRealtimeEventSchema,
+    MatchRealtimeSnapshotSchema,
     TournamentSchema
 } from "@zanshin/schemas";
 
@@ -16,4 +18,6 @@ export type Division = z.infer<typeof DivisionSchema>;
 export type GradingResult = z.infer<typeof GradingResultSchema>;
 export type GradingSession = z.infer<typeof GradingSessionSchema>;
 export type Match = z.infer<typeof MatchSchema>;
+export type MatchRealtimeEvent = z.infer<typeof MatchRealtimeEventSchema>;
+export type MatchRealtimeSnapshot = z.infer<typeof MatchRealtimeSnapshotSchema>;
 export type Tournament = z.infer<typeof TournamentSchema>;

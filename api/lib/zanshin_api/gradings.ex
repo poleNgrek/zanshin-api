@@ -12,12 +12,26 @@ defmodule ZanshinApi.Gradings do
     GradingVote
   }
 
+  alias ZanshinApi.Realtime.AdminBroadcaster
   alias ZanshinApi.Repo
 
   def create_session(attrs) do
     %GradingSession{}
     |> GradingSession.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, session} ->
+        AdminBroadcaster.broadcast("admin_grading_session_created", %{
+          tournament_id: session.tournament_id,
+          grading_session_id: session.id,
+          session_name: session.name
+        })
+
+        {:ok, session}
+
+      error ->
+        error
+    end
   end
 
   def list_sessions_by_tournament(tournament_id) do
@@ -33,6 +47,21 @@ defmodule ZanshinApi.Gradings do
     %GradingResult{}
     |> GradingResult.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, result} ->
+        with {:ok, session} <- fetch_session(result.grading_session_id) do
+          AdminBroadcaster.broadcast("admin_grading_result_created", %{
+            tournament_id: session.tournament_id,
+            grading_session_id: session.id,
+            grading_result_id: result.id
+          })
+        end
+
+        {:ok, result}
+
+      error ->
+        error
+    end
   end
 
   def get_result(result_id), do: Repo.get(GradingResult, result_id)
@@ -178,6 +207,20 @@ defmodule ZanshinApi.Gradings do
       result
       |> GradingResult.changeset(attrs)
       |> Repo.update()
+      |> case do
+        {:ok, updated} ->
+          AdminBroadcaster.broadcast("admin_grading_result_computed", %{
+            tournament_id: session.tournament_id,
+            grading_session_id: session.id,
+            grading_result_id: updated.id,
+            final_result: Atom.to_string(updated.final_result)
+          })
+
+          {:ok, updated}
+
+        error ->
+          error
+      end
     end
   end
 
@@ -423,5 +466,20 @@ defmodule ZanshinApi.Gradings do
     result
     |> GradingResult.changeset(attrs)
     |> Repo.update()
+    |> case do
+      {:ok, updated} ->
+        with {:ok, session} <- fetch_session(updated.grading_session_id) do
+          AdminBroadcaster.broadcast("admin_grading_result_finalized", %{
+            tournament_id: session.tournament_id,
+            grading_session_id: session.id,
+            grading_result_id: updated.id
+          })
+        end
+
+        {:ok, updated}
+
+      error ->
+        error
+    end
   end
 end
