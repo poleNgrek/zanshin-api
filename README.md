@@ -17,6 +17,7 @@ API-first platform for managing kendo tournaments with a web app, analytics laye
 - **Storage:** PostgreSQL (transactional) + Neo4j (analytical graph)
 
 See detailed requirements in `docs/PRD.md`.
+For browser cross-origin integration notes, see `docs/CORS.md`.
 
 ## Repository Structure
 
@@ -66,6 +67,7 @@ bash scripts/dev_frontend.sh
 - `dev_api_docker.sh` runs backend inside Docker on `http://localhost:4000`.
 - `dev_frontend_docker.sh` runs frontend inside Docker on `http://localhost:3000`.
 - `dev_all_docker.sh` opens two Terminal tabs and starts full Docker mode.
+- `check_cors.sh` verifies API CORS headers for a given URL/origin pair.
 - If Bun is missing on host, `dev_frontend.sh` prints Bun install instructions.
 
 ### Common Run Variations
