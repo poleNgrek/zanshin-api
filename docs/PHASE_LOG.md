@@ -681,6 +681,10 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - phased rollout order (Wave 1/2/3)
     - verification gates and exit criteria
   - Established separation from Increment 1 so plugin work is not blocked by broad hardening scope.
+- **Next pickup (for next agent):**
+  - Start Increment 2 execution from `docs/pre_phase5_increment2_backlog.md`.
+  - Begin with Wave 1 deliverables and verification gates in document order.
+  - Keep `docs/PHASE_LOG.md` updated per completed wave/milestone.
 
 ### Increment 3 - Monorepo Relayout + ESLint Plugin Integration
 
