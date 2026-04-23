@@ -129,9 +129,15 @@ From repo root:
 docker compose up -d postgres
 cd apps/api
 mix setup
+mix run priv/repo/seeds.exs
 mix test
 mix phx.server
 ```
+
+Seed behavior:
+
+- `mix run priv/repo/seeds.exs` creates a full-domain sample dataset (tournaments/divisions/rules/stages, competitors, teams/matches, grading, medals/awards).
+- Seed is intentionally non-destructive; if tournaments already exist, it exits without adding duplicates.
 
 ## CI
 
@@ -139,6 +145,33 @@ GitHub Actions CI runs from `.github/workflows/ci.yml` and currently validates:
 
 - `mix format --check-formatted`
 - `mix test` (with PostgreSQL service in the workflow job)
+- frontend lint and unit tests (`bun run lint`, `bun run test`)
+- real API Playwright lane (`tests/e2e/real-api.spec.ts`) with seeded API service
+
+## Test Fixtures
+
+- API tests can use deterministic fixture builders under:
+  - `test/support/fixtures/competitions_fixtures.ex`
+  - `test/support/fixtures/matches_fixtures.ex`
+  - `test/support/fixtures/full_domain_fixtures.ex`
+
+## Domain Event Envelope (Outbox-Ready)
+
+Match lifecycle and scoring now emit canonical domain events into `domain_events`.
+
+Envelope fields:
+
+- `event_type`
+- `event_version`
+- `aggregate_type`
+- `aggregate_id`
+- `occurred_at`
+- `actor_role`
+- `payload`
+- `source`
+- `correlation_id`
+- `causation_id`
+- `processed_at` (set by future projection workers)
 
 Then test:
 

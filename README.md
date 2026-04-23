@@ -82,6 +82,9 @@ bash scripts/dev_frontend.sh
 # Variation C: both backend + frontend in Docker
 bash scripts/dev_api_docker.sh
 bash scripts/dev_frontend_docker.sh
+
+# Optional: populate API with a full-domain sample dataset
+cd apps/api && mix run priv/repo/seeds.exs
 ```
 
 ## Environment Defaults
@@ -175,6 +178,8 @@ Planned commands:
 - Current CI scope:
   - Phoenix API format check (`mix format --check-formatted`)
   - Phoenix API test suite (`mix test`) with PostgreSQL service
+  - Frontend lint + unit tests (`bun run lint`, `bun run test`)
+  - Frontend real-API Playwright lane (`tests/e2e/real-api.spec.ts`) with API boot + seeded data
 - CD is intentionally deferred until later hardening/release phases, once deployment targets and secrets strategy are finalized.
 
 ## Phase 2 Status
@@ -202,6 +207,15 @@ Planned commands:
   - Swagger UI: `GET /api/docs`
   - OpenAPI source: `docs/api/openapi.yaml`
   - Postman collection: `docs/api/zanshin-api.postman_collection.json`
+
+## Post-Phase-4 Hardening Backlog
+
+- Timer command/event model with full audited reconstruction.
+- Realtime transport for match/scoring/timer/admin state.
+- Scheduling workflows for shiaijo/shinpan assignment and conflict management.
+- Explicit bracket graph model (round/slot/link) to replace insertion-order assumptions.
+- Expanded admin UI for match/scoring/team-match/grading panel operations.
+- Idempotency keys for command endpoints and standardized pagination contracts.
 
 ## GitHub Push Validation
 

@@ -461,6 +461,51 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 - **Status:** `planned`
 - **Goal:** event projection pipeline and Neo4j integration for first analytics outputs.
 
+### Pre-Phase 4 Hardening Sweep (Moderate) - API/Frontend Readiness
+
+- **Status:** `in_progress`
+- **Goal:** reduce analytics and integration risk by hardening contracts, invariants, fixtures, and CI before projection work begins.
+- **Done in workspace:**
+  - Added deterministic fixture foundations:
+    - backend full-domain fixtures (`test/support/fixtures/full_domain_fixtures.ex`)
+    - frontend Playwright shared fixture payloads (`apps/frontend/tests/e2e/fixtures.ts`)
+  - Added non-destructive API full-domain seed script:
+    - `apps/api/priv/repo/seeds.exs`
+  - Hardened API contract behavior + docs alignment:
+    - explicit required query handling (`tournament_id` for divisions/sessions, `division_id` for stages)
+    - OpenAPI now marks these params required and documents `400` bad-request response
+  - Hardened domain invariants:
+    - match creation validates division/tournament consistency
+    - team match creation validates team/division consistency and representative winner participation
+    - grading vote/note creation validates examiner panel membership for result session
+  - Added canonical outbox-ready domain event envelope:
+    - new `domain_events` table + schema/context
+    - match transitions emit `match.transitioned`
+    - score recording emits `match.score_recorded`
+  - Expanded frontend E2E coverage:
+    - added admin route flow coverage (`/admin`, `/admin/tournaments`, `/admin/competitors`, `/admin/gradings/results`)
+    - added real API Playwright lane (`tests/e2e/real-api.spec.ts`)
+  - Updated CI workflow:
+    - frontend unit job now uses `bun run test` (unit-only scope)
+    - added dedicated real-API Playwright job with API bootstrap + seed + health wait
+- **Verification:**
+  - Focused backend and controller suites pass for contract/invariant/event changes.
+  - Frontend unit tests pass via `bun run test`.
+  - Playwright mocked suites added; real-API lane defined for CI runner environment.
+- **What went wrong / notes:**
+  - Local Playwright execution in this tool environment can fail due host/sandbox network interface limitations; CI lane addresses this with explicit service startup and health checks.
+
+### Post-Phase 4 Backlog - Extensive Hardening (Deferred)
+
+- Implement full timer command/event model (`start`, `pause`, `resume`, overtime) with audited timeline reconstruction.
+- Add realtime update transport (Phoenix channels or SSE) for match/timer/scoring/admin state.
+- Expand scheduling domain and workflows for `shiaijo`/`shinpan` assignments and conflict-aware timeslots.
+- Replace insertion-order-based podium assumptions with explicit bracket graph semantics (round/slot/link metadata).
+- Expand admin UI to cover match operations, scoring controls, team-match operations, and advanced grading panel workflows.
+- Introduce idempotency keys for high-frequency command endpoints (score, transition, compute/finalize).
+- Add standardized pagination contracts for list endpoints with response metadata.
+- Add projection replay tests and drift-detection checks once analytics workers are introduced.
+
 ---
 
 ## Phase 5 - WordPress Plugin

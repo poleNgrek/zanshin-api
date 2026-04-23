@@ -88,4 +88,85 @@ jobs:
         run: bun run lint
 
       - name: Run unit tests
-        run: bun test
+        run: bun run test
+
+  frontend-e2e-real-api:
+    name: Frontend E2E (Real API Integration)
+    runs-on: ubuntu-latest
+    needs: [api-tests, frontend-tests]
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: zanshin_dev
+          POSTGRES_USER: zanshin
+          POSTGRES_PASSWORD: zanshin
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U zanshin -d zanshin_dev"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Elixir and Erlang
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.17.3"
+          otp-version: "27.1"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install API dependencies
+        run: cd apps/api && mix deps.get
+
+      - name: Prepare API database and seed
+        env:
+          DB_HOST: localhost
+          JWT_SECRET: ci-jwt-secret
+          AUTH_MODE: legacy_hs256
+        run: |
+          cd apps/api
+          mix ecto.create
+          mix ecto.migrate
+          mix run priv/repo/seeds.exs
+
+      - name: Start API server
+        env:
+          DB_HOST: localhost
+          JWT_SECRET: ci-jwt-secret
+          AUTH_MODE: legacy_hs256
+          PORT: "4000"
+        run: cd apps/api && mix phx.server > /tmp/api.log 2>&1 &
+
+      - name: Wait for API
+        run: |
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:4000/api/v1/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API failed to start" >&2
+          cat /tmp/api.log >&2 || true
+          exit 1
+
+      - name: Install frontend dependencies
+        run: cd apps/frontend && bun install
+
+      - name: Install Playwright browser
+        run: cd apps/frontend && bunx playwright install chromium
+
+      - name: Run real API Playwright lane
+        env:
+          API_BASE_URL: http://127.0.0.1:4000
+          PLAYWRIGHT_REAL_API: "1"
+        run: cd apps/frontend && bunx playwright test tests/e2e/real-api.spec.ts
