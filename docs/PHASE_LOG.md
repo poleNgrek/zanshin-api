@@ -773,6 +773,17 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 - **Next pickup (same increment):**
   - Complete Wave 1 with projection replay/drift tests for analytics worker flows.
 
+### Increment 2 Execution - Post-Wave Follow-up (Planned) Cabbage BDD Migration
+
+- **Status:** `planned`
+- **Goal:** replace custom Gherkin harness with `cabbage` and harden test architecture by lane.
+- **Planned scope:**
+  - add `cabbage` tooling + BDD support modules
+  - migrate `matches` feature slice first, then expand to `competitions`, `gradings`, `analytics`
+  - keep ExUnit suites as canonical correctness checks during migration
+  - add dedicated BDD CI lane and docs/rule alignment
+  - retire custom parser/harness after parity + CI stability checks
+
 ---
 
 ## Phase 5 - WordPress Plugin

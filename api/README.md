@@ -167,6 +167,7 @@ GitHub Actions CI runs from `.github/workflows/ci.yml` and currently validates:
 
 - `mix format --check-formatted`
 - `mix test` (with PostgreSQL service in the workflow job)
+- `mix test.bdd` (dedicated Cabbage BDD lane)
 - frontend lint and unit tests (`bun run lint`, `bun run test`)
 - real API Playwright lane (`tests/e2e/real-api.spec.ts`) with seeded API service
 
@@ -176,15 +177,11 @@ GitHub Actions CI runs from `.github/workflows/ci.yml` and currently validates:
   - `test/support/fixtures/competitions_fixtures.ex`
   - `test/support/fixtures/matches_fixtures.ex`
   - `test/support/fixtures/full_domain_fixtures.ex`
-- Gherkin-style API scenarios can live in:
+- Cabbage BDD feature files live under:
   - `test/features/*.feature`
-  - executed by ExUnit test modules that parse scenarios from `test/support/gherkin.ex`
-  - coverage matrices:
-    - `test/features/controller_regression_coverage.feature`
-    - `test/features/domain_regression_coverage.feature`
-  - parity guard:
-    - `test/zanshin_api/gherkin_coverage_catalog_test.exs` ensures ExUnit test names stay mirrored in Gherkin matrices
-  - run only those scenarios with: `mix test --only gherkin`
+  - feature-runner modules use `Cabbage.Feature` with shared step modules from `test/support/cabbage/*.ex`
+  - run only BDD scenarios with: `mix test.bdd`
+  - run full API verification with: `mix test`
 
 ## Domain Event Envelope (Outbox-Ready)
 

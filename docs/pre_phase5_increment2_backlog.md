@@ -49,3 +49,13 @@ Verification gates:
 - Every scope item is delivered through sub-increments with dedicated tests and docs.
 - API contracts remain stable under `/api/v1` and are reflected in OpenAPI docs.
 - No regressions to closed Pre-Phase-5 Increment 1 frontend/CI foundations.
+
+## Post-Wave Follow-up Increment (Planned)
+
+### Increment 2.4 - Cabbage BDD Migration and Test Architecture Hardening
+
+- Migrate API behavior feature execution from custom Gherkin harness to `cabbage`.
+- Preserve ExUnit controller/domain suites as canonical correctness checks.
+- Introduce a dedicated BDD lane (`mix test.bdd`) and CI job coverage.
+- Expand behavior specs by domain (`matches`, `competitions`, `gradings`, `analytics`) with shared step/support modules.
+- Decommission custom parser/harness only after parity and CI stability are confirmed.

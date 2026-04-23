@@ -20,6 +20,14 @@ defmodule ZanshinApi.MixProject do
     ]
   end
 
+  def cli do
+    [
+      preferred_envs: [
+        "test.bdd": :test
+      ]
+    ]
+  end
+
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
@@ -34,6 +42,7 @@ defmodule ZanshinApi.MixProject do
       {:jason, "~> 1.4"},
       {:jose, "~> 1.11"},
       {:neo4j_ex, "~> 0.1.9"},
+      {:cabbage, "~> 0.4.1", only: :test},
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 1.0"}
     ]
@@ -44,7 +53,8 @@ defmodule ZanshinApi.MixProject do
       setup: ["deps.get", "ecto.setup"],
       "ecto.setup": ["ecto.create", "ecto.migrate"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
+      "test.bdd": ["ecto.create --quiet", "ecto.migrate --quiet", "test test/features"]
     ]
   end
 end

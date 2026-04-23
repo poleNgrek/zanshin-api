@@ -18,6 +18,10 @@ alwaysApply: true
 - Test success, error, and edge states (not just happy paths).
 - Keep tests deterministic; avoid hidden inter-test coupling and timing flakiness.
 - Update test docs/commands in `README.md` when introducing new test suites.
+- Maintain Cabbage feature coverage for behavior-level API specs:
+  - Add or update `.feature` scenarios for changed behavior in `api/test/features`.
+  - Keep step definitions in `api/test/support/cabbage` reusable and domain-scoped.
+  - Ensure `mix test.bdd` passes in addition to `mix test` for API behavior changes.
 - Keep Gherkin coverage in sync with ExUnit test cases:
   - API controller test names must be represented in `api/test/features/controller_regression_coverage.feature`.
   - API domain/context test names must be represented in `api/test/features/domain_regression_coverage.feature`.
