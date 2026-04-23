@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 
-import { getStoredToken, setStoredToken } from "../app/lib/auth/tokenStore";
+import { getStoredToken, setStoredToken } from "@zanshin/providers";
 
 function createMemoryStorage() {
   const store = new Map<string, string>();

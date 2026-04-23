@@ -3,7 +3,7 @@ import { Links, LiveReload, Meta, Outlet, Scripts, ScrollRestoration } from "@re
 import CssBaseline from "@mui/material/CssBaseline";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
-import { AppShell } from "~/components/ui/AppShell";
+import { AppShell } from "@zanshin/components";
 import stylesheet from "~/styles.css";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: stylesheet }];

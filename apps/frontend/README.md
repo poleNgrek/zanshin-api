@@ -8,7 +8,27 @@ This folder contains the Remix SPA admin app for Zanshin.
 - Bun (package manager, runtime, and test runner)
 - MUI for UI components
 - Zod for API response validation
+- Madge for circular dependency checks
 - Playwright for E2E tests
+- Storybook for dev-only component previews
+
+## Source Layout
+
+- `app/src/routes` - Remix route modules (nested folders, no dot-delimited filenames)
+- `app/src/api` - API client package
+- `app/src/components` - UI component package
+- `app/src/providers` - provider/state adapter package
+- `app/src/schemas` - validation schema package
+- `app/src/types` - shared frontend types package
+- `app/src/utils` - runtime utilities package
+- `app/src/__fixtures__` - frontend fixtures for stories/tests
+- `app/src/storybook` - Storybook story modules
+- `app/client.tsx` and `app/server.tsx` - Remix entry modules
+
+Import alias examples:
+
+- `import { fetchWithSchema } from "@zanshin/api"`
+- `import type { Tournament } from "@zanshin/types"`
 
 ## Prerequisites
 
@@ -101,8 +121,8 @@ bun run typecheck
 # Lint
 bun run lint
 
-# Unit tests
-bun test
+# Unit tests + circular dependency checks
+bun run test
 
 # One-time browser install for Playwright
 bunx playwright install chromium
@@ -110,8 +130,14 @@ bunx playwright install chromium
 # E2E tests
 bun run test:e2e
 
+# Dependency cycle check only
+bun run depcheck:circular
+
+# Storybook (dev-only)
+bun run storybook
+
 # Real API integration lane (expects API running on localhost:4000)
-PLAYWRIGHT_REAL_API=1 API_BASE_URL=http://127.0.0.1:4000 bunx playwright test tests/e2e/real-api.spec.ts
+bun run test:e2e:api
 ```
 
 ## E2E Mock Fixtures

@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from "bun:test";
 
-import { ApiError, fetchWithSchema } from "../app/lib/api/client";
-import { tournamentListResponseSchema } from "../app/lib/schemas/tournaments";
+import { ApiError, fetchWithSchema } from "@zanshin/api";
+import { TournamentListResponseSchema } from "@zanshin/schemas";
 
 describe("fetchWithSchema", () => {
   test("returns parsed data for valid payload", async () => {
@@ -18,7 +18,7 @@ describe("fetchWithSchema", () => {
 
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-    const response = await fetchWithSchema("/api/v1/tournaments", tournamentListResponseSchema);
+    const response = await fetchWithSchema("/api/v1/tournaments", TournamentListResponseSchema);
     expect(response.data.length).toBe(1);
   });
 
@@ -36,7 +36,7 @@ describe("fetchWithSchema", () => {
 
     globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-    await expect(fetchWithSchema("/api/v1/tournaments", tournamentListResponseSchema)).rejects.toBeInstanceOf(
+    await expect(fetchWithSchema("/api/v1/tournaments", TournamentListResponseSchema)).rejects.toBeInstanceOf(
       ApiError
     );
   });

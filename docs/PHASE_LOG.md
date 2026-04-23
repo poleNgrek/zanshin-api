@@ -436,7 +436,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 - **Goal:** close remaining Phase 3 scope by separating consumer/admin views and shipping an initial consumer match-list screen.
 - **Done in workspace:**
   - Added consumer match list route (`/matches`) with:
-    - typed match schema/model (`app/lib/schemas/matches.ts`)
+    - typed match schema/model (`app/src/schemas/matches.ts`)
     - tournament/division filter controls
     - competitor name resolution and read-only match state listing
   - Introduced explicit view separation in navigation:
@@ -626,6 +626,61 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 - Introduce idempotency keys for high-frequency command endpoints (score, transition, compute/finalize).
 - Add standardized pagination contracts for list endpoints with response metadata.
 - Add projection replay tests and drift-detection checks once analytics workers are introduced.
+
+---
+
+## Pre-Phase 5 Preparation
+
+### Increment 1 - Frontend Package Split + CI Phase Refinement
+
+- **Status:** `done`
+- **Goal:** refactor frontend into pseudo-packages with alias boundaries, add cycle checks, and align CI phase semantics.
+- **Done in workspace:**
+  - Added package-style source layout under `apps/frontend/app/src`:
+    - `api`, `components`, `providers`, `schemas`, `types`, `utils`, `__fixtures__`, `storybook`, `routes`
+  - Added `@zanshin/*` path aliases in frontend TypeScript config.
+  - Migrated frontend routes/tests to package imports (`@zanshin/api`, `@zanshin/schemas`, `@zanshin/types`, `@zanshin/providers`).
+  - Moved Remix routes from `app/routes` to nested `app/src/routes` modules and removed dot-delimited route filenames.
+  - Renamed Remix entry modules to `app/client.tsx` and `app/server.tsx`, with explicit route mapping in `remix.config.js`.
+  - Added reusable MUI route primitives under `app/src/components/ui` (`PageTitle`, `SectionCard`, `InfoAlertList`) and refactored routes to use them.
+  - Removed empty `hooks` pseudo-package and stale alias wiring.
+  - Added `madge` circular dependency check script and folded it into frontend test workflow.
+  - Added Storybook dev-only setup:
+    - `.storybook/main.ts`
+    - `.storybook/preview.ts`
+    - stories under `app/src/storybook`
+    - fixtures under `app/src/__fixtures__`
+  - Updated CI workflow phase naming and frontend phase checks:
+    - typecheck
+    - build
+    - lint
+    - unit tests + circular dependency checks
+  - Added reusable Cursor rules:
+    - `frontend-architecture-boundaries.mdc`
+    - `frontend-naming-conventions.mdc`
+  - Consolidated frontend rule set to architecture + naming files only.
+- **Verification:**
+  - `cd apps/frontend && bun install`
+  - `cd apps/frontend && bun run typecheck`
+  - `cd apps/frontend && bun run lint`
+  - `cd apps/frontend && bun run test`
+    - unit tests: 8 passed
+    - madge: no circular dependencies
+  - `cd apps/frontend && bun run test:e2e`
+    - 9 passed, 1 skipped, 0 failures
+
+### Increment 2 - Deferred Extensive Backlog Program Definition
+
+- **Status:** `done`
+- **Goal:** operationalize the deferred backlog as a dedicated hardening program with explicit rollout gates.
+- **Done in workspace:**
+  - Added dedicated execution document:
+    - `docs/pre_phase5_increment2_backlog.md`
+  - Captured:
+    - full deferred scope
+    - phased rollout order (Wave 1/2/3)
+    - verification gates and exit criteria
+  - Established separation from Increment 1 so plugin work is not blocked by broad hardening scope.
 
 ---
 

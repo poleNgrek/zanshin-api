@@ -1,0 +1,29 @@
+---
+description: Enforce frontend pseudo-package boundaries and import direction.
+globs: apps/frontend/**/*.{ts,tsx}
+alwaysApply: false
+---
+# Frontend Architecture Boundaries
+
+- Treat `apps/frontend/app/src` as pseudo-packages:
+  - `api`
+  - `components`
+  - `providers`
+  - `utils`
+  - `schemas`
+  - `types`
+  - `__fixtures__`
+  - `storybook`
+  - `routes`
+- Use `@zanshin/*` aliases for cross-package imports instead of relative deep paths.
+- Route modules in `app/src/routes` may import from `@zanshin/*`.
+- Non-route packages must not import from `app/src/routes`.
+- Each pseudo-package should expose a public entrypoint (`index.ts`/`index.tsx`) and consumers should prefer that entrypoint.
+- Keep package responsibilities strict:
+  - `api` exports request clients/contracts only
+  - `providers` exports providers/state adapters only
+  - `components` exports presentational/container UI components only
+  - `schemas` exports validation schemas only
+  - `types` exports type aliases only
+  - `utils` exports pure utility/runtime helpers only
+- Avoid circular dependencies; run and keep `madge` circular checks green.

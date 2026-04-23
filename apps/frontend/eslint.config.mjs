@@ -24,7 +24,19 @@ export default [
       ...reactHooks.configs.recommended.rules,
       "react-hooks/set-state-in-effect": "error",
       "react-hooks/immutability": "error",
-      "@typescript-eslint/no-explicit-any": "error"
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/naming-convention": [
+        "error",
+        {
+          selector: "variable",
+          modifiers: ["const"],
+          filter: {
+            regex: "Schema$",
+            match: true
+          },
+          format: ["PascalCase"]
+        }
+      ]
     }
   }
 ];

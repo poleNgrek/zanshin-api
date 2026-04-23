@@ -1,0 +1,16 @@
+---
+description: Enforce reusable snake_case naming conventions for frontend files and directories.
+globs: apps/frontend/**/*.{ts,tsx,css,md}
+alwaysApply: false
+---
+# Frontend Naming Conventions
+
+- Use `snake_case` for frontend file and directory names by default.
+- Preferred examples:
+  - files: `token_store.ts`, `analytics_dashboard.stories.tsx`
+  - directories: `auth_token`, `ui_components`
+- Keep Remix route module filenames compatible with Remix routing requirements when needed.
+- Keep route modules under `app/src/routes` in nested folders (for example `admin/gradings/results.tsx`), not dot-delimited filenames.
+- For non-route source under `app/src`, always prefer `snake_case`.
+- Keep symbol names descriptive and consistent with existing project style.
+- When introducing new modules, match filename responsibility to exported symbol purpose.

@@ -166,14 +166,14 @@ See `docs/IMPLEMENTATION_GUIDE.md` for the detailed approach.
 
 ## How to Run Tests
 
-Current status: Phase 4 analytics foundation is in progress in `apps/api`.
+Current status: Phase 4 analytics foundation and Pre-Phase-5 Increment 1 frontend/CI refactor are complete.
 
 Planned commands:
 
 - API tests (Phase 2+):
   - `cd apps/api && mix test`
 - Frontend unit tests (Phase 3+):
-  - `cd apps/frontend && bun test`
+  - `cd apps/frontend && bun run test`
 - Frontend E2E tests with Playwright (Phase 3+):
   - first run once: `cd apps/frontend && bunx playwright install chromium`
   - `cd apps/frontend && bun run test:e2e`
@@ -188,7 +188,7 @@ Planned commands:
 - Current CI scope:
   - Phoenix API format check (`mix format --check-formatted`)
   - Phoenix API test suite (`mix test`) with PostgreSQL service
-  - Frontend lint + unit tests (`bun run lint`, `bun run test`)
+  - Frontend typecheck + build + lint + unit tests + circular dependency checks (`bun run typecheck`, `bun run build`, `bun run lint`, `bun run test`)
   - Frontend real-API Playwright lane (`tests/e2e/real-api.spec.ts`) with API boot + seeded data
 - CD is intentionally deferred until later hardening/release phases, once deployment targets and secrets strategy are finalized.
 

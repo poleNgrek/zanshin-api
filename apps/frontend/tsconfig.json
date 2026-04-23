@@ -15,7 +15,15 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "~/*": ["app/*"]
+      "~/*": ["app/*"],
+      "@zanshin/api": ["app/src/api/index.ts"],
+      "@zanshin/components": ["app/src/components/index.ts"],
+      "@zanshin/fixtures": ["app/src/__fixtures__/index.ts"],
+      "@zanshin/providers": ["app/src/providers/index.ts"],
+      "@zanshin/schemas": ["app/src/schemas/index.ts"],
+      "@zanshin/types": ["app/src/types/index.ts"],
+      "@zanshin/utils": ["app/src/utils/index.ts"],
+      "@zanshin/*": ["app/src/*"]
     }
   }
 }
