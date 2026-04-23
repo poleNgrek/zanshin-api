@@ -16,6 +16,35 @@ config :zanshin_api, ZanshinApi.Auth.OAuth,
   jwks: nil,
   jwks_cache_ttl_seconds: 300
 
+config :zanshin_api, :neo4j_client, ZanshinApi.Analytics.Neo4jClient.Bolt
+config :zanshin_api, :analytics_summary_source, :neo4j
+
+config :zanshin_api, ZanshinApi.Analytics.Neo4jClient.Bolt,
+  url: "bolt://localhost:7687",
+  username: "neo4j",
+  password: "zanshin_neo4j",
+  driver_name: :analytics_projection,
+  pool_size: 5,
+  connection_timeout_ms: 15_000,
+  query_timeout_ms: 10_000
+
+config :neo4j_ex,
+  drivers: [
+    analytics_projection: [
+      uri: "bolt://localhost:7687",
+      auth: {"neo4j", "zanshin_neo4j"},
+      connection_timeout: 15_000,
+      query_timeout: 10_000,
+      max_pool_size: 5
+    ]
+  ]
+
+config :zanshin_api, ZanshinApi.Analytics.Workers.Neo4jProjectionWorker,
+  enabled: false,
+  poll_interval_ms: 2_000,
+  batch_size: 100,
+  projection_name: "neo4j_match_projection_v1"
+
 config :zanshin_api, ZanshinApiWeb.Endpoint,
   url: [host: "localhost"],
   render_errors: [

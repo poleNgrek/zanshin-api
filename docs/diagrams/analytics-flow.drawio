@@ -1,0 +1,70 @@
+<mxfile host="app.diagrams.net" modified="2026-04-23T00:00:00.000Z" agent="cursor-agent" version="24.7.8">
+  <diagram id="analyticsFlow" name="Analytics Flow">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="cmd" value="Match Command Handler" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="120" width="190" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="events" value="domain_events (Postgres)" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="120" width="210" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="worker" value="Neo4jProjectionWorker" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="590" y="120" width="210" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="projector" value="Neo4jMatchProjector" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="860" y="120" width="200" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="adapter" value="Neo4jClient.Bolt Adapter" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="120" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="neo4j" value="Neo4j Graph" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1400" y="120" width="160" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="checkpoints" value="projection_checkpoints" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="640" y="240" width="190" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="client" value="Admin Dashboard / Client View" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="120" y="390" width="250" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="endpoint" value="GET /api/v1/analytics/matches/summary" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="430" y="390" width="300" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="analytics" value="ZanshinApi.Analytics.match_summary/1" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="790" y="390" width="290" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="readStore" value="domain_events summary read model" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1140" y="390" width="260" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="cmd" target="events" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="events" target="worker" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="worker" target="projector" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="projector" target="adapter" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="adapter" target="neo4j" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="worker" target="checkpoints" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="client" target="endpoint" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="endpoint" target="analytics" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="analytics" target="readStore" style="endArrow=classic;html=1;rounded=0;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

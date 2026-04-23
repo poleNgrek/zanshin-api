@@ -33,6 +33,7 @@ defmodule ZanshinApi.MixProject do
       {:plug_cowboy, "~> 2.7"},
       {:jason, "~> 1.4"},
       {:jose, "~> 1.11"},
+      {:neo4j_ex, "~> 0.1.9"},
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 1.0"}
     ]

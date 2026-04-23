@@ -458,8 +458,90 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 
 ## Phase 4 - Analytics Foundation
 
-- **Status:** `planned`
+- **Status:** `in_progress`
 - **Goal:** event projection pipeline and Neo4j integration for first analytics outputs.
+
+### Increment 4.0 - Projection Pipeline Bootstrap
+
+- **Status:** `done`
+- **Goal:** establish the first projection worker slice from `domain_events` into a Neo4j-oriented projector contract.
+- **Done in workspace:**
+  - Added projection checkpoint persistence:
+    - migration: `projection_checkpoints` table
+    - schema/context: `ZanshinApi.Analytics.ProjectionCheckpoint` + `ZanshinApi.Analytics`
+  - Added analytics projection interfaces and skeleton modules:
+    - projector behaviour (`ZanshinApi.Analytics.Projector`)
+    - Neo4j client behaviour + noop adapter (`ZanshinApi.Analytics.Neo4jClient`)
+    - first match projector (`ZanshinApi.Analytics.Projectors.Neo4jMatchProjector`) handling:
+      - `match.transitioned`
+      - `match.score_recorded`
+    - polling worker skeleton (`ZanshinApi.Analytics.Workers.Neo4jProjectionWorker`) with:
+      - unprocessed event batch read
+      - projector dispatch
+      - `domain_events.processed_at` marking
+      - checkpoint upsert progression
+  - Wired worker boot toggle in application config/supervision:
+    - disabled by default via `enabled: false` until Neo4j runtime wiring is finalized.
+  - Added first projection verification test:
+    - `neo4j_projection_worker_test.exs` validates project call + processed mark + checkpoint advance for a transition event.
+- **Verification:**
+  - `cd apps/api && mix format`
+  - `cd apps/api && MIX_ENV=test mix test test/zanshin_api/analytics/workers/neo4j_projection_worker_test.exs`
+  - `cd apps/api && MIX_ENV=test mix test` (72 tests, 0 failures)
+
+### Increment 4.1 - Bolt Adapter + Analytics View Contract
+
+- **Status:** `in_progress`
+- **Goal:** replace projection noop transport with Bolt runtime wiring and expose first analytics dashboard contract.
+- **Done in workspace:**
+  - Implemented Bolt adapter:
+    - `ZanshinApi.Analytics.Neo4jClient.Bolt` using `neo4j_ex`
+    - runtime/env wiring for Bolt URL, credentials, pool size, and timeouts
+    - application supervision wiring to boot Neo4j driver only when projection worker is enabled
+  - Expanded projection reliability tests:
+    - projection failure leaves event unprocessed
+    - retry success after transient projector failure
+    - insertion ordering and checkpoint advancement checks
+  - Added first analytics contract endpoint:
+    - `GET /api/v1/analytics/matches/summary`
+    - scoped filters (`tournament_id`, `division_id`, `from`, `to`, `limit`, `offset`)
+    - controller/context tests for unauthorized and successful summary responses
+  - Added architecture visuals:
+    - `docs/analytics-architecture.md` (Mermaid)
+    - `docs/diagrams/analytics-flow.drawio`
+  - OpenAPI updated with analytics summary route and response contracts.
+- **Verification:**
+  - `cd apps/api && mix format`
+  - `cd apps/api && MIX_ENV=test mix test test/zanshin_api/analytics/workers/neo4j_projection_worker_test.exs`
+  - `cd apps/api && MIX_ENV=test mix test test/zanshin_api_web/controllers/analytics_match_summary_controller_test.exs`
+  - `cd apps/api && MIX_ENV=test mix test test/zanshin_api_web/controllers/match_controller_test.exs`
+
+### Increment 4.2 - Neo4j-Backed Summary Read Path
+
+- **Status:** `done`
+- **Goal:** serve analytics summary from Neo4j read model when configured, with safe Postgres fallback.
+- **Done in workspace:**
+  - Extended Neo4j adapter behaviour with read-query support (`query/3`) and implemented it in:
+    - `ZanshinApi.Analytics.Neo4jClient.Bolt`
+    - `ZanshinApi.Analytics.Neo4jClient.Noop`
+  - Enriched Neo4j projection writes to include match scope metadata on `Match` nodes:
+    - `tournament_id`
+    - `division_id`
+  - Updated `ZanshinApi.Analytics.match_summary/1` to support source switching:
+    - `neo4j` (default)
+    - `postgres` (override)
+    - automatic fallback to `postgres_fallback` when Neo4j read fails
+  - Added new analytics context tests:
+    - `test/zanshin_api/analytics_test.exs`
+  - Added runtime toggle for summary read source:
+    - `ANALYTICS_SUMMARY_SOURCE`
+  - Added usage header comments to scripts in `scripts/` to document:
+    - purpose
+    - where to run from
+    - exact invocation examples
+  - Stabilized OAuth test helper key setup to avoid async key-rotation flakiness.
+- **Verification:**
+  - `cd apps/api && MIX_ENV=test mix test` (80 tests, 0 failures)
 
 ### Pre-Phase 4 Hardening Sweep (Moderate) - API/Frontend Readiness
 

@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Purpose:
+# - Quick CORS validation for API endpoint + origin combination.
+#
+# Run from:
+# - Repository root (recommended), or anywhere using:
+#   bash scripts/check_cors.sh [API_URL] [ORIGIN] [REQUEST_METHOD]
+#
+# Example:
+# - bash scripts/check_cors.sh http://localhost:4000/api/v1/health http://localhost:3000 GET
+# - Returns PASS/FAIL based on allow-origin behavior.
+
 API_URL="${1:-http://localhost:4000/api/v1/health}"
 ORIGIN="${2:-http://localhost:3000}"
 REQUEST_METHOD="${3:-GET}"

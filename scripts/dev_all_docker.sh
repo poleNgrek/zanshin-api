@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Purpose:
+# - Start full Docker dev mode (API + frontend) in two Terminal tabs.
+#
+# Run from:
+# - Repository root (recommended), or anywhere using:
+#   bash scripts/dev_all_docker.sh
+#
+# Notes:
+# - macOS only automation (uses osascript + Terminal app).
+# - If osascript is unavailable, run the two scripts manually.
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SCRIPT_API="$ROOT_DIR/scripts/dev_api_docker.sh"
 SCRIPT_FRONTEND="$ROOT_DIR/scripts/dev_frontend_docker.sh"

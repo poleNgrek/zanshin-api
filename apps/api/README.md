@@ -173,6 +173,87 @@ Envelope fields:
 - `causation_id`
 - `processed_at` (set by future projection workers)
 
+## Analytics Projection Bootstrap (Phase 4.0)
+
+First analytics slices now exist in API:
+
+- `ZanshinApi.Analytics.Workers.Neo4jProjectionWorker`
+  - polls unprocessed `domain_events` in ordered batches
+  - dispatches to `ZanshinApi.Analytics.Projectors.Neo4jMatchProjector`
+  - marks projected events via `processed_at`
+  - persists projection progress in `projection_checkpoints`
+- worker is disabled by default and controlled via:
+  - `config :zanshin_api, ZanshinApi.Analytics.Workers.Neo4jProjectionWorker, ...`
+- Neo4j adapter contract is defined via `ZanshinApi.Analytics.Neo4jClient`.
+- Active Bolt adapter:
+  - `ZanshinApi.Analytics.Neo4jClient.Bolt` (implemented with `neo4j_ex`)
+  - Bolt transport endpoint is `NEO4J_BOLT_URL` (default `bolt://localhost:7687`)
+- First analytics read contract:
+  - `GET /api/v1/analytics/matches/summary`
+  - required query param: `tournament_id`
+  - optional filters: `division_id`, `from`, `to`, `limit`, `offset`
+  - response includes `data_source` (`postgres`, `neo4j`, `postgres_fallback`)
+
+### Bolt Adapter Basics (Learning Notes)
+
+- Bolt is Neo4j's native binary protocol (optimized for app-to-db query traffic).
+- In this project:
+  - the worker/projector creates Cypher + params
+  - the adapter executes those Cypher statements over Bolt
+  - checkpointing and `processed_at` keep replay behavior auditable
+- Runtime environment knobs:
+  - `NEO4J_BOLT_URL`
+  - `NEO4J_USERNAME`
+  - `NEO4J_PASSWORD`
+  - `NEO4J_POOL_SIZE`
+  - `NEO4J_CONNECTION_TIMEOUT_MS`
+  - `NEO4J_QUERY_TIMEOUT_MS`
+  - `ANALYTICS_SUMMARY_SOURCE` (`neo4j` default, optional `postgres` override)
+
+### Verify projected data in Neo4j Browser
+
+- Open Neo4j Browser: `http://localhost:7474`
+- Run quick checks:
+  - `MATCH (m:Match) RETURN m LIMIT 10`
+  - `MATCH (e:DomainEvent)-[:APPLIES_TO]->(m:Match) RETURN e,m LIMIT 25`
+- Compare with API event log:
+  - `SELECT event_type, aggregate_id, processed_at FROM domain_events ORDER BY inserted_at DESC LIMIT 25;`
+
+### Live Neo4j smoke sequence (from repo root)
+
+```bash
+# 1) Bring infra up
+docker compose up -d postgres neo4j
+
+# 2) Prepare API DB state
+cd apps/api
+mix setup
+mix run priv/repo/seeds.exs
+
+# 3) Emit a couple of domain events (replace token/ids as needed)
+curl -X POST http://localhost:4000/api/v1/matches/<MATCH_ID>/transition \
+  -H 'content-type: application/json' \
+  -H 'authorization: Bearer <TOKEN>' \
+  -d '{"event":"prepare"}'
+
+curl -X POST http://localhost:4000/api/v1/matches/<MATCH_ID>/score \
+  -H 'content-type: application/json' \
+  -H 'authorization: Bearer <TOKEN>' \
+  -d '{"score_type":"ippon","side":"aka","target":"men"}'
+
+# 4) Run one projection cycle into Neo4j
+mix run -e "IO.inspect(ZanshinApi.Analytics.Workers.Neo4jProjectionWorker.run_once())"
+
+# 5) Validate API summary from Neo4j
+curl 'http://localhost:4000/api/v1/analytics/matches/summary?tournament_id=<TOURNAMENT_ID>' \
+  -H 'authorization: Bearer <TOKEN>'
+```
+
+Neo4j adapter interfaces:
+
+  - `ZanshinApi.Analytics.Neo4jClient`
+  - concrete adapter: `ZanshinApi.Analytics.Neo4jClient.Bolt`
+
 Then test:
 
 - Health check: `curl http://localhost:4000/api/v1/health`
@@ -197,5 +278,5 @@ CORS:
 
 ## Next steps
 
-- Start Phase 3 frontend foundation in `apps/frontend` with Bun + Remix + TypeScript + MUI.
-- Integrate Zod-backed API client and Playwright smoke tests.
+- Continue Phase 4 by wiring richer Neo4j read models for analytics dashboards.
+- Add replay/drift checks once dedicated analytics workers are expanded.

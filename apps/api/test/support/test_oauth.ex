@@ -5,7 +5,19 @@ defmodule ZanshinApi.TestOAuth do
   @kid "test-key-1"
 
   def setup! do
-    private_jwk = JOSE.JWK.generate_key({:rsa, 2048, 65_537}) |> JOSE.JWK.merge(%{"kid" => @kid})
+    private_jwk =
+      case :persistent_term.get(@cache_key, nil) do
+        nil ->
+          generated_jwk =
+            JOSE.JWK.generate_key({:rsa, 2048, 65_537}) |> JOSE.JWK.merge(%{"kid" => @kid})
+
+          :persistent_term.put(@cache_key, generated_jwk)
+          generated_jwk
+
+        existing_jwk ->
+          existing_jwk
+      end
+
     public_jwk = JOSE.JWK.to_public(private_jwk)
 
     Application.put_env(:zanshin_api, ZanshinApi.Auth, mode: :oauth_jwks)
@@ -18,7 +30,6 @@ defmodule ZanshinApi.TestOAuth do
       jwks_cache_ttl_seconds: 300
     )
 
-    :persistent_term.put(@cache_key, private_jwk)
     :ok
   end
 

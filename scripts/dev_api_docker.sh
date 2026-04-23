@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Purpose:
+# - Run API inside Docker (postgres + api containers).
+#
+# Run from:
+# - Repository root (recommended), or anywhere using:
+#   bash scripts/dev_api_docker.sh
+#
+# What it does:
+# - Starts postgres and api containers
+# - Runs dependency/db setup in api container
+# - Starts Phoenix server at http://localhost:4000
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE=(docker compose -f "$ROOT_DIR/docker-compose.yml" --profile dev)
 

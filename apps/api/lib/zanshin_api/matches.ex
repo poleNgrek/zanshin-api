@@ -67,7 +67,9 @@ defmodule ZanshinApi.Matches do
             event: Atom.to_string(event),
             from_state: Atom.to_string(match.state),
             to_state: Atom.to_string(new_state),
-            match_id: match.id
+            match_id: match.id,
+            tournament_id: match.tournament_id,
+            division_id: match.division_id
           }
         })
       end)
@@ -156,6 +158,8 @@ defmodule ZanshinApi.Matches do
           causation_id: score_event.id,
           payload: %{
             match_id: match.id,
+            tournament_id: match.tournament_id,
+            division_id: match.division_id,
             score_event_id: score_event.id,
             score_type: Atom.to_string(normalized_score_type),
             side: Atom.to_string(normalized_side),

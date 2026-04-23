@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Purpose:
+# - Run API locally on host with PostgreSQL in Docker.
+#
+# Run from:
+# - Repository root (recommended), or anywhere using:
+#   bash scripts/dev_api_local.sh
+#
+# What it does:
+# - Starts postgres container
+# - Installs API deps and prepares DB
+# - Starts Phoenix server at http://localhost:4000
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 API_DIR="$ROOT_DIR/apps/api"
 

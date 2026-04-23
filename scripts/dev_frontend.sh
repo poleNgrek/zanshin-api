@@ -1,6 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Purpose:
+# - Run frontend locally with Bun on host.
+#
+# Run from:
+# - Repository root (recommended), or anywhere using:
+#   bash scripts/dev_frontend.sh
+#
+# Optional env:
+# - API_BASE_URL (default: http://localhost:4000)
+#
+# What it does:
+# - Installs frontend deps
+# - Starts Remix dev server at http://localhost:3000
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FRONTEND_DIR="$ROOT_DIR/apps/frontend"
 API_BASE_URL="${API_BASE_URL:-http://localhost:4000}"

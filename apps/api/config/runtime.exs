@@ -1,5 +1,41 @@
 import Config
 
+neo4j_bolt_url = System.get_env("NEO4J_BOLT_URL")
+neo4j_username = System.get_env("NEO4J_USERNAME")
+neo4j_password = System.get_env("NEO4J_PASSWORD")
+neo4j_pool_size = System.get_env("NEO4J_POOL_SIZE")
+neo4j_connection_timeout_ms = System.get_env("NEO4J_CONNECTION_TIMEOUT_MS")
+neo4j_query_timeout_ms = System.get_env("NEO4J_QUERY_TIMEOUT_MS")
+analytics_summary_source = System.get_env("ANALYTICS_SUMMARY_SOURCE")
+
+analytics_summary_source_value =
+  case analytics_summary_source do
+    "neo4j" -> :neo4j
+    "postgres" -> :postgres
+    _ -> :neo4j
+  end
+
+config :zanshin_api, ZanshinApi.Analytics.Neo4jClient.Bolt,
+  url: neo4j_bolt_url || "bolt://localhost:7687",
+  username: neo4j_username || "neo4j",
+  password: neo4j_password || "zanshin_neo4j",
+  pool_size: String.to_integer(neo4j_pool_size || "5"),
+  connection_timeout_ms: String.to_integer(neo4j_connection_timeout_ms || "15000"),
+  query_timeout_ms: String.to_integer(neo4j_query_timeout_ms || "10000")
+
+config :neo4j_ex,
+  drivers: [
+    analytics_projection: [
+      uri: neo4j_bolt_url || "bolt://localhost:7687",
+      auth: {neo4j_username || "neo4j", neo4j_password || "zanshin_neo4j"},
+      connection_timeout: String.to_integer(neo4j_connection_timeout_ms || "15000"),
+      query_timeout: String.to_integer(neo4j_query_timeout_ms || "10000"),
+      max_pool_size: String.to_integer(neo4j_pool_size || "5")
+    ]
+  ]
+
+config :zanshin_api, :analytics_summary_source, analytics_summary_source_value
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

@@ -1,6 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Purpose:
+# - Run frontend inside Docker.
+#
+# Run from:
+# - Repository root (recommended), or anywhere using:
+#   bash scripts/dev_frontend_docker.sh
+#
+# Optional env:
+# - API_BASE_URL (default: http://localhost:4000)
+#
+# What it does:
+# - Starts frontend container
+# - Installs frontend deps in container
+# - Starts frontend dev server at http://localhost:3000
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE=(docker compose -f "$ROOT_DIR/docker-compose.yml" --profile dev)
 API_BASE_URL="${API_BASE_URL:-http://localhost:4000}"

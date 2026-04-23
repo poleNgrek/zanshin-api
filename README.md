@@ -158,7 +158,7 @@ See `docs/IMPLEMENTATION_GUIDE.md` for the detailed approach.
 
 ## How to Run Tests
 
-Current status: Phase 2 API foundation has started in `apps/api`.
+Current status: Phase 4 analytics foundation is in progress in `apps/api`.
 
 Planned commands:
 
@@ -170,7 +170,7 @@ Planned commands:
   - first run once: `cd apps/frontend && bunx playwright install chromium`
   - `cd apps/frontend && bun run test:e2e`
 - Analytics tests (Phase 4+):
-  - `cd apps/analytics && <test-command-to-be-defined>`
+  - `cd apps/api && MIX_ENV=test mix test test/zanshin_api/analytics/`
 - WordPress plugin tests (Phase 5+):
   - `cd apps/wordpress-plugin && <test-command-to-be-defined>`
 
@@ -209,6 +209,17 @@ Planned commands:
   - Swagger UI: `GET /api/docs`
   - OpenAPI source: `docs/api/openapi.yaml`
   - Postman collection: `docs/api/zanshin-api.postman_collection.json`
+
+## Phase 4 Status
+
+- Domain events are projected by `Neo4jProjectionWorker`.
+- Neo4j transport now uses Bolt via `ZanshinApi.Analytics.Neo4jClient.Bolt`.
+- First analytics contract endpoint is available:
+  - `GET /api/v1/analytics/matches/summary`
+  - default summary source: Neo4j (`ANALYTICS_SUMMARY_SOURCE=neo4j`)
+- Architecture visuals are documented in:
+  - `docs/analytics-architecture.md`
+  - `docs/diagrams/analytics-flow.drawio`
 
 ## Post-Phase-4 Hardening Backlog
 

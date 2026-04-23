@@ -13,7 +13,7 @@ defmodule ZanshinApi.Auth.OAuth do
          {true, %JOSE.JWT{fields: claims}, _} <- JOSE.JWT.verify_strict(jwk, ["RS256"], token),
          :ok <- validate_claims(claims),
          {:ok, role} <- extract_role(claims) do
-      {:ok, %{subject: claims["sub"], role: String.to_existing_atom(role), claims: claims}}
+      {:ok, %{subject: claims["sub"], role: String.to_atom(role), claims: claims}}
     else
       {:error, reason} -> {:error, reason}
       _ -> {:error, :invalid_token}
@@ -57,6 +57,7 @@ defmodule ZanshinApi.Auth.OAuth do
 
   defp peek_header(token) do
     case JOSE.JWT.peek_protected(token) do
+      %JOSE.JWS{fields: fields} when is_map(fields) -> {:ok, fields}
       map when is_map(map) -> {:ok, map}
       _ -> {:error, :invalid_token_header}
     end
@@ -82,7 +83,7 @@ defmodule ZanshinApi.Auth.OAuth do
   defp select_jwk(keys, nil), do: Enum.find(keys, &is_map/1)
   defp select_jwk(keys, kid), do: Enum.find(keys, &(jwk_kid(&1) == kid))
 
-  defp jwk_kid(%JOSE.JWK{}), do: nil
+  defp jwk_kid(%JOSE.JWK{fields: fields}) when is_map(fields), do: fields["kid"] || fields[:kid]
   defp jwk_kid(map), do: map["kid"] || map[:kid]
 
   defp load_jwks_keys do
@@ -104,17 +105,23 @@ defmodule ZanshinApi.Auth.OAuth do
   end
 
   defp load_jwks do
-    ttl = config()[:jwks_cache_ttl_seconds] || 300
-    now = System.system_time(:second)
-
-    case :persistent_term.get(@cache_key, nil) do
-      %{expires_at: expires_at, jwks: jwks} when expires_at > now ->
+    case config()[:jwks] do
+      jwks when is_map(jwks) ->
         {:ok, jwks}
 
       _ ->
-        with {:ok, jwks} <- source_jwks() do
-          :persistent_term.put(@cache_key, %{expires_at: now + ttl, jwks: jwks})
-          {:ok, jwks}
+        ttl = config()[:jwks_cache_ttl_seconds] || 300
+        now = System.system_time(:second)
+
+        case :persistent_term.get(@cache_key, nil) do
+          %{expires_at: expires_at, jwks: jwks} when expires_at > now ->
+            {:ok, jwks}
+
+          _ ->
+            with {:ok, jwks} <- source_jwks() do
+              :persistent_term.put(@cache_key, %{expires_at: now + ttl, jwks: jwks})
+              {:ok, jwks}
+            end
         end
     end
   end
