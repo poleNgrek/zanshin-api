@@ -24,7 +24,7 @@ export default [
       ...reactHooks.configs.recommended.rules,
       "react-hooks/set-state-in-effect": "error",
       "react-hooks/immutability": "error",
-      "@typescript-eslint/no-explicit-any": "off"
+      "@typescript-eslint/no-explicit-any": "error"
     }
   }
 ];
