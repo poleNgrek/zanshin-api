@@ -3,50 +3,53 @@ defmodule ZanshinApiWeb.MatchScoreController do
 
   alias ZanshinApi.Matches
   alias ZanshinApi.Matches.ScoreEvent
+  alias ZanshinApiWeb.Idempotency
 
   def create(conn, %{"id" => match_id, "score_type" => score_type, "side" => side} = params) do
-    with {:ok, role} <- current_actor_role(conn),
-         {:ok, score_event} <-
-           Matches.record_score_event(
-             match_id,
-             parse_score_type(score_type),
-             parse_side(side),
-             parse_target(Map.get(params, "target")),
-             role
-           ) do
-      conn
-      |> put_status(:created)
-      |> json(%{data: serialize(score_event)})
-    else
-      {:error, :unauthorized} ->
-        conn |> put_status(:unauthorized) |> json(%{error: "unauthorized"})
-
-      {:error, :invalid_score_type} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: "invalid_score_type"})
-
-      {:error, :invalid_side} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: "invalid_side"})
-
-      {:error, :invalid_target} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: "invalid_target"})
-
-      {:error, :match_not_found} ->
-        conn |> put_status(:not_found) |> json(%{error: "match_not_found"})
-
-      {:error, :match_not_ongoing} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: "match_not_ongoing"})
-
-      {:error, :tsuki_not_allowed} ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: "tsuki_not_allowed"})
-
-      {:error, :forbidden_score_for_role} ->
-        conn |> put_status(:forbidden) |> json(%{error: "forbidden_score_for_role"})
-
-      {:error, %Ecto.Changeset{} = changeset} ->
+    Idempotency.run(conn, params, fn ->
+      with {:ok, role} <- current_actor_role(conn),
+           {:ok, score_event} <-
+             Matches.record_score_event(
+               match_id,
+               parse_score_type(score_type),
+               parse_side(side),
+               parse_target(Map.get(params, "target")),
+               role
+             ) do
         conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{error: "invalid_score_payload", details: changeset_errors(changeset)})
-    end
+        |> put_status(:created)
+        |> json(%{data: serialize(score_event)})
+      else
+        {:error, :unauthorized} ->
+          conn |> put_status(:unauthorized) |> json(%{error: "unauthorized"})
+
+        {:error, :invalid_score_type} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: "invalid_score_type"})
+
+        {:error, :invalid_side} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: "invalid_side"})
+
+        {:error, :invalid_target} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: "invalid_target"})
+
+        {:error, :match_not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "match_not_found"})
+
+        {:error, :match_not_ongoing} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: "match_not_ongoing"})
+
+        {:error, :tsuki_not_allowed} ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: "tsuki_not_allowed"})
+
+        {:error, :forbidden_score_for_role} ->
+          conn |> put_status(:forbidden) |> json(%{error: "forbidden_score_for_role"})
+
+        {:error, %Ecto.Changeset{} = changeset} ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> json(%{error: "invalid_score_payload", details: changeset_errors(changeset)})
+      end
+    end)
   end
 
   def create(conn, _params) do

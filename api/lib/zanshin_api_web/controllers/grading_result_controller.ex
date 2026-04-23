@@ -3,6 +3,7 @@ defmodule ZanshinApiWeb.GradingResultController do
 
   alias ZanshinApi.Grading.{GradingNote, GradingResult, GradingVote}
   alias ZanshinApi.Gradings
+  alias ZanshinApiWeb.Idempotency
 
   def index(conn, %{"id" => session_id}) do
     data = Gradings.list_results_by_session(session_id) |> Enum.map(&serialize_result/1)
@@ -82,43 +83,50 @@ defmodule ZanshinApiWeb.GradingResultController do
     json(conn, %{data: data})
   end
 
-  def compute(conn, %{"id" => result_id}) do
-    with :ok <- authorize_write(conn),
-         {:ok, result} <- Gradings.compute_result_decision(result_id) do
-      json(conn, %{data: serialize_result(result)})
-    else
-      {:error, :forbidden} ->
-        conn |> put_status(:forbidden) |> json(%{error: "forbidden"})
+  def compute(conn, %{"id" => result_id} = params) do
+    Idempotency.run(conn, params, fn ->
+      with :ok <- authorize_write(conn),
+           {:ok, result} <- Gradings.compute_result_decision(result_id) do
+        json(conn, %{data: serialize_result(result)})
+      else
+        {:error, :forbidden} ->
+          conn |> put_status(:forbidden) |> json(%{error: "forbidden"})
 
-      {:error, reason} when is_atom(reason) ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: Atom.to_string(reason)})
+        {:error, reason} when is_atom(reason) ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: Atom.to_string(reason)})
 
-      {:error, changeset} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{error: "invalid_grading_compute_payload", details: changeset_errors(changeset)})
-    end
+        {:error, changeset} ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> json(%{
+            error: "invalid_grading_compute_payload",
+            details: changeset_errors(changeset)
+          })
+      end
+    end)
   end
 
-  def finalize(conn, %{"id" => result_id}) do
-    with :ok <- authorize_write(conn),
-         {:ok, result} <- Gradings.finalize_result(result_id, conn.assigns[:current_role]) do
-      json(conn, %{data: serialize_result(result)})
-    else
-      {:error, :forbidden} ->
-        conn |> put_status(:forbidden) |> json(%{error: "forbidden"})
+  def finalize(conn, %{"id" => result_id} = params) do
+    Idempotency.run(conn, params, fn ->
+      with :ok <- authorize_write(conn),
+           {:ok, result} <- Gradings.finalize_result(result_id, conn.assigns[:current_role]) do
+        json(conn, %{data: serialize_result(result)})
+      else
+        {:error, :forbidden} ->
+          conn |> put_status(:forbidden) |> json(%{error: "forbidden"})
 
-      {:error, reason} when is_atom(reason) ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: Atom.to_string(reason)})
+        {:error, reason} when is_atom(reason) ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: Atom.to_string(reason)})
 
-      {:error, changeset} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{
-          error: "invalid_grading_finalize_payload",
-          details: changeset_errors(changeset)
-        })
-    end
+        {:error, changeset} ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> json(%{
+            error: "invalid_grading_finalize_payload",
+            details: changeset_errors(changeset)
+          })
+      end
+    end)
   end
 
   def decision_snapshot(conn, %{"id" => result_id}) do

@@ -3,6 +3,7 @@ defmodule ZanshinApiWeb.DivisionMedalResultController do
 
   alias ZanshinApi.Competitions
   alias ZanshinApi.Competitions.DivisionMedalResult
+  alias ZanshinApiWeb.Idempotency
 
   def index(conn, %{"division_id" => division_id}) do
     data = Competitions.list_division_medal_results(division_id) |> Enum.map(&serialize/1)
@@ -29,20 +30,22 @@ defmodule ZanshinApiWeb.DivisionMedalResultController do
     end
   end
 
-  def compute(conn, %{"id" => division_id}) do
-    with :ok <- authorize_write(conn),
-         {:ok, results} <- Competitions.compute_division_results(division_id) do
-      json(conn, %{data: Enum.map(results, &serialize/1)})
-    else
-      {:error, :forbidden} ->
-        conn |> put_status(:forbidden) |> json(%{error: "forbidden"})
+  def compute(conn, %{"id" => division_id} = params) do
+    Idempotency.run(conn, params, fn ->
+      with :ok <- authorize_write(conn),
+           {:ok, results} <- Competitions.compute_division_results(division_id) do
+        json(conn, %{data: Enum.map(results, &serialize/1)})
+      else
+        {:error, :forbidden} ->
+          conn |> put_status(:forbidden) |> json(%{error: "forbidden"})
 
-      {:error, :division_not_found} ->
-        conn |> put_status(:not_found) |> json(%{error: "division_not_found"})
+        {:error, :division_not_found} ->
+          conn |> put_status(:not_found) |> json(%{error: "division_not_found"})
 
-      {:error, reason} when is_atom(reason) ->
-        conn |> put_status(:unprocessable_entity) |> json(%{error: Atom.to_string(reason)})
-    end
+        {:error, reason} when is_atom(reason) ->
+          conn |> put_status(:unprocessable_entity) |> json(%{error: Atom.to_string(reason)})
+      end
+    end)
   end
 
   defp authorize_write(conn) do

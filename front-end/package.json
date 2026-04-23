@@ -7,6 +7,7 @@
     "build": "bunx remix build",
     "start": "bunx remix-serve ./build/index.js",
     "typecheck": "bunx tsc --noEmit",
+    "verify": "bun run typecheck && bun run lint && bun run test",
     "lint:plugin": "npm --prefix ./eslint-plugin-zanshin install --no-fund --no-audit && npm --prefix ./eslint-plugin-zanshin run build",
     "prelint": "bun run lint:plugin",
     "lint": "bunx eslint .",

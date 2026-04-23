@@ -79,6 +79,7 @@ defmodule ZanshinApiWeb.GradingControllerTest do
     conn =
       build_conn()
       |> put_req_header("authorization", bearer_token_for("admin"))
+      |> put_req_header("idempotency-key", "grading-compute-flow-1")
       |> post("/api/v1/gradings/results/#{result_id}/compute", %{})
 
     assert %{"data" => %{"final_result" => "pass"}} = json_response(conn, 200)
@@ -86,6 +87,7 @@ defmodule ZanshinApiWeb.GradingControllerTest do
     conn =
       build_conn()
       |> put_req_header("authorization", bearer_token_for("admin"))
+      |> put_req_header("idempotency-key", "grading-finalize-flow-1")
       |> post("/api/v1/gradings/results/#{result_id}/finalize", %{})
 
     assert %{"data" => %{"locked_at" => locked_at}} = json_response(conn, 200)
@@ -165,5 +167,48 @@ defmodule ZanshinApiWeb.GradingControllerTest do
       })
 
     assert %{"error" => "examiner_not_assigned_to_session"} = json_response(conn, 422)
+  end
+
+  test "grading compute replays response for same idempotency key", %{conn: conn} do
+    tournament = tournament_fixture()
+    competitor = competitor_fixture()
+
+    session_conn =
+      conn
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/sessions", %{
+        "tournament_id" => tournament.id,
+        "name" => "Replay Session"
+      })
+
+    assert %{"data" => %{"id" => session_id}} = json_response(session_conn, 201)
+
+    result_conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> post("/api/v1/gradings/sessions/#{session_id}/results", %{
+        "competitor_id" => competitor.id,
+        "target_grade" => "3dan"
+      })
+
+    assert %{"data" => %{"id" => result_id}} = json_response(result_conn, 201)
+
+    compute_conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> put_req_header("idempotency-key", "grading-compute-replay-1")
+      |> post("/api/v1/gradings/results/#{result_id}/compute", %{})
+
+    assert %{"data" => %{"id" => first_result_id}} = json_response(compute_conn, 200)
+
+    replay_conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("admin"))
+      |> put_req_header("idempotency-key", "grading-compute-replay-1")
+      |> post("/api/v1/gradings/results/#{result_id}/compute", %{})
+
+    assert get_resp_header(replay_conn, "x-idempotent-replayed") == ["true"]
+    assert %{"data" => %{"id" => replay_result_id}} = json_response(replay_conn, 200)
+    assert replay_result_id == first_result_id
   end
 end

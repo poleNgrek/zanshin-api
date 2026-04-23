@@ -86,6 +86,7 @@ defmodule ZanshinApiWeb.DivisionResultsControllerTest do
     conn =
       conn
       |> put_req_header("authorization", bearer_token_for("admin"))
+      |> put_req_header("idempotency-key", "division-results-compute-1")
       |> post("/api/v1/divisions/#{division.id}/compute_results", %{})
 
     assert %{"data" => results} = json_response(conn, 200)

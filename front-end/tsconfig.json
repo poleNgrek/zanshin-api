@@ -1,5 +1,6 @@
 {
   "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["eslint-plugin-zanshin/**"],
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",

@@ -5,6 +5,7 @@ defmodule ZanshinApiWeb.MatchScoreControllerTest do
   import ZanshinApi.CompetitionsFixtures
   import ZanshinApi.MatchesFixtures
   alias ZanshinApi.Competitions
+  alias ZanshinApi.Matches
 
   test "POST /api/v1/matches/:id/score records score for ongoing match", %{conn: conn} do
     match = match_fixture(%{"state" => "ongoing"})
@@ -12,6 +13,7 @@ defmodule ZanshinApiWeb.MatchScoreControllerTest do
     conn =
       conn
       |> put_req_header("authorization", bearer_token_for("shinpan"))
+      |> put_req_header("idempotency-key", "match-score-valid-1")
       |> post("/api/v1/matches/#{match.id}/score", %{
         "score_type" => "ippon",
         "side" => "aka",
@@ -27,6 +29,7 @@ defmodule ZanshinApiWeb.MatchScoreControllerTest do
     conn =
       conn
       |> put_req_header("authorization", bearer_token_for("shinpan"))
+      |> put_req_header("idempotency-key", "match-score-not-ongoing-1")
       |> post("/api/v1/matches/#{match.id}/score", %{"score_type" => "hansoku", "side" => "shiro"})
 
     assert %{"error" => "match_not_ongoing"} = json_response(conn, 422)
@@ -38,6 +41,7 @@ defmodule ZanshinApiWeb.MatchScoreControllerTest do
     conn =
       conn
       |> put_req_header("authorization", bearer_token_for("timekeeper"))
+      |> put_req_header("idempotency-key", "match-score-forbidden-1")
       |> post("/api/v1/matches/#{match.id}/score", %{
         "score_type" => "ippon",
         "side" => "aka",
@@ -55,6 +59,7 @@ defmodule ZanshinApiWeb.MatchScoreControllerTest do
     conn =
       conn
       |> put_req_header("authorization", bearer_token_for("shinpan"))
+      |> put_req_header("idempotency-key", "match-score-tsuki-1")
       |> post("/api/v1/matches/#{match.id}/score", %{
         "score_type" => "ippon",
         "side" => "aka",
@@ -62,5 +67,40 @@ defmodule ZanshinApiWeb.MatchScoreControllerTest do
       })
 
     assert %{"error" => "tsuki_not_allowed"} = json_response(conn, 422)
+  end
+
+  test "POST /api/v1/matches/:id/score replays response for same idempotency key", %{conn: conn} do
+    match = match_fixture(%{"state" => "ongoing"})
+
+    conn =
+      conn
+      |> put_req_header("authorization", bearer_token_for("shinpan"))
+      |> put_req_header("idempotency-key", "match-score-idem-key-1")
+      |> post("/api/v1/matches/#{match.id}/score", %{
+        "score_type" => "ippon",
+        "side" => "aka",
+        "target" => "men"
+      })
+
+    assert %{"data" => %{"id" => first_score_id, "score_type" => "ippon", "side" => "aka"}} =
+             json_response(conn, 201)
+
+    replay_conn =
+      build_conn()
+      |> put_req_header("authorization", bearer_token_for("shinpan"))
+      |> put_req_header("idempotency-key", "match-score-idem-key-1")
+      |> post("/api/v1/matches/#{match.id}/score", %{
+        "score_type" => "ippon",
+        "side" => "aka",
+        "target" => "men"
+      })
+
+    assert get_resp_header(replay_conn, "x-idempotent-replayed") == ["true"]
+
+    assert %{"data" => %{"id" => replay_score_id, "score_type" => "ippon", "side" => "aka"}} =
+             json_response(replay_conn, 201)
+
+    assert replay_score_id == first_score_id
+    assert length(Matches.list_score_events(match.id)) == 1
   end
 end

@@ -711,6 +711,37 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
   - `cd front-end && bun run test`
   - `cd front-end && bun run test:e2e`
 
+### Increment 2 Execution - Wave 1.1 Idempotency Keys on Command Endpoints
+
+- **Status:** `in_progress`
+- **Goal:** start Wave 1 reliability work by making core command retries safe and deterministic.
+- **Done in workspace:**
+  - Added persisted idempotency storage:
+    - migration `api/priv/repo/migrations/20260423123000_create_idempotency_keys.exs`
+    - schema/context `ZanshinApi.Idempotency` and `ZanshinApi.Idempotency.RequestKey`
+  - Added reusable web helper:
+    - `ZanshinApiWeb.Idempotency.run/3` for key validation, fingerprint matching, replay, and conflict handling
+  - Applied idempotency guard to command endpoints:
+    - `POST /api/v1/matches/:id/transition`
+    - `POST /api/v1/matches/:id/score`
+    - `POST /api/v1/divisions/:id/compute_results`
+    - `POST /api/v1/gradings/results/:id/compute`
+    - `POST /api/v1/gradings/results/:id/finalize`
+  - Added controller coverage for:
+    - missing key rejection (`400`)
+    - replay behavior with `x-idempotent-replayed: true`
+    - key reuse conflict for different payload (`409`)
+  - Updated API docs:
+    - `docs/api/openapi.yaml`
+    - `api/priv/static/openapi.yaml`
+    - `api/README.md`
+- **Verification:**
+  - `cd api && mix test test/zanshin_api_web/controllers/match_state_controller_test.exs test/zanshin_api_web/controllers/match_score_controller_test.exs test/zanshin_api_web/controllers/division_results_controller_test.exs test/zanshin_api_web/controllers/grading_controller_test.exs`
+  - `cd api && mix test` (89 tests, 0 failures)
+- **Next pickup (same increment):**
+  - Continue Wave 1 with standardized pagination contracts for list endpoints.
+  - Add projection replay/drift tests for analytics worker flows.
+
 ---
 
 ## Phase 5 - WordPress Plugin

@@ -98,6 +98,14 @@ This directory contains the initial Phoenix-oriented API foundation for the Kend
   - OpenAPI document served by API: `GET /openapi.yaml`
   - OpenAPI source file in repo: `docs/api/openapi.yaml`
   - Postman collection: `docs/api/zanshin-api.postman_collection.json`
+- Command idempotency baseline:
+  - command routes below now require `idempotency-key` request header:
+    - `POST /api/v1/matches/:id/transition`
+    - `POST /api/v1/matches/:id/score`
+    - `POST /api/v1/divisions/:id/compute_results`
+    - `POST /api/v1/gradings/results/:id/compute`
+    - `POST /api/v1/gradings/results/:id/finalize`
+  - replayed responses include `x-idempotent-replayed: true`
 - Real tournament/division/competitor entities with DB-level FK constraints on matches
 - Persistent audit trail in `match_events` table
 - Initial tests for:
@@ -160,6 +168,10 @@ GitHub Actions CI runs from `.github/workflows/ci.yml` and currently validates:
   - `test/support/fixtures/competitions_fixtures.ex`
   - `test/support/fixtures/matches_fixtures.ex`
   - `test/support/fixtures/full_domain_fixtures.ex`
+- Gherkin-style API scenarios can live in:
+  - `test/features/*.feature`
+  - executed by ExUnit test modules that parse scenarios from `test/support/gherkin.ex`
+  - run only those scenarios with: `mix test --only gherkin`
 
 ## Domain Event Envelope (Outbox-Ready)
 

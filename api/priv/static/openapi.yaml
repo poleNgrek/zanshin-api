@@ -210,9 +210,14 @@ paths:
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/IdPath"
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
       responses:
         "200":
           $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /api/v1/competitors:
     get:
       tags: [Competitors]
@@ -354,6 +359,7 @@ paths:
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/IdPath"
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
       requestBody:
         required: true
         content:
@@ -364,6 +370,10 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /api/v1/matches/{id}/score:
     get:
       tags: [Matches]
@@ -379,6 +389,7 @@ paths:
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/IdPath"
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
       requestBody:
         required: true
         content:
@@ -389,6 +400,10 @@ paths:
       responses:
         "201":
           $ref: "#/components/responses/Created"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /api/v1/gradings/examiners:
     get:
       tags: [Gradings]
@@ -547,9 +562,14 @@ paths:
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/IdPath"
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
       responses:
         "200":
           $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /api/v1/gradings/results/{id}/finalize:
     post:
       tags: [Gradings]
@@ -557,9 +577,14 @@ paths:
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/IdPath"
+        - $ref: "#/components/parameters/IdempotencyKeyHeader"
       responses:
         "200":
           $ref: "#/components/responses/Ok"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /api/v1/gradings/results/{id}/decision_snapshot:
     get:
       tags: [Gradings]
@@ -583,6 +608,15 @@ components:
       schema:
         type: string
         format: uuid
+    IdempotencyKeyHeader:
+      name: idempotency-key
+      in: header
+      required: true
+      description: Unique key used to deduplicate command retries.
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 200
   responses:
     Ok:
       description: Success
@@ -616,6 +650,12 @@ components:
             $ref: "#/components/schemas/ErrorEnvelope"
     BadRequest:
       description: Missing or invalid request parameter
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    Conflict:
+      description: Request conflicts with an existing idempotency key usage
       content:
         application/json:
           schema:
