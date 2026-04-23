@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 
 import { ApiError, fetchWithSchema } from "@zanshin/api";
-import { InfoAlertList, PageTitle } from "@zanshin/components";
+import { InfoAlertList, PageTitle, SectionCard } from "@zanshin/components";
 import {
     DivisionListResponseSchema,
     DivisionResponseSchema,
@@ -298,97 +298,111 @@ export default function TournamentsRoute() {
     <Stack spacing={2}>
       <PageTitle title="Tournaments" />
       {error ? <Alert severity="error">{error}</Alert> : null}
-      <Alert severity={liveError ? "warning" : "info"}>
-        Live updates: {liveEnabled ? "on" : "off"}
-        {lastUpdatedAt ? ` - last sync ${lastUpdatedAt.toLocaleTimeString()}` : ""}
-        {liveError ? ` - ${liveError}` : ""}
-      </Alert>
+      <SectionCard title="Tournament Setup">
+        <Stack spacing={1.5}>
+          <Alert severity={liveError ? "warning" : "info"}>
+            Live updates: {liveEnabled ? "on" : "off"}
+            {lastUpdatedAt ? ` - last sync ${lastUpdatedAt.toLocaleTimeString()}` : ""}
+            {liveError ? ` - ${liveError}` : ""}
+          </Alert>
 
-      <Stack direction="row" spacing={1}>
-        <TextField label="Tournament name" value={name} onChange={(e) => setName(e.target.value)} fullWidth />
-        <TextField
-          type="date"
-          value={startsOn}
-          onChange={(e) => setStartsOn(e.target.value)}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-        <Button variant="contained" onClick={createTournament} disabled={creatingTournament}>
-          {creatingTournament ? "Creating..." : "Create"}
-        </Button>
-        <TextField
-          select
-          label="Live Refresh"
-          value={liveEnabled ? "on" : "off"}
-          onChange={(e) => setLiveEnabled(e.target.value === "on")}
-          sx={{ minWidth: 160 }}
-        >
-          <MenuItem value="on">Enabled</MenuItem>
-          <MenuItem value="off">Disabled</MenuItem>
-        </TextField>
-      </Stack>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
+            <TextField label="Tournament name" value={name} onChange={(e) => setName(e.target.value)} fullWidth />
+            <TextField
+              type="date"
+              value={startsOn}
+              onChange={(e) => setStartsOn(e.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+            <Button variant="contained" onClick={createTournament} disabled={creatingTournament}>
+              {creatingTournament ? "Creating..." : "Create"}
+            </Button>
+            <TextField
+              select
+              label="Live Refresh"
+              value={liveEnabled ? "on" : "off"}
+              onChange={(e) => setLiveEnabled(e.target.value === "on")}
+              sx={{ minWidth: 160 }}
+            >
+              <MenuItem value="on">Enabled</MenuItem>
+              <MenuItem value="off">Disabled</MenuItem>
+            </TextField>
+          </Stack>
+        </Stack>
+      </SectionCard>
 
       {loadingTournaments ? <Alert severity="info">Loading tournaments...</Alert> : null}
       {!loadingTournaments && items.length === 0 ? (
         <Alert severity="warning">No tournaments yet. Create your first tournament to continue.</Alert>
       ) : null}
 
-      <InfoAlertList items={items.map((item) => ({ id: item.id, text: `${item.name} (${item.id})` }))} />
+      <SectionCard title="Existing Tournaments">
+        <InfoAlertList items={items.map((item) => ({ id: item.id, text: `${item.name} (${item.id})` }))} />
+      </SectionCard>
 
       <Typography variant="h5" sx={{ pt: 2 }}>
         Division Setup
       </Typography>
-      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-        <TextField
-          select
-          label="Tournament"
-          value={selectedTournamentId}
-          onChange={(e) => void selectTournament(e.target.value)}
-          sx={{ minWidth: 280 }}
-        >
-          {items.map((item) => (
-            <MenuItem key={item.id} value={item.id}>
-              {item.name}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField label="Division name" value={divisionName} onChange={(e) => setDivisionName(e.target.value)} fullWidth />
-        <TextField select label="Format" value={divisionFormat} onChange={(e) => setDivisionFormat(e.target.value)}>
-          <MenuItem value="bracket">bracket</MenuItem>
-          <MenuItem value="swiss">swiss</MenuItem>
-          <MenuItem value="round_robin">round_robin</MenuItem>
-          <MenuItem value="team">team</MenuItem>
-          <MenuItem value="hybrid">hybrid</MenuItem>
-        </TextField>
-        <Button variant="contained" onClick={createDivision} disabled={creatingDivision || !selectedTournamentId}>
-          {creatingDivision ? "Creating..." : "Create Division"}
-        </Button>
-      </Stack>
+      <SectionCard title="Division Setup">
+        <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ flexWrap: "wrap" }}>
+          <TextField
+            select
+            label="Tournament"
+            value={selectedTournamentId}
+            onChange={(e) => void selectTournament(e.target.value)}
+            sx={{ minWidth: 280 }}
+          >
+            {items.map((item) => (
+              <MenuItem key={item.id} value={item.id}>
+                {item.name}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField label="Division name" value={divisionName} onChange={(e) => setDivisionName(e.target.value)} fullWidth />
+          <TextField select label="Format" value={divisionFormat} onChange={(e) => setDivisionFormat(e.target.value)}>
+            <MenuItem value="bracket">bracket</MenuItem>
+            <MenuItem value="swiss">swiss</MenuItem>
+            <MenuItem value="round_robin">round_robin</MenuItem>
+            <MenuItem value="team">team</MenuItem>
+            <MenuItem value="hybrid">hybrid</MenuItem>
+          </TextField>
+          <Button variant="contained" onClick={createDivision} disabled={creatingDivision || !selectedTournamentId}>
+            {creatingDivision ? "Creating..." : "Create Division"}
+          </Button>
+        </Stack>
 
-      <InfoAlertList
-        items={divisions.map((division) => ({
-          id: division.id,
-          severity: "success",
-          text: `${division.name} [${division.format}] (${division.id})`
-        }))}
-      />
+        <Stack sx={{ mt: 1.5 }}>
+          <InfoAlertList
+            items={divisions.map((division) => ({
+              id: division.id,
+              severity: "success",
+              text: `${division.name} [${division.format}] (${division.id})`
+            }))}
+          />
+        </Stack>
+      </SectionCard>
 
-      <Typography variant="h5" sx={{ pt: 2 }}>
+      <Typography variant="h5" sx={{ pt: 1 }}>
         Grading Session Setup
       </Typography>
-      <Stack direction="row" spacing={1}>
-        <TextField label="Session name" value={sessionName} onChange={(e) => setSessionName(e.target.value)} fullWidth />
-        <Button variant="contained" onClick={createSession} disabled={creatingSession || !selectedTournamentId}>
-          {creatingSession ? "Creating..." : "Create Session"}
-        </Button>
-      </Stack>
+      <SectionCard title="Session Setup">
+        <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
+          <TextField label="Session name" value={sessionName} onChange={(e) => setSessionName(e.target.value)} fullWidth />
+          <Button variant="contained" onClick={createSession} disabled={creatingSession || !selectedTournamentId}>
+            {creatingSession ? "Creating..." : "Create Session"}
+          </Button>
+        </Stack>
 
-      <InfoAlertList
-        items={sessions.map((session) => ({
-          id: session.id,
-          severity: "warning",
-          text: `${session.name} (${session.id})`
-        }))}
-      />
+        <Stack sx={{ mt: 1.5 }}>
+          <InfoAlertList
+            items={sessions.map((session) => ({
+              id: session.id,
+              severity: "warning",
+              text: `${session.name} (${session.id})`
+            }))}
+          />
+        </Stack>
+      </SectionCard>
     </Stack>
   );
 }

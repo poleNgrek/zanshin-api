@@ -12,9 +12,9 @@ type InfoAlertListProps = {
 
 export function InfoAlertList({ items }: InfoAlertListProps) {
   return (
-    <Stack spacing={1}>
+    <Stack spacing={1.25}>
       {items.map((item) => (
-        <Alert key={item.id} severity={item.severity ?? "info"}>
+        <Alert key={item.id} severity={item.severity ?? "info"} variant="outlined">
           {item.text}
         </Alert>
       ))}

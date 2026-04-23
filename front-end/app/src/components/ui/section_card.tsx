@@ -9,9 +9,17 @@ type SectionCardProps = PropsWithChildren<{
 
 export function SectionCard({ title, titleVariant = "h6", sx, children }: SectionCardProps) {
   return (
-    <Card sx={sx}>
+    <Card
+      sx={{
+        borderRadius: 2,
+        border: "1px solid",
+        borderColor: "divider",
+        boxShadow: "0 8px 20px rgba(15, 23, 42, 0.05)",
+        ...sx
+      }}
+    >
       <CardContent>
-        <Typography variant={titleVariant} sx={{ mb: 1 }}>
+        <Typography variant={titleVariant} sx={{ mb: 1.25, fontWeight: 700 }}>
           {title}
         </Typography>
         {children}

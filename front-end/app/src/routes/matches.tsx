@@ -3,7 +3,7 @@ import { useLoaderData } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ApiError, fetchMatchEventsSnapshot, fetchWithSchema } from "@zanshin/api";
-import { InfoAlertList, PageTitle } from "@zanshin/components";
+import { InfoAlertList, PageTitle, SectionCard } from "@zanshin/components";
 import {
     CompetitorListResponseSchema,
     DivisionListResponseSchema,
@@ -147,66 +147,72 @@ export default function MatchesRoute() {
   return (
     <Stack spacing={2}>
       <PageTitle title="Match List" description="Public consumer view of currently recorded matches." />
-      <Alert severity={liveError ? "warning" : "info"}>
-        Live updates: {liveEnabled ? "on" : "off"}
-        {selectedTournamentId === "all" ? " (select a tournament to subscribe)" : ""}
-        {lastUpdatedAt ? ` - last sync ${lastUpdatedAt.toLocaleTimeString()}` : ""}
-        {liveError ? ` - ${liveError}` : ""}
-      </Alert>
+      <SectionCard title="Filters and Live Status">
+        <Stack spacing={1.5}>
+          <Alert severity={liveError ? "warning" : "info"}>
+            Live updates: {liveEnabled ? "on" : "off"}
+            {selectedTournamentId === "all" ? " (select a tournament to subscribe)" : ""}
+            {lastUpdatedAt ? ` - last sync ${lastUpdatedAt.toLocaleTimeString()}` : ""}
+            {liveError ? ` - ${liveError}` : ""}
+          </Alert>
 
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
-        <TextField
-          select
-          label="Tournament"
-          value={selectedTournamentId}
-          onChange={(event) => handleTournamentChange(event.target.value)}
-          sx={{ minWidth: 300 }}
-        >
-          <MenuItem value="all">All tournaments</MenuItem>
-          {tournamentsInMatches.map((tournament) => (
-            <MenuItem key={tournament.id} value={tournament.id}>
-              {tournament.name}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          select
-          label="Division"
-          value={selectedDivisionId}
-          onChange={(event) => setSelectedDivisionId(event.target.value)}
-          sx={{ minWidth: 300 }}
-        >
-          <MenuItem value="all">All divisions</MenuItem>
-          {divisionsInScope.map((division) => (
-            <MenuItem key={division.id} value={division.id}>
-              {division.name}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          select
-          label="Live Refresh"
-          value={liveEnabled ? "on" : "off"}
-          onChange={(event) => setLiveEnabled(event.target.value === "on")}
-          sx={{ minWidth: 220 }}
-        >
-          <MenuItem value="on">Enabled</MenuItem>
-          <MenuItem value="off">Disabled</MenuItem>
-        </TextField>
-      </Stack>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
+            <TextField
+              select
+              label="Tournament"
+              value={selectedTournamentId}
+              onChange={(event) => handleTournamentChange(event.target.value)}
+              sx={{ minWidth: 300 }}
+            >
+              <MenuItem value="all">All tournaments</MenuItem>
+              {tournamentsInMatches.map((tournament) => (
+                <MenuItem key={tournament.id} value={tournament.id}>
+                  {tournament.name}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select
+              label="Division"
+              value={selectedDivisionId}
+              onChange={(event) => setSelectedDivisionId(event.target.value)}
+              sx={{ minWidth: 300 }}
+            >
+              <MenuItem value="all">All divisions</MenuItem>
+              {divisionsInScope.map((division) => (
+                <MenuItem key={division.id} value={division.id}>
+                  {division.name}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select
+              label="Live Refresh"
+              value={liveEnabled ? "on" : "off"}
+              onChange={(event) => setLiveEnabled(event.target.value === "on")}
+              sx={{ minWidth: 220 }}
+            >
+              <MenuItem value="on">Enabled</MenuItem>
+              <MenuItem value="off">Disabled</MenuItem>
+            </TextField>
+          </Stack>
+        </Stack>
+      </SectionCard>
 
       {filteredMatches.length === 0 ? <Alert severity="info">No matches found for this filter.</Alert> : null}
 
-      <InfoAlertList
-        items={filteredMatches.map((match) => {
-          const akaName = competitorById.get(match.aka_competitor_id) ?? match.aka_competitor_id;
-          const shiroName = competitorById.get(match.shiro_competitor_id) ?? match.shiro_competitor_id;
-          return {
-            id: match.id,
-            text: `${akaName} vs ${shiroName} - ${match.state} (${match.id})`
-          };
-        })}
-      />
+      <SectionCard title="Matches">
+        <InfoAlertList
+          items={filteredMatches.map((match) => {
+            const akaName = competitorById.get(match.aka_competitor_id) ?? match.aka_competitor_id;
+            const shiroName = competitorById.get(match.shiro_competitor_id) ?? match.shiro_competitor_id;
+            return {
+              id: match.id,
+              text: `${akaName} vs ${shiroName} - ${match.state} (${match.id})`
+            };
+          })}
+        />
+      </SectionCard>
     </Stack>
   );
 }

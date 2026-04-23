@@ -204,69 +204,73 @@ export default function AnalyticsRoute() {
       />
 
       {error ? <Alert severity="error">{error}</Alert> : null}
-      <Alert severity={liveError ? "warning" : "info"}>
-        Live updates: {liveEnabled ? "on" : "off"}
-        {lastUpdatedAt ? ` - last sync ${lastUpdatedAt.toLocaleTimeString()}` : ""}
-        {liveError ? ` - ${liveError}` : ""}
-      </Alert>
-      {tournaments.length === 0 ? <Alert severity="warning">No tournaments available yet.</Alert> : null}
+      <SectionCard title="Filters and Live Status">
+        <Stack spacing={1.5}>
+          <Alert severity={liveError ? "warning" : "info"}>
+            Live updates: {liveEnabled ? "on" : "off"}
+            {lastUpdatedAt ? ` - last sync ${lastUpdatedAt.toLocaleTimeString()}` : ""}
+            {liveError ? ` - ${liveError}` : ""}
+          </Alert>
+          {tournaments.length === 0 ? <Alert severity="warning">No tournaments available yet.</Alert> : null}
 
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
-        <TextField
-          select
-          label="Tournament"
-          value={selectedTournamentId}
-          onChange={(event) => handleTournamentChange(event.target.value)}
-          sx={{ minWidth: 280 }}
-        >
-          {tournaments.map((item) => (
-            <MenuItem key={item.id} value={item.id}>
-              {item.name}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          select
-          label="Division"
-          value={selectedDivisionId}
-          onChange={(event) => setSelectedDivisionId(event.target.value)}
-          sx={{ minWidth: 280 }}
-        >
-          <MenuItem value="">All divisions</MenuItem>
-          {divisionsInScope.map((item) => (
-            <MenuItem key={item.id} value={item.id}>
-              {item.name}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          type="datetime-local"
-          label="From"
-          value={from}
-          onChange={(event) => setFrom(event.target.value)}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-        <TextField
-          type="datetime-local"
-          label="To"
-          value={to}
-          onChange={(event) => setTo(event.target.value)}
-          slotProps={{ inputLabel: { shrink: true } }}
-        />
-        <Button variant="contained" onClick={() => void loadOverview()} disabled={!selectedTournamentId || loading}>
-          {loading ? "Loading..." : "Refresh"}
-        </Button>
-        <TextField
-          select
-          label="Live Refresh"
-          value={liveEnabled ? "on" : "off"}
-          onChange={(event) => setLiveEnabled(event.target.value === "on")}
-          sx={{ minWidth: 180 }}
-        >
-          <MenuItem value="on">Enabled</MenuItem>
-          <MenuItem value="off">Disabled</MenuItem>
-        </TextField>
-      </Stack>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
+            <TextField
+              select
+              label="Tournament"
+              value={selectedTournamentId}
+              onChange={(event) => handleTournamentChange(event.target.value)}
+              sx={{ minWidth: 280 }}
+            >
+              {tournaments.map((item) => (
+                <MenuItem key={item.id} value={item.id}>
+                  {item.name}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              select
+              label="Division"
+              value={selectedDivisionId}
+              onChange={(event) => setSelectedDivisionId(event.target.value)}
+              sx={{ minWidth: 280 }}
+            >
+              <MenuItem value="">All divisions</MenuItem>
+              {divisionsInScope.map((item) => (
+                <MenuItem key={item.id} value={item.id}>
+                  {item.name}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              type="datetime-local"
+              label="From"
+              value={from}
+              onChange={(event) => setFrom(event.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+            <TextField
+              type="datetime-local"
+              label="To"
+              value={to}
+              onChange={(event) => setTo(event.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+            <Button variant="contained" onClick={() => void loadOverview()} disabled={!selectedTournamentId || loading}>
+              {loading ? "Loading..." : "Refresh"}
+            </Button>
+            <TextField
+              select
+              label="Live Refresh"
+              value={liveEnabled ? "on" : "off"}
+              onChange={(event) => setLiveEnabled(event.target.value === "on")}
+              sx={{ minWidth: 180 }}
+            >
+              <MenuItem value="on">Enabled</MenuItem>
+              <MenuItem value="off">Disabled</MenuItem>
+            </TextField>
+          </Stack>
+        </Stack>
+      </SectionCard>
 
       {overview ? (
         <>

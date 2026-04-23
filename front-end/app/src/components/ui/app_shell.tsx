@@ -16,6 +16,14 @@ import { get_stored_token, set_stored_token } from "@zanshin/providers";
 
 export function AppShell({ children }: PropsWithChildren) {
   const [token, set_token] = useState(() => get_stored_token() ?? "");
+  const navButtonSx = {
+    textTransform: "none",
+    borderRadius: 1.5,
+    px: 1.25,
+    "&[aria-current='page']": {
+      backgroundColor: "rgba(255,255,255,0.18)"
+    }
+  };
 
   function save_token() {
     set_stored_token(token);
@@ -45,31 +53,26 @@ export function AppShell({ children }: PropsWithChildren) {
             </Typography>
             <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", alignItems: "center" }}>
               <Chip size="small" label="Consumer" color="secondary" />
-              <Button component={NavLink} to="/" color="inherit" sx={{ textTransform: "none" }}>
+              <Button component={NavLink} to="/" color="inherit" sx={navButtonSx}>
                 Dashboard
               </Button>
-              <Button component={NavLink} to="/matches" color="inherit" sx={{ textTransform: "none" }}>
+              <Button component={NavLink} to="/matches" color="inherit" sx={navButtonSx}>
                 Matches
               </Button>
               <Chip size="small" label="Admin" color="secondary" sx={{ ml: 1 }} />
-              <Button component={NavLink} to="/admin" color="inherit" sx={{ textTransform: "none" }}>
+              <Button component={NavLink} to="/admin" color="inherit" sx={navButtonSx}>
                 Console
               </Button>
-              <Button component={NavLink} to="/admin/tournaments" color="inherit" sx={{ textTransform: "none" }}>
+              <Button component={NavLink} to="/admin/tournaments" color="inherit" sx={navButtonSx}>
                 Tournaments
               </Button>
-              <Button component={NavLink} to="/admin/analytics" color="inherit" sx={{ textTransform: "none" }}>
+              <Button component={NavLink} to="/admin/analytics" color="inherit" sx={navButtonSx}>
                 Analytics
               </Button>
-              <Button component={NavLink} to="/admin/competitors" color="inherit" sx={{ textTransform: "none" }}>
+              <Button component={NavLink} to="/admin/competitors" color="inherit" sx={navButtonSx}>
                 Competitors
               </Button>
-              <Button
-                component={NavLink}
-                to="/admin/gradings/results"
-                color="inherit"
-                sx={{ textTransform: "none" }}
-              >
+              <Button component={NavLink} to="/admin/gradings/results" color="inherit" sx={navButtonSx}>
                 Grading Results
               </Button>
             </Stack>

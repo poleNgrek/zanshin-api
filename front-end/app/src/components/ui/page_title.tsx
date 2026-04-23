@@ -7,10 +7,12 @@ type PageTitleProps = {
 
 export function PageTitle({ title, description }: PageTitleProps) {
   return (
-    <Stack spacing={0.5}>
-      <Typography variant="h4">{title}</Typography>
+    <Stack spacing={1}>
+      <Typography variant="h3" sx={{ fontWeight: 700, letterSpacing: -0.3 }}>
+        {title}
+      </Typography>
       {description ? (
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 860 }}>
           {description}
         </Typography>
       ) : null}

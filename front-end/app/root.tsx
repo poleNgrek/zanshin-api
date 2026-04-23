@@ -25,7 +25,19 @@ const theme = createTheme({
   palette: {
     mode: "light",
     primary: { main: "#1f4b99" },
-    secondary: { main: "#c28b1e" }
+    secondary: { main: "#c28b1e" },
+    background: {
+      default: "#eef2f7",
+      paper: "#ffffff"
+    }
+  },
+  shape: {
+    borderRadius: 10
+  },
+  typography: {
+    h3: { fontSize: "2rem", fontWeight: 700 },
+    h4: { fontSize: "1.65rem", fontWeight: 700 },
+    h5: { fontSize: "1.25rem", fontWeight: 700 }
   }
 });
 
