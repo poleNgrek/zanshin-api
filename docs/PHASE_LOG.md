@@ -33,7 +33,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 - **Goal:** establish initial project baseline and validate GitHub push access.
 - **Done:**
   - Created root `README.md`.
-  - Added project skeleton directories (`apps/api`, `apps/frontend`, `apps/analytics`, `apps/wordpress-plugin`, etc.).
+  - Added project skeleton directories (`api`, `front-end`, `analytics`, `wordpress-plugin`, etc.).
   - Added `docker-compose.yml` baseline (`postgres`, `neo4j`, placeholder API/frontend services).
   - Added `.gitignore` baseline.
   - Pushed first bootstrap commit to GitHub.
@@ -53,7 +53,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 - **Status:** `done`
 - **Goal:** create initial Phoenix-compatible API skeleton and first testable lifecycle contract.
 - **Done:**
-  - Added app skeleton files in `apps/api` (`mix.exs`, config, app modules, endpoint/router/controllers).
+  - Added app skeleton files in `api` (`mix.exs`, config, app modules, endpoint/router/controllers).
   - Added health endpoint and initial lifecycle transition endpoint.
   - Implemented `ZanshinApi.Matches.StateMachine`.
   - Added initial tests for state machine and controller flows.
@@ -121,7 +121,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - create/list divisions
     - create/list competitors
   - Updated fixtures and tests to use real entity IDs.
-  - Updated docs (`README.md`, `apps/api/README.md`) for new endpoints.
+  - Updated docs (`README.md`, `api/README.md`) for new endpoints.
 - **Verification:**
   - Docker checks passed:
     - `mix format --check-formatted`
@@ -346,7 +346,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 - **Status:** `done`
 - **Goal:** establish frontend runtime, UI framework, validation layer, and testing baseline.
 - **Done in workspace:**
-  - Scaffolded `apps/frontend` with Bun-managed Remix SPA + TypeScript project files.
+  - Scaffolded `front-end` with Bun-managed Remix SPA + TypeScript project files.
   - Added MUI theme + shared app shell/navigation.
   - Added Zod-based API client and starter schemas.
   - Added starter routes:
@@ -375,7 +375,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - tournament/session selectors
     - competitor selector + grading result creation
     - per-result compute/finalize actions directly from list rows
-  - Updated `apps/frontend/README.md` with complete local run instructions and auth token usage.
+  - Updated `front-end/README.md` with complete local run instructions and auth token usage.
 
 ### Increment 3.2 - Frontend Test Hardening
 
@@ -485,9 +485,9 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
   - Added first projection verification test:
     - `neo4j_projection_worker_test.exs` validates project call + processed mark + checkpoint advance for a transition event.
 - **Verification:**
-  - `cd apps/api && mix format`
-  - `cd apps/api && MIX_ENV=test mix test test/zanshin_api/analytics/workers/neo4j_projection_worker_test.exs`
-  - `cd apps/api && MIX_ENV=test mix test` (72 tests, 0 failures)
+  - `cd api && mix format`
+  - `cd api && MIX_ENV=test mix test test/zanshin_api/analytics/workers/neo4j_projection_worker_test.exs`
+  - `cd api && MIX_ENV=test mix test` (72 tests, 0 failures)
 
 ### Increment 4.1 - Bolt Adapter + Analytics View Contract
 
@@ -511,10 +511,10 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - `docs/diagrams/analytics-flow.drawio`
   - OpenAPI updated with analytics summary route and response contracts.
 - **Verification:**
-  - `cd apps/api && mix format`
-  - `cd apps/api && MIX_ENV=test mix test test/zanshin_api/analytics/workers/neo4j_projection_worker_test.exs`
-  - `cd apps/api && MIX_ENV=test mix test test/zanshin_api_web/controllers/analytics_match_summary_controller_test.exs`
-  - `cd apps/api && MIX_ENV=test mix test test/zanshin_api_web/controllers/match_controller_test.exs`
+  - `cd api && mix format`
+  - `cd api && MIX_ENV=test mix test test/zanshin_api/analytics/workers/neo4j_projection_worker_test.exs`
+  - `cd api && MIX_ENV=test mix test test/zanshin_api_web/controllers/analytics_match_summary_controller_test.exs`
+  - `cd api && MIX_ENV=test mix test test/zanshin_api_web/controllers/match_controller_test.exs`
 
 ### Increment 4.2 - Neo4j-Backed Summary Read Path
 
@@ -541,7 +541,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - exact invocation examples
   - Stabilized OAuth test helper key setup to avoid async key-rotation flakiness.
 - **Verification:**
-  - `cd apps/api && MIX_ENV=test mix test` (80 tests, 0 failures)
+  - `cd api && MIX_ENV=test mix test` (80 tests, 0 failures)
 
 ### Increment 4.3 - Dashboard-Focused Analytics Endpoints
 
@@ -574,13 +574,13 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
       - actor-role activity leaderboard
   - Added frontend schema + E2E/validation coverage for the consolidated overview payload.
 - **Verification:**
-  - `cd apps/api && MIX_ENV=test mix test test/zanshin_api_web/controllers/analytics_dashboard_controller_test.exs`
-  - `cd apps/frontend && bun test tests/schemas.test.ts`
-  - `cd apps/frontend && bun run test:e2e -- --grep "admin analytics route|admin tournaments route supports create flow"`
+  - `cd api && MIX_ENV=test mix test test/zanshin_api_web/controllers/analytics_dashboard_controller_test.exs`
+  - `cd front-end && bun test tests/schemas.test.ts`
+  - `cd front-end && bun run test:e2e -- --grep "admin analytics route|admin tournaments route supports create flow"`
   - Final verification pass:
-    - `cd apps/api && MIX_ENV=test mix test` (84 tests, 0 failures)
-    - `cd apps/frontend && bun run test` (8 tests, 0 failures)
-    - `cd apps/frontend && bun run test:e2e` (9 passed, 1 skipped, 0 failures)
+    - `cd api && MIX_ENV=test mix test` (84 tests, 0 failures)
+    - `cd front-end && bun run test` (8 tests, 0 failures)
+    - `cd front-end && bun run test:e2e` (9 passed, 1 skipped, 0 failures)
 
 ### Pre-Phase 4 Hardening Sweep (Moderate) - API/Frontend Readiness
 
@@ -589,9 +589,9 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 - **Done in workspace:**
   - Added deterministic fixture foundations:
     - backend full-domain fixtures (`test/support/fixtures/full_domain_fixtures.ex`)
-    - frontend Playwright shared fixture payloads (`apps/frontend/tests/e2e/fixtures.ts`)
+    - frontend Playwright shared fixture payloads (`front-end/tests/e2e/fixtures.ts`)
   - Added non-destructive API full-domain seed script:
-    - `apps/api/priv/repo/seeds.exs`
+    - `api/priv/repo/seeds.exs`
   - Hardened API contract behavior + docs alignment:
     - explicit required query handling (`tournament_id` for divisions/sessions, `division_id` for stages)
     - OpenAPI now marks these params required and documents `400` bad-request response
@@ -636,7 +636,7 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
 - **Status:** `done`
 - **Goal:** refactor frontend into pseudo-packages with alias boundaries, add cycle checks, and align CI phase semantics.
 - **Done in workspace:**
-  - Added package-style source layout under `apps/frontend/app/src`:
+  - Added package-style source layout under `front-end/app/src`:
     - `api`, `components`, `providers`, `schemas`, `types`, `utils`, `__fixtures__`, `storybook`, `routes`
   - Added `@zanshin/*` path aliases in frontend TypeScript config.
   - Migrated frontend routes/tests to package imports (`@zanshin/api`, `@zanshin/schemas`, `@zanshin/types`, `@zanshin/providers`).
@@ -660,13 +660,13 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - `frontend-naming-conventions.mdc`
   - Consolidated frontend rule set to architecture + naming files only.
 - **Verification:**
-  - `cd apps/frontend && bun install`
-  - `cd apps/frontend && bun run typecheck`
-  - `cd apps/frontend && bun run lint`
-  - `cd apps/frontend && bun run test`
+  - `cd front-end && bun install`
+  - `cd front-end && bun run typecheck`
+  - `cd front-end && bun run lint`
+  - `cd front-end && bun run test`
     - unit tests: 8 passed
     - madge: no circular dependencies
-  - `cd apps/frontend && bun run test:e2e`
+  - `cd front-end && bun run test:e2e`
     - 9 passed, 1 skipped, 0 failures
 
 ### Increment 2 - Deferred Extensive Backlog Program Definition
@@ -681,6 +681,31 @@ It tracks each phase/increment with goals, delivered scope, verification, issues
     - phased rollout order (Wave 1/2/3)
     - verification gates and exit criteria
   - Established separation from Increment 1 so plugin work is not blocked by broad hardening scope.
+
+### Increment 3 - Monorepo Relayout + ESLint Plugin Integration
+
+- **Status:** `done`
+- **Goal:** remove `apps/` container, keep top-level service roots, and integrate local ESLint plugin with Node-friendly packaging.
+- **Done in workspace:**
+  - Moved service folders to top-level:
+    - `api`
+    - `front-end`
+    - `analytics`
+    - `wordpress-plugin`
+  - Removed legacy `apps/` directory and updated CI/scripts/docker/docs to the new paths.
+  - Integrated `eslint-plugin-zanshin` into `front-end/eslint.config.mjs` with typed parser options:
+    - `projectService: true`
+    - `tsconfigRootDir: import.meta.dirname`
+  - Enabled plugin rules under the `zanshin/*` namespace in frontend lint config.
+  - Refactored plugin packaging to Node-friendly build output (`dist/`) and exports metadata.
+  - Updated plugin docs to current structure and usage.
+  - Evaluated dual-manifest strategy and kept current single app package structure for now (no root/app split introduced).
+  - Evaluated imported organize-imports tooling and deferred adoption to avoid introducing extra formatter churn in this migration.
+- **Verification:**
+  - `cd front-end && bun run typecheck`
+  - `cd front-end && bun run lint`
+  - `cd front-end && bun run test`
+  - `cd front-end && bun run test:e2e`
 
 ---
 
